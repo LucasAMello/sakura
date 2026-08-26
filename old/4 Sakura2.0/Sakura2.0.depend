@@ -1,0 +1,114 @@
+# depslib dependency file v1.0
+1296348736 source:c:\users\lucas\desktop\sakura2.0\main.cpp
+	<iostream>
+	<stdlib.h>
+	<time.h>
+	<allegro.h>
+	"data.h"
+	"game.h"
+	"menu.h"
+	"intro.h"
+
+1137011734 c:\users\lucas\desktop\sakura2.0\gerror.h
+	<allegro.h>
+
+1137011736 c:\users\lucas\desktop\sakura2.0\gkernel.h
+
+1211318330 c:\users\lucas\desktop\sakura2.0\data.h
+
+1281310109 c:\users\lucas\desktop\sakura2.0\globals.h
+
+1281722912 c:\users\lucas\desktop\sakura2.0\sprite.h
+	<allegro.h>
+	<list>
+
+1281308767 c:\users\lucas\desktop\sakura2.0\colision.h
+
+1294786452 c:\users\lucas\desktop\sakura2.0\player.h
+	<allegro.h>
+	"map.h"
+
+1281308767 c:\users\lucas\desktop\sakura2.0\draw.h
+
+1281308952 c:\users\lucas\desktop\sakura2.0\scripts.h
+
+1282234777 c:\users\lucas\desktop\sakura2.0\menu.h
+	<allegro.h>
+	<iostream>
+	<fstream.h>
+	"player.h"
+	"timing.h"
+	"data.h"
+	"intro.h"
+
+1281308952 c:\users\lucas\desktop\sakura2.0\maps.h
+
+1296340570 source:c:\users\lucas\desktop\sakura2.0\game.cpp
+	"game.h"
+
+1296340284 c:\users\lucas\desktop\sakura2.0\game.h
+	<allegro.h>
+	<iostream>
+	<fstream.h>
+	"player.h"
+	"actor.h"
+	"wall.h"
+	"menu.h"
+	"map.h"
+
+1295458525 c:\users\lucas\desktop\sakura2.0\wall.h
+	<allegro.h>
+	<list>
+	"timing.h"
+
+1296016811 source:c:\users\lucas\desktop\sakura2.0\map.cpp
+	"map.h"
+	"game.h"
+
+1284587724 c:\users\lucas\desktop\sakura2.0\map.h
+	<allegro.h>
+	"actor.h"
+	"wall.h"
+
+1296348769 source:c:\users\lucas\desktop\sakura2.0\menu.cpp
+	"menu.h"
+
+1295456806 c:\users\lucas\desktop\sakura2.0\timing.h
+
+1296329127 source:c:\users\lucas\desktop\sakura2.0\player.cpp
+	"player.h"
+	"game.h"
+
+1281314889 source:c:\users\lucas\desktop\sakura2.0\sprite.cpp
+	"sprite.h"
+
+1282235121 source:c:\users\lucas\desktop\sakura2.0\wall.cpp
+	"wall.h"
+
+1294784208 source:c:\users\lucas\desktop\sakura2.0\intro.cpp
+	"intro.h"
+	"game.h"
+
+1294775618 c:\users\lucas\desktop\sakura2.0\intro.h
+	<allegro.h>
+	"player.h"
+	"timing.h"
+	"data.h"
+
+1296340430 c:\users\lucas\desktop\sakura2.0\actor.h
+	<allegro.h>
+	<list>
+	"timing.h"
+
+1296340543 source:c:\users\lucas\desktop\sakura2.0\actor.cpp
+	"actor.h"
+	"game.h"
+
+1282351420 c:\users\lucas\desktop\sakura2.0\actor_classes.h
+	"actor.h"
+	"game.h"
+	"data.h"
+
+1282492063 source:c:\users\lucas\desktop\sakura2.0\actor_classes.cpp
+	"actor_classes.h"
+

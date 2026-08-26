@@ -1,0 +1,702 @@
+SAKURA GODOT PORT SPECIFICATION
+MILESTONE: MAP10 VERTICAL SLICE
+VERSION: 0.2 (source-derived, unverified against a running 2008 build)
+DATE: 2026-08-24
+
+PURPOSE
+=======
+
+This is the canonical, text-only implementation specification for the first
+Godot port milestone. It reconstructs behavior from the complete original
+"2 Joguito" C++/Allegro source and data because the 2008 executable crashes
+after its menu.
+
+This milestone includes:
+
+  - map10 geometry, rendering, camera, entry, and exit;
+  - the normal player with only the default weapon;
+  - solid walls and the map's invisible death floor;
+  - the three enemy types explicitly placed on map10;
+  - contact damage, enemy HP, default-shot damage, and enemy death drops.
+
+This milestone explicitly defers:
+
+  - weapons 2 through 7 and weapon switching;
+  - the two card/collectible objects placed on map10;
+  - pause/character menus, saving, later maps, bosses, and complete HUD polish;
+  - restoration of map110 or any other prototype/backup map;
+  - improvements to the original mechanics unless listed as a port decision.
+
+
+AUTHORITY AND CONFIDENCE
+========================
+
+Primary authority:
+
+  old/2 Joguito/Main.cpp
+  old/2 Joguito/maps.h
+  old/2 Joguito/player.h
+  old/2 Joguito/sprite.h
+  old/2 Joguito/scripts.h
+  old/2 Joguito/colision.h
+  old/2 Joguito/draw.h
+  old/2 Joguito/globals.h
+  old/2 Joguito/map10.map
+
+Behavior is taken from old/2 Joguito's modular Main.cpp plus headers. Visual
+assets should normally be loaded from old/5 jogos new sakura: its loose BMPs
+match the shipped 2008 files.dat pixels and appear to have been extracted from
+that archive. If an asset is absent from folder 5, use the corresponding loose
+file from old/2 Joguito as the fallback, then verify it against files.dat when
+practical. Main3.cpp is useful behavioral corroboration but is not a separate
+authority.
+
+Important comparison result: the map10 terrain, red-ball, spring, bird, and
+default-shot BMPs tested in folders 2-5 have identical decoded pixels. Their raw
+BMP hashes may differ solely because of DPI/header metadata. PLAYER_MOVING01 is
+a genuine exception: use folder 5's playermo01.bmp, which matches the release;
+folder 2's copy differs visibly by 131 pixels.
+
+Confidence labels:
+
+  CONFIRMED  Directly and consistently represented in source/data.
+  INFERRED   Strong source evidence, but the dead executable prevents observation.
+  UNCERTAIN  Source is contradictory, accidental-looking, or depends on runtime.
+
+All numerical behavior below is expressed at the original fixed update rate of
+60 simulation ticks per second. Godot must use a fixed 60 Hz gameplay update for
+this milestone. Rendering may run faster, with interpolation if desired, but
+simulation results must not depend on render frame rate.
+
+
+M10: MAP10
+==========
+
+M10.001 [CONFIRMED] Dimensions and coordinate system
+
+  Tile grid:          450 columns x 28 rows
+  Tile size:          20 x 20 pixels
+  World size:         9000 x 560 pixels
+  Origin:             top-left
+  Positive X:         right
+  Positive Y:         down
+  Viewport:           640 x 480 pixels
+  Starting point:     (60, 200), player top-left
+  Water level:        0, meaning no water behavior on map10
+  Map type:           1
+  Map number flag:    1 (enables the stage-entry portal presentation)
+  Background:         bg.bmp
+  Terrain atlas:      old/5 jogos new sakura/textures02.bmp (80 x 100)
+                      datafile object name: TEXTURES01
+  Stage music:        Tek.mid (audio implementation may be deferred)
+
+M10.002 [CONFIRMED] Map parser
+
+  Read exactly 28 rows of 450 non-whitespace one-character tokens from
+  map10.map. Spaces and line breaks are separators only. Reject an incorrect
+  token count instead of reading past the file as the C++ code could.
+
+M10.003 [CONFIRMED] Tile semantics used by map10
+
+  Token  Collision / behavior                  Atlas source rectangle (x,y,w,h)
+  -----  ------------------------------------  --------------------------------
+  1      Empty/passable; draw nothing          none
+  0      Invisible lethal floor/void           none
+  2      Solid 20 x 20 tile                     20, 0,20,20
+  3      Solid 20 x 20 tile                     40, 0,20,20
+  4      Solid 20 x 20 tile                      0,40,20,20
+  5      Solid 20 x 20 tile                      0,60,20,20
+  a      Solid 20 x 20 tile                     20,40,20,20
+  b      Solid 20 x 20 tile                     60,40,20,20
+  c      Solid 20 x 20 tile                     20,20,20,20
+  d      Solid 20 x 20 tile                     20,60,20,20
+  e      Solid 20 x 20 tile                     60,60,20,20
+  f      Solid 20 x 20 tile                     40,20,20,20
+  g      Solid 20 x 20 tile                     60, 0,20,20
+  i      Solid 20 x 20 tile                      0, 0,20,20
+  j      Solid 20 x 20 tile                     60,20,20,20
+  k      Solid 20 x 20 tile                     40,60,20,20
+
+  The atlas uses magenta (255,0,255) as transparency. Collision remains a full
+  20 x 20 square even where the visible art is transparent.
+
+  Tile counts in the shipped map10:
+
+    empty token 1:            11,283
+    invisible death token 0:     440
+    visible solid tiles:          877
+    total tokens:              12,600
+
+  Tokens h, l, and m have loader mappings in maps.h but do not occur in map10.
+
+M10.004 [CONFIRMED] Death floor
+
+  If any of the player's three bottom probes (left, center, right) enters token
+  0 while descending, mark the player dead immediately. Token 0 is not visible.
+  It is not an ordinary platform and must not allow the player to stand on it.
+
+M10.005 [CONFIRMED] Camera
+
+  The camera follows the player's logical top-left, not sprite center.
+
+  Horizontal:
+    - Keep player X at screen X=300 while 299 < player X < 8660.
+    - Clamp camera to world left at player X <= 299.
+    - Clamp camera to world right at player X >= 8660.
+
+  Vertical:
+    - Keep player Y at screen Y=240 while 239 < player Y < 320.
+    - Clamp to world top below that range.
+    - Clamp to world bottom above that range (maximum camera Y=80).
+
+  Background parallax is one fifth of scenario camera movement on both axes.
+  The original builds a 3000 x 580 repeated background from three bg.bmp copies.
+
+M10.006 [CONFIRMED] Entry presentation
+
+  On a normal map10 start:
+
+    - player begins at (60,200), facing right, grounded, full HP;
+    - input and ordinary gameplay are locked;
+    - the portal/arrival animation and READY presentation run for 129 ticks;
+    - control unlocks when the entry counter reaches 130 (about 2.17 seconds).
+
+  Exact portal cropping effects are presentation polish. The timing and locked
+  input are compatibility requirements; the detailed effect may be implemented
+  after basic playability.
+
+M10.007 [CONFIRMED] Exit
+
+  Place exit trigger type 1010 at:
+
+    position:       (8960,280)
+    nominal value:  100 (unused by the relevant transition path)
+    next map:       11
+
+  On overlap, lock input and camera. If airborne, finish falling. Once grounded,
+  automatically move the player right by 2 pixels/tick for 40 ticks; then load
+  map11. The milestone is complete when this transition request is emitted; map11
+  itself does not need to exist yet.
+
+M10.008 [CONFIRMED] Explicitly deferred objects
+
+  Two collectibles exist but are outside this milestone:
+
+    type 69 at (4052,260), card/index 32, only if not previously collected
+    type 65 at (6470,120), card holder/index 43, only if not previously collected
+
+  For the first vertical slice, either omit both consistently or render obvious
+  noninteractive placeholders. Do not accidentally treat them as enemies.
+
+
+P00: NORMAL PLAYER
+==================
+
+P00.001 [CONFIRMED] Logical size and visual anchor
+
+  Collision body:    40 x 80 pixels
+  Position:          top-left of collision body
+  Primary art:       old/5 jogos new sakura/playermo01.bmp (54 x 80)
+                     datafile object name: PLAYER_MOVING01
+  Facing right:      draw art at logical (x,y)
+  Facing left:       horizontally flip and draw at (x-10,y)
+  Direction 0:       right
+  Direction 1:       left
+
+  Godot recommendation: CharacterBody2D with a 40 x 80 rectangular collision
+  shape and a separately offset AnimatedSprite2D. Do not widen the collider to
+  the shipped frame's 54-pixel art width.
+
+P00.002 [CONFIRMED] Default controls
+
+  Move left/right:   Left Arrow / Right Arrow
+  Jump:              F
+  Fire:              D
+  Pause/menu:        Enter (deferred)
+  Quit:              Escape (deferred)
+
+  Godot actions should be named move_left, move_right, jump, fire, pause, quit
+  and may later be remapped. Opposite horizontal inputs cancel to zero.
+
+P00.003 [CONFIRMED] Horizontal movement
+
+  Original per-tick velocity update while holding a single direction:
+
+    - If currently moving the other direction, set velocity to 0 first.
+    - While absolute speed is below 1, add 0.2 toward the input direction.
+    - Once absolute speed is at least 1, add 1 toward the input direction.
+    - Clamp to -4..+4 pixels/tick (maximum 240 pixels/second).
+    - Apply movement once per tick.
+    - Releasing input immediately sets horizontal speed to zero; no deceleration.
+
+  The old renderer truncates player X to an integer every frame, so subpixel
+  movement below one pixel is effectively discarded even though velocity keeps
+  accumulating. Reproduce that result for the compatibility baseline.
+
+P00.004 [CONFIRMED] Horizontal collision
+
+  Probe the player's 40 x 80 body against the tile grid. Solid tokens block at
+  tile boundaries and horizontal speed becomes zero. Map10 contains no sloped or
+  one-way special tokens, so full square collision is sufficient here.
+
+  Clamp player X to at least zero. The right side is constrained by map terrain
+  and the stage exit rather than a general X clamp in move_player().
+
+P00.005 [CONFIRMED] Jump initiation
+
+  A jump begins only while grounded and while the anti-repeat flag w84go is clear.
+  On the first tick:
+
+    vertical velocity = -2.0
+    vertical displacement = velocity * 5 = -10 pixels
+    grounded = false
+    ascent timer begins at 1
+
+  Holding jump produces the full jump. Releasing jump during ascent immediately
+  ends upward movement by setting velocity to +0.4 and entering the fall phase,
+  producing a variable-height jump.
+
+P00.006 [CONFIRMED] Full-jump gravity curve
+
+  During ascent, add gravity before moving:
+
+    timer  1..10:  vertical velocity += 0.10/tick
+    timer 11..20:  vertical velocity += 0.06/tick
+    timer 21..38:  vertical velocity += 0.04/tick
+
+  Vertical displacement each active tick is velocity * 5. When velocity reaches
+  zero or positive, switch to falling.
+
+  During falling:
+
+    first 10 fall ticks:     velocity += 0.04/tick
+    next 10 fall ticks:      velocity += 0.06/tick
+    subsequent fall ticks:   velocity += 0.10/tick
+    maximum fall velocity:   +2 pixels/unit, applied as +10 pixels/tick
+
+  Landing snaps to a 20-pixel tile boundary, sets velocity and timer to zero,
+  and marks grounded=true.
+
+  IMPORTANT: The unusual x5 multiplier is part of the observed source behavior.
+  Do not translate -2 to -2 pixels/tick; that would make the jump far too small.
+
+P00.007 [CONFIRMED] Ceiling and floor probes
+
+  Use three vertical probes at local X=0,20,39. The ceiling probes use player Y;
+  floor probes use local Y=79. This produces a logical body spanning X 0..39 and
+  Y 0..79. Ceiling contact stops penetration at the tile boundary but leaves the
+  player airborne. Floor contact sets grounded.
+
+P00.008 [CONFIRMED] Animation
+
+  Normal movement has five principal frames. While moving, advance this 8-tick
+  walk sequence at one frame per simulation tick:
+
+    idle/step1, step2, step3, step2, step1, step4, step5, step4, repeat
+
+  While airborne, use step3. While stationary, use step1. When firing, use the
+  corresponding firing variation for at least the firing presentation window.
+  Visual authority for the port is folder 5's loose BMP set, checked against the
+  shipped 2008 files.dat. The normal animation begins with playermo01.bmp /
+  PLAYER_MOVING01 (54 x 80). Do not substitute folder 2's playermo01.bmp: unlike
+  the map10 enemy and terrain assets, that player frame has a real pixel-level
+  difference and folder 5 is the confirmed release version.
+
+P00.009 [CONFIRMED] Health, damage, immunity, and death
+
+  Initial maximum HP:       15
+  Initial HP on map start:  15
+  Initial lives globally:   5 (full life/restart flow may be deferred)
+
+  Enemy overlap applies that enemy's strength only when immunity is zero.
+  Positive damage starts 40 ticks of immunity (about 0.667 seconds). There is no
+  explicit contact knockback. Immunity flashes/hides the player using PLAYERD and
+  NULO frames. HP at or below zero triggers death. Falling into token 0 also
+  triggers death regardless of HP.
+
+P00.010 [CONFIRMED] Player/enemy overlap
+
+  Use strict AABB overlap between the player's 40 x 80 box and the enemy's stated
+  logical box. Merely touching edges is not overlap. Continue checking contact
+  during immunity, but do not apply additional damage until immunity expires.
+
+
+W00: DEFAULT WEAPON ONLY
+========================
+
+W00.001 [CONFIRMED] Projectile
+
+  Internal type:       1
+  Logical size:        10 x 10
+  Loose art:           old/5 jogos new sakura/tiro0.bmp
+  Datafile name:       YELLOW_TOSKO_SHOT
+  Damage:              1 HP to normal map10 enemies
+  Maximum simultaneous active shots: 4
+
+  Spawn while facing right:
+    position = (player.x + 40, player.y + 35)
+    horizontal base velocity = +5
+
+  Spawn while facing left:
+    position = (player.x - 21, player.y + 35)
+    horizontal base velocity = -5
+
+  Each tick, advance six separate 5-pixel steps, checking collision after every
+  step. Effective unobstructed speed is 30 pixels/tick (1800 pixels/second).
+  Despawn/impact when hitting a solid wall, a damageable enemy, or when more than
+  640 pixels away from the player. On impact, replace the shot with a short 20 x
+  20 impact animation and decrement the active-shot count immediately.
+
+W00.002 [CONFIRMED] Enemy hit test
+
+  The original first performs AABB broad-phase collision, then samples the 10 x
+  10 projectile footprint against non-magenta pixels in the enemy's current
+  bitmap (including mirrored handling). This is effectively pixel-mask collision
+  for the default bullet.
+
+  Compatibility target: preserve this using per-frame collision polygons/masks,
+  or use carefully fitted hitboxes and compare during playtesting. A full enemy
+  rectangle is acceptable only as a documented first-pass approximation.
+
+W00.003 [UNCERTAIN] Fire repeat timing
+
+  A fresh press fires immediately. The source then uses a shared fire counter:
+
+    - after release, reset eligibility once counter >= 10;
+    - while held, reset when counter >= 25 and active shot count is zero;
+    - never exceed four simultaneous shots.
+
+  Implement this literally for the baseline. It creates cadence that depends on
+  projectile lifetime, and may be accidental. Expose tap lockout (10 ticks), held
+  threshold (25 ticks), and max shots (4) as data so user testing can tune them.
+
+
+E10: RED BALL
+=============
+
+E10.001 [CONFIRMED] Stats
+
+  Internal type:       10
+  Initial frame:       REDBALL01
+  Loose art:           old/5 jogos new sakura/ewulmonster.bmp through
+                       ewulmonster5.bmp (five 40 x 40 frames)
+  Datafile names:      REDBALL01 through REDBALL05
+  Logical size:        40 x 40
+  HP:                  5
+  Contact damage:      1
+  Horizontal speed:    4 pixels/tick (240 pixels/second)
+  Direction 0:         moves left
+  Direction 1:         moves right
+
+E10.002 [CONFIRMED] Behavior
+
+  Patrol horizontally at constant speed. Reverse direction when overlapping a
+  solid 20 x 20 wall. Also reverse before walking off a ledge by checking the map
+  approximately 50 pixels below the enemy at its left and right edges; if either
+  probe sees empty token 1, align to a tile boundary and turn.
+
+  Animate in a 15-tick loop:
+
+    t0  REDBALL01
+    t2  REDBALL02
+    t4  REDBALL03
+    t6  REDBALL02
+    t8  REDBALL01
+    t10 REDBALL04
+    t12 REDBALL05
+    t14 REDBALL04, then loop
+
+E10.003 [CONFIRMED] Placements (13)
+
+  #   X     Y    Initial direction
+  1   800   320  left
+  2   1480  320  left
+  3   1780  240  right
+  4   2920  120  left
+  5   3220  120  left
+  6   3720  280  left
+  7   5140  400  left
+  8   5500  340  left
+  9   5800  280  left
+  10  7060  420  left
+  11  7480  240  left
+  12  7700  160  left
+  13  7900  120  left
+
+E10.004 [CONFIRMED] Death/drop
+
+  Five default shots kill it. On death, stop movement and play the common DA400
+  destruction animation/sound. Independently roll a 1-in-3 chance to spawn a
+  small recovery at enemy position+(10,15). Small recovery is 10 x 10 and heals
+  1 HP on pickup, capped at maximum HP.
+
+
+E11: HAPPY SPRING
+=================
+
+E11.001 [CONFIRMED] Stats
+
+  Internal type:       11
+  Frames:              MOLA_FELIZ / MOLA_FELIZ2
+  Loose art:           old/5 jogos new sakura/ewulspring.bmp (40 x 60) /
+                       ewulspring2.bmp (40 x 74)
+  Datafile names:      MOLA_FELIZ / MOLA_FELIZ2
+  Logical size idle:   40 x 60
+  Logical size jump:   40 x 73
+  HP:                  6
+  Contact damage:      3
+  Horizontal motion:   none
+  Initial vertical state value: 3
+
+E11.002 [CONFIRMED] Behavior
+
+  Repeat a 99-tick fixed vertical cycle at the spawn X position:
+
+    t1..39:   idle at base position
+    t40..59:  rise using the source's piecewise velocity update
+    t60..99:  return toward the base
+    t99:      snap exactly to base Y, restore idle frame/height, restart counter
+
+  The reconstructed maximum rise is about 139.6 pixels above base Y. The spring
+  faces toward the player each tick, but does not move horizontally or chase.
+  Facing affects only horizontal sprite flip.
+
+  Preserve the source sequence for initial parity; implement it as a sampled
+  curve or explicit state machine rather than relying on Godot gravity.
+
+E11.003 [CONFIRMED] Placements (3)
+
+  #   X     Base Y  Initial direction
+  1   2720  220     right
+  2   6480  380     right
+  3   7060  400     right
+
+E11.004 [CONFIRMED] Death/drop
+
+  Six default shots kill it. Use the common destruction animation/sound. Roll a
+  1-in-3 chance for a small +1 HP recovery at enemy position+(10,25).
+
+
+E14: PARAKEET / PIRIKITO
+=======================
+
+E14.001 [CONFIRMED] Stats
+
+  Internal type:       14
+  Frames:              PIRIKITO, PIRIKITO2, PIRIKITO3
+  Loose art:           old/5 jogos new sakura/ewulbird.bmp through
+                       ewulbird3.bmp (37 x 33 each)
+  Datafile names:      PIRIKITO, PIRIKITO2, PIRIKITO3
+  Logical size:        37 x 33
+  HP:                  3
+  Contact damage:      2
+  Horizontal motion:   none in this source behavior
+
+E14.002 [CONFIRMED] Behavior
+
+  Repeat a 76-tick fixed vertical loop around the spawn position:
+
+    t1..45:   descend, accelerating by +0.25 until +2.5 pixels/tick
+    t46:      set vertical speed to -6, then add +0.176 and begin rising
+    t46..75:  rise while adding +0.176/tick
+    t76:      snap exactly to spawn Y, zero velocity, restart
+
+  The lowest point is approximately 101.25 pixels below spawn Y. Wing frames
+  change at t45, t46, t48, and t49. The source sets a local variable according to
+  X<0 or X>480 but never uses it; do not invent horizontal flight from that code.
+
+E14.003 [CONFIRMED] Placements (3)
+
+  #   X     Spawn Y  Initial timer  Initial direction
+  1   4320  120      0              right-facing art
+  2   6100  160      0              right-facing art
+  3   6180  160     -10             right-facing art
+
+  The -10 timer offsets the third bird's cycle by ten simulation ticks.
+
+E14.004 [CONFIRMED] Death/drop
+
+  Three default shots kill it. Use the common destruction animation/sound. This
+  type has no random recovery drop in its death branch.
+
+
+UPDATE ORDER
+============
+
+For reproducibility, use this 60 Hz order:
+
+  1. Advance immunity/animation and all active enemy/projectile scripts.
+  2. Remove inactive sprites.
+  3. Process locked entry/exit presentation where applicable.
+  4. If gameplay input is unlocked:
+       a. sample jump and fire state;
+       b. spawn default projectile if eligible;
+       c. update/apply horizontal player movement;
+       d. update/apply ascent;
+       e. initiate jump if grounded;
+       f. apply jump-release cut;
+       g. update/apply falling;
+       h. resolve player/enemy contact.
+  5. Update camera from the resulting player position.
+  6. Render background, scenario, actors, foreground/HUD, and entry effects.
+
+Godot implementation may reorganize code into nodes/resources, but changing this
+observable order can change collision, jump height, and damage timing.
+
+
+RECOMMENDED GODOT STRUCTURE
+===========================
+
+  Map10.tscn
+    StageController
+    Parallax/background presentation
+    TileMapLayer or generated StaticBody2D terrain
+    DeathArea representation for token 0
+    Player (CharacterBody2D)
+    EnemyContainer
+    ProjectileContainer
+    ExitTrigger
+    Camera2D
+    CanvasLayer/HUD
+
+  Suggested scripts/resources:
+
+    map_ascii_loader.gd       Parse map10.map and create visuals/collision
+    player.gd                 Fixed-step input, movement, health, immunity
+    default_shot.gd           Six-step swept projectile behavior
+    enemy_base.gd             HP, contact damage, destruction/drop handling
+    red_ball.gd               Patrol + wall/ledge turning
+    happy_spring.gd           Sampled 99-tick vertical cycle
+    pirikito.gd               Sampled 76-tick vertical cycle
+    stage_exit.gd             Locked 40-tick exit sequence
+    map10_spawn_data.tres     All positions/stats as data, not hardcoded scene code
+
+Avoid a line-by-line translation of global arrays. Preserve numerical behavior
+in small components with named fields and automated tests.
+
+
+ACCEPTANCE TESTS
+================
+
+AT.001 Map load
+
+  Load 12,600 tokens, produce 450 x 28 cells, 877 visible solid cells, and 440
+  lethal void cells. World bounds are 9000 x 560.
+
+AT.002 Start
+
+  Player logical top-left is (60,200), collider is 40 x 80, HP is 15, direction
+  is right. Gameplay input remains locked until the 130-count entry finishes.
+
+AT.003 Movement
+
+  Holding right from rest reaches +4 pixels/tick according to the original
+  stepped acceleration. Releasing immediately sets speed to zero. Left mirrors.
+
+AT.004 Jump
+
+  First jump displacement is 10 pixels upward. Holding produces the full
+  piecewise arc; releasing during ascent produces a shorter jump. Solid ceilings
+  stop upward movement; solid floors produce grounded state.
+
+AT.005 Void
+
+  Descending into any token-0 bottom probe triggers death instead of landing.
+
+AT.006 Default shot
+
+  Shot spawns at the direction-specific offset, moves up to 30 pixels per fixed
+  tick with six collision checks, impacts walls, damages normal enemies by 1,
+  never exceeds four active shots, and ends outside the 640-pixel player range.
+
+AT.007 Enemies
+
+  Spawn exactly 13 type-10, 3 type-11, and 3 type-14 enemies at the coordinates
+  listed above. Their HP/contact strengths are respectively 5/1, 6/3, and 3/2.
+
+AT.008 Red ball
+
+  Moves 4 pixels/tick, reverses at walls and ledges, and dies on its fifth
+  default-shot hit.
+
+AT.009 Spring
+
+  Remains idle for the first 39 ticks, rises to about 139.6 pixels above base,
+  returns/snaps at the end of its 99-tick cycle, and faces the player.
+
+AT.010 Bird
+
+  Descends to about 101.25 pixels below spawn, rises, and snaps to spawn on its
+  76-tick loop. The paired birds at X=6100 and X=6180 are ten ticks out of phase.
+
+AT.011 Damage
+
+  Contact uses strict AABB overlap. Damage applies once, grants 40 immunity ticks,
+  has no forced knockback, and kills at zero HP.
+
+AT.012 Exit
+
+  Grounded overlap at (8960,280) locks control, moves player right at 2 pixels per
+  tick, and requests map11 after 40 ticks.
+
+
+OPEN QUESTIONS FOR MEMORY-BASED PLAYTESTING
+===========================================
+
+Q01  Does maximum running speed feel like 240 pixels/second at 640 x 480?
+Q02  Does the source-derived jump feel too high/low or too sharp?
+Q03  Did releasing jump produce a noticeably shorter jump?
+Q04  Should the red ball really move as fast as the player at top speed?
+Q05  Did the spring rise roughly 140 pixels and wait visibly between jumps?
+Q06  Did the bird bob downward from its placed position, or was its motion
+     remembered differently?
+Q07  Was contact damage free of knockback?
+Q08  Did immunity last roughly two thirds of a second?
+Q09  Did the default bullet move extremely fast (nearly instant on screen)?
+Q10  Did holding fire produce the source's projectile-lifetime-dependent cadence?
+Q11  Was the 2.17-second READY/portal entry duration approximately correct?
+Q12  Should the two deferred collectibles be present during the first test build?
+
+
+KNOWN SOURCE QUIRKS — DO NOT SILENTLY NORMALIZE
+===============================================
+
+  - Player sprite width (50) differs from collision width (40).
+  - Vertical movement multiplies velocity by 5; horizontal movement does not.
+  - Player position is truncated to integer during drawing.
+  - Token 0 is invisible but lethal only through descending floor probes.
+  - Bullet speed is achieved through six movement/collision substeps.
+  - Default-shot enemy hit detection is partly pixel-mask based.
+  - Fire repeat cadence depends on both a timer and active projectile count.
+  - Spring and bird motion are hand-authored timer equations with hard snaps.
+  - The bird contains dead-looking horizontal-boundary code but no X movement.
+  - Sprite type IDs and variable names are historical implementation details;
+    retain them only as source IDs, not as the new architecture.
+
+
+SOURCE LOCATOR SUMMARY
+======================
+
+  Main.cpp:1-61          map10 dimensions/parser
+  Main.cpp:1092+         map10 background/setup
+  Main.cpp:1597+         damage/immunity initialization
+  Main.cpp:2192+         player input/default fire
+  Main.cpp:2288+         horizontal movement and jump physics
+  Main.cpp:2372          60 Hz timer
+  Main.cpp:2407+         default controls and initial HP/lives
+  maps.h:1-97            map10 tiles, spawns, entry/music
+  globals.h:42+          PLAYER/SPRITE/WALL/MAPS layouts
+  player.h:1+            player map collision
+  sprite.h:44+           entity construction/stats
+  sprite.h:1573+         impact/death animations
+  scripts.h:1+           player animation/immunity updates
+  scripts.h:283+         map10 enemy AI/timers
+  colision.h:1+          hit tests
+  colision.h:502+        projectile/enemy damage
+  colision.h:1263+       projectile/wall collision
+  colision.h:1509+       red ball wall/ledge behavior
+  colision.h:1739+       player/entity contact
+  draw.h:1+              camera/parallax
+  draw.h:800+            player entry/rendering
+
+END OF SPECIFICATION

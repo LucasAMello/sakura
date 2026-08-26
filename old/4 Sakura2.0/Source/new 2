@@ -1,0 +1,7 @@
+I have a character that is made of a container GameObject named "Player", and it's child are the body, arms, legs, etc. I want it to turn and shoot at the direction the player clicks with the mouse, but I want it to turn using it's right arm as reference, not the whole Transform. This is how I'm doing it:
+
+// 240, 160 is the center of the screen, the player is always centered
+var look : Vector3 = Vector3(mouse.position.x - 240, thisTransform.position.y, touchHandler.position.y - 160);
+thisTransform.forward = look.normalized;
+
+This is a script in the "Player" GameObject. If I try to use the right arm transform (rightArmTransform.forward = look.normalized), only the right arm would turn, not the whole body. How can I make the whole body rotate using the right arm?

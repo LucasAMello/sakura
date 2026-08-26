@@ -1,0 +1,65 @@
+/* Allegro datafile object indexes, produced by grabber v4.1.17 (WIP), MinGW32 */
+/* Datafile: c:\WINDOWS\Desktop\Joguito\files.dat */
+/* Date: Fri Jun 16 19:14:21 2006 */
+/* Do not hand edit! */
+
+#define BRICK_WALL                       0        /* BMP  */
+#define DA400                            1        /* BMP  */
+#define DA401                            2        /* BMP  */
+#define DA402                            3        /* BMP  */
+#define DESTROYABLEPAREDE                4        /* BMP  */
+#define DESTROYABLEPAREDE2               5        /* BMP  */
+#define GREEN_TURRET                     6        /* BMP  */
+#define LIFE                             7        /* BMP  */
+#define LIFEBAR                          8        /* BMP  */
+#define LIFEMETER                        9        /* BMP  */
+#define LIFEMETERBOSS                    10       /* BMP  */
+#define MOLA_FELIZ                       11       /* BMP  */
+#define MOLA_FELIZ2                      12       /* BMP  */
+#define NULO                             13       /* BMP  */
+#define PARTICLEDESTROY1                 14       /* BMP  */
+#define PARTICLEDESTROY2                 15       /* BMP  */
+#define PARTICLES01                      16       /* BMP  */
+#define PARTICLES02                      17       /* BMP  */
+#define PARTICLES03                      18       /* BMP  */
+#define PARTICLES04                      19       /* BMP  */
+#define PDIE1                            20       /* BMP  */
+#define PDIE2                            21       /* BMP  */
+#define PDIE3                            22       /* BMP  */
+#define PDIE4                            23       /* BMP  */
+#define PDIE5                            24       /* BMP  */
+#define PIRIKITO                         25       /* BMP  */
+#define PIRIKITO2                        26       /* BMP  */
+#define PIRIKITO3                        27       /* BMP  */
+#define PLAYER_FRAME                     28       /* BMP  */
+#define PLAYER_MOVING                    29       /* BMP  */
+#define PLAYERD                          30       /* BMP  */
+#define PORTA1                           31       /* BMP  */
+#define PORTA2                           32       /* BMP  */
+#define RECOVERY_L                       33       /* BMP  */
+#define RECOVERY_M                       34       /* BMP  */
+#define RECOVERY_S                       35       /* BMP  */
+#define RED_TANK                         36       /* BMP  */
+#define RED_TANK_2                       37       /* BMP  */
+#define RED_TANK_3                       38       /* BMP  */
+#define REDBALL01                        39       /* BMP  */
+#define REDBALL02                        40       /* BMP  */
+#define REDBALL03                        41       /* BMP  */
+#define SHOT_0_1                         42       /* BMP  */
+#define SHOT_0_2                         43       /* BMP  */
+#define SHOT_0_3                         44       /* BMP  */
+#define SHOT_13_1                        45       /* BMP  */
+#define SHOT_13_2                        46       /* BMP  */
+#define SHOT_13_3                        47       /* BMP  */
+#define TEXTURES01                       48       /* BMP  */
+#define TOLETED_1                        49       /* BMP  */
+#define TOLETED_2                        50       /* BMP  */
+#define TOLETED_3                        51       /* BMP  */
+#define TURRET_SHOT                      52       /* BMP  */
+#define WIND_SHOT01                      53       /* BMP  */
+#define WIND_SHOT02                      54       /* BMP  */
+#define WIND_SHOT03                      55       /* BMP  */
+#define WINDY01                          56       /* BMP  */
+#define WINDY02                          57       /* BMP  */
+#define YELLOW_TOSKO_SHOT                58       /* BMP  */
+

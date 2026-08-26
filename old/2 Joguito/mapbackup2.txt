@@ -1,0 +1,589 @@
+
+else if (mapnumber == 2) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           //set_dvalues(doorrecord - 1);
+           load_map(2);
+        }
+        
+        texture = TEXTURES02;
+        for (int i = 0; i <= 23; i++){
+            for( int t = 0; t <= 99; t++){
+                 if( map[i][t] == '2') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '3') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '4') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '5') initialize_wall(20, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(20, 20, 1, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '7') initialize_wall(0, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '8') initialize_wall(20, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '9') initialize_wall(40, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'a') initialize_wall(0 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'b') initialize_wall(40 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'c') initialize_wall(0 , 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'd') initialize_wall(40 , 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'e') initialize_wall(60 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'f') initialize_wall(80 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'g') initialize_wall(60 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'h') initialize_wall(80 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'i') initialize_wall(0, 80, 1, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'j') initialize_wall(60, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'k') initialize_wall(60, 80, 20, 20, 20, t * 20, i * 20);
+            }       
+        }
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        initialize_sprite(1010, 1960, 120, 200, 3);
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }    
+    else if (mapnumber == 3) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           //set_dvalues(doorrecord - 1);
+           load_map(3);
+        }
+        
+        texture = TEXTURES02;
+        for (int i = 0; i <= 23; i++){
+            for( int t = 0; t <= 149; t++){
+                 /*if( map[i][t] == '1') initialize_wall(20, 20, 1, 20, 20, t * 20, i * 20);
+                 else*/ if( map[i][t] == '2') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '3') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '4') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '5') initialize_wall(20, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(20, 20, 1, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'a') initialize_wall(0 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'b') initialize_wall(40 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'c') initialize_wall(0 , 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'd') initialize_wall(40 , 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'e') initialize_wall(60 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'f') initialize_wall(80 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'g') initialize_wall(60 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'h') initialize_wall(80 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'l') initialize_wall(100 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'm') initialize_wall(120 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'z') { initialize_wall(80, 60, 1, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+            }       
+        }
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        initialize_sprite(15, 700, 250, 0, 0);
+        initialize_sprite(15, 1500, 120, 0, 0);
+        initialize_sprite(15, 2000, 320, 0, 0);
+        initialize_sprite(15, 2800, 150, 0, 0);
+        
+        initialize_sprite(400, 2770, 220, 0, 1);
+        initialize_sprite(401, 2920, 60, 0, 1);
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }    
+    else if (mapnumber == 4) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           set_dvalues(doorrecord - 1);
+           load_map(4);
+        }
+        
+        texture = TEXTURES03;
+        for (int i = 0; i <= 23; i++){
+            for( int t = 0; t <= 63; t++){
+                 /*if( map[i][t] == '1') initialize_wall(20, 20, 1, 20, 20, t * 20, i * 20);
+                 else*/ if( map[i][t] == '2') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '3') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '4') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '5') initialize_wall(20, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(20, 20, 1, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'a') initialize_wall(0 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'b') initialize_wall(40 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'c') initialize_wall(0 , 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'd') initialize_wall(40 , 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'e') initialize_wall(60 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'f') initialize_wall(80 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'g') initialize_wall(60 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'h') initialize_wall(80 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'l') initialize_wall(100 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'm') initialize_wall(120 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'z') { initialize_wall(80, 60, 1, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+            }       
+        }
+        
+        //initialize_sprite(402, 680, 260, 0, 0);
+        //initialize_sprite(403, 645, 230, 0, 0);
+        initialize_sprite(1000, 610, 280, 0, 2);
+        initialize_sprite(1002, 1000, 370, 0, 0);
+        
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }
+    
+    else if (mapnumber == 5) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           load_map(5);
+        }
+        
+        texture = TEXTURES04;
+        for (int i = 0; i <= 26; i++){
+            for( int t = 0; t <= 70; t++){
+                 if( map[i][t] == '2') initialize_wall(0, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '3') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '4') initialize_wall(40, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '5') initialize_wall(60, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(80, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '7') initialize_wall(20, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '8') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '9') initialize_wall(60, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'a') initialize_wall(0, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'b') initialize_wall(20, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'c') initialize_wall(0, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'd') initialize_wall(20, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'e') initialize_wall(40, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'f') initialize_wall(60, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'g') initialize_wall(40, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'h') initialize_wall(60, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'i') initialize_wall(80, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'j') initialize_wall(100, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'k') initialize_wall(80, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'l') initialize_wall(100, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'm') initialize_wall(100, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'n') initialize_wall(120, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'o') initialize_wall(100, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'p') initialize_wall(120, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'q') initialize_wall(120, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'r') initialize_wall(120, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 's') initialize_wall(120, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 't') initialize_wall(100, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'u') initialize_wall(100, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'v') initialize_wall(0, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'w') initialize_wall(0, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'x') initialize_wall(20, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'y') initialize_wall(20, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'z') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '/') initialize_wall(80, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '!') initialize_wall(40, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '@') initialize_wall(60, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '#') initialize_wall(80, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '$') initialize_wall(40, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '%') initialize_wall(60, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '*') initialize_wall(80, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '+') initialize_wall(120, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '<') initialize_wall(0, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '>') initialize_wall(20, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == ':') initialize_wall(40, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '-') initialize_wall(60, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '_') initialize_wall(80, 120, 20, 20, 20, t * 20, i * 20);
+            }       
+        }   
+        
+        initialize_sprite(19, 160, 40, 0, 0);
+        initialize_sprite(19, 620, 340, 1, 0);
+        initialize_sprite(19, 820, 340, 2, 0);
+        initialize_sprite(24, 1200, 16, 0, 0);
+        initialize_sprite(24, 817, 250, 1, 0);
+        initialize_sprite(24, 1200, 277, 2, 0);
+        initialize_sprite(24, 956, 250, 3, 0);
+        initialize_sprite(500, 620, 380, 0, 0);
+        initialize_sprite(500, 640, 380, 0, 0);
+        initialize_sprite(500, 640, 180, 0, 0);
+        initialize_sprite(500, 620, 180, 0, 0);
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }
+    else if (mapnumber == 6) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           set_dvalues(doorrecord - 1);
+           load_map(6);
+        }
+        
+        texture = TEXTURES04;
+        for (int i = 0; i <= 23; i++){
+            for( int t = 0; t <= 63; t++){
+                 if( map[i][t] == '2') initialize_wall(0, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '3') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '4') initialize_wall(40, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '5') initialize_wall(60, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(80, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '7') initialize_wall(20, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '8') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '9') initialize_wall(60, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'a') initialize_wall(0, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'b') initialize_wall(20, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'c') initialize_wall(0, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'd') initialize_wall(20, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'e') initialize_wall(40, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'f') initialize_wall(60, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'g') initialize_wall(40, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'h') initialize_wall(60, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'i') initialize_wall(80, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'j') initialize_wall(100, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'k') initialize_wall(80, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'l') initialize_wall(100, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'm') initialize_wall(100, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'n') initialize_wall(120, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'o') initialize_wall(100, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'p') initialize_wall(120, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'q') initialize_wall(120, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'r') initialize_wall(120, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 's') initialize_wall(120, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 't') initialize_wall(100, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'u') initialize_wall(100, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'v') initialize_wall(0, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'w') initialize_wall(0, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'x') initialize_wall(20, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'y') initialize_wall(20, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'z') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '/') initialize_wall(80, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '!') initialize_wall(40, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '@') initialize_wall(60, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '#') initialize_wall(80, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '$') initialize_wall(40, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '%') initialize_wall(60, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '*') initialize_wall(80, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '+') initialize_wall(120, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '<') initialize_wall(0, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '>') initialize_wall(20, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == ':') initialize_wall(40, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '-') initialize_wall(60, 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '_') initialize_wall(80, 120, 20, 20, 20, t * 20, i * 20);
+            }       
+        }   
+        
+        initialize_sprite(1000, 610, 220, 0, 3);
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }
+    
+    else if (mapnumber == 7) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           load_map(7);
+        }
+        
+        texture = TEXTURES05;
+        for (int i = 0; i <= 32; i++){
+            for( int t = 0; t <= 90; t++){
+                 if( map[i][t] == '2') { initialize_wall(0, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == '3') { initialize_wall(20, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == '4') { initialize_wall(40, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == '5') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(20, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '7') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '8') { initialize_wall(40, 20, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'a') { initialize_wall(60, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'b') { initialize_wall(60, 20, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'c') { initialize_wall(80, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'd') { initialize_wall(80, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'e') { initialize_wall(100, 20, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'f') { initialize_wall(100, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'g') { initialize_wall(100, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'h') initialize_wall(0, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'i') { initialize_wall(20, 40, 11, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'j') { initialize_wall(40, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'k') { initialize_wall(60, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'l') { initialize_wall(120, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'm') initialize_wall(0, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'n') { initialize_wall(20, 60, 11, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'o') { initialize_wall(40, 60, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'p') { initialize_wall(60, 60, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == ',') initialize_wall(80, 20, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '.') initialize_wall(120, 20, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '[') initialize_wall(20, 40, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == ']') initialize_wall(40, 40, 12, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '{') initialize_wall(20, 60, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '}') initialize_wall(40, 60, 12, 20, 20, t * 20, i * 20);
+                 
+            }       
+        }   
+        
+        //initialize_sprite(29, 500, 280, 0, 0);
+        initialize_sprite(32, 1600, 520, 0, 3);
+        initialize_sprite(32, 1630, 530, 0, 7);
+        initialize_sprite(32, 1560, 550, 0, 0);
+        initialize_sprite(32, 1610, 580, 0, 8);
+        initialize_sprite(32, 1580, 560, 0, 0);
+        initialize_sprite(34, 740 + 1, 220 + 13, 1, 0);
+        initialize_sprite(33, 740, 220, 1, 0);
+        initialize_sprite(34, 440 + 6, 220 + 13, 0, 0);
+        initialize_sprite(33, 440, 220, 0, 0);
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }
+    else if (mapnumber == 8) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           load_map(8);
+        }
+        
+        texture = TEXTURES05;
+        for (int i = 0; i <= 23; i++){
+            for( int t = 0; t <= 63; t++){
+                 if( map[i][t] == '2') { initialize_wall(0, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == '3') { initialize_wall(20, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == '4') { initialize_wall(40, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == '5') initialize_wall(0, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(20, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '7') initialize_wall(40, 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '8') { initialize_wall(40, 20, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'a') { initialize_wall(60, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'b') { initialize_wall(60, 20, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'c') { initialize_wall(80, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'd') { initialize_wall(80, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'e') { initialize_wall(100, 20, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'f') { initialize_wall(100, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'g') { initialize_wall(100, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'h') initialize_wall(0, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'i') { initialize_wall(20, 40, 11, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'j') { initialize_wall(40, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'k') { initialize_wall(60, 40, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'l') { initialize_wall(120, 0, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'm') initialize_wall(0, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'n') { initialize_wall(20, 60, 11, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'o') { initialize_wall(40, 60, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'p') { initialize_wall(60, 60, 10, 20, 20, t * 20, i * 20); map[i][t] = '1'; }
+                 else if( map[i][t] == 'q') initialize_wall(120, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'r') initialize_wall(120, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 's') initialize_wall(80, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 't') initialize_wall(100, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'u') initialize_wall(0, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'v') initialize_wall(20, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'w') initialize_wall(40, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'x') initialize_wall(60, 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == ',') initialize_wall(80, 20, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '.') initialize_wall(120, 20, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '[') initialize_wall(20, 40, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == ']') initialize_wall(40, 40, 12, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '{') initialize_wall(20, 60, 11, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '}') initialize_wall(40, 60, 12, 20, 20, t * 20, i * 20);
+                 
+            }       
+        }   
+        
+        initialize_sprite(1000, 610, 220, 0, 4);
+        initialize_sprite(1005, 1050, 250, 0, 0);
+        
+        player.on_ground = TRUE;
+        player.in_water = 1;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }

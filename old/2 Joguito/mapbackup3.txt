@@ -1,0 +1,579 @@
+else if (mapnumber == 2) {
+         Map.width = 100;
+         Map.height = 24;
+         Map.limitleft = 0;
+         Map.limitright = 2000;
+         Map.limitup = 0;
+         Map.limitdown = 480;
+         Map.number = 2;
+         Map.startingpointx = 60;
+         Map.startingpointy = 240;
+         Map.type = 1;
+         map = new unsigned char* [24];
+
+         for(int i = 0; i < 24; i++)
+             map[i] = new unsigned char[100];
+         
+         fmap = fopen("map02.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 3) {
+         Map.width = 150;
+         Map.height = 24;
+         Map.limitleft = 0;
+         Map.limitright = 3000;
+         Map.limitup = 0;
+         Map.limitdown = 480;
+         Map.number = 2;
+         Map.startingpointx = 60;
+         Map.startingpointy = 240;
+         Map.type = 0;
+         map = new unsigned char* [24];
+
+         for(int i = 0; i < 24; i++)
+             map[i] = new unsigned char[150];
+         
+         fmap = fopen("map03.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 4) {
+         Map.width = 64;
+         Map.height = 24;
+         Map.limitleft = 0;
+         Map.limitright = 640;
+         Map.limitup = 0;
+         Map.limitdown = 480;
+         Map.number = 2;
+         Map.startingpointx = 40;
+         Map.startingpointy = 300;
+         Map.type = 0;
+         map = new unsigned char* [24];
+
+         for(int i = 0; i < 24; i++)
+             map[i] = new unsigned char[64];
+         
+         fmap = fopen("map04.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 5) {
+         Map.width = 71;
+         Map.height = 27;
+         Map.limitleft = 0;
+         Map.limitright = 1420;
+         Map.limitup = 0;
+         Map.limitdown = 520;
+         Map.number = 3;
+         Map.startingpointx = 40;
+         Map.startingpointy = 120;
+         Map.type = 1;
+         map = new unsigned char* [27];
+
+         for(int i = 0; i < 27; i++)
+             map[i] = new unsigned char[71];
+         
+         fmap = fopen("map05.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 6) {
+         Map.width = 64;
+         Map.height = 24;
+         Map.limitleft = 0;
+         Map.limitright = 640;
+         Map.limitup = 0;
+         Map.limitdown = 480;
+         Map.number = 3;
+         Map.startingpointx = 40;
+         Map.startingpointy = 240;
+         Map.type = 1;
+         map = new unsigned char* [24];
+
+         for(int i = 0; i < 24; i++)
+             map[i] = new unsigned char[64];
+         
+         fmap = fopen("map06.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 7) {
+         Map.width = 91;
+         Map.height = 33;
+         Map.limitleft = 0;
+         Map.limitright = 1820;
+         Map.limitup = 0;
+         Map.limitdown = 640;
+         Map.number = 4;
+         Map.startingpointx = 40;
+         Map.startingpointy = 120;
+         Map.type = 3;
+         Map.water_position = 320;
+         map = new unsigned char* [33];
+
+         for(int i = 0; i < 33; i++)
+             map[i] = new unsigned char[91];
+         
+         fmap = fopen("map07.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+else if (mapnumber == 8) {
+         Map.width = 64;
+         Map.height = 24;
+         Map.limitleft = 0;
+         Map.limitright = 640;
+         Map.limitup = 0;
+         Map.limitdown = 480;
+         Map.number = 3;
+         Map.startingpointx = 40;
+         Map.startingpointy = 240;
+         Map.type = 3;
+         Map.water_position = 0;
+         map = new unsigned char* [24];
+
+         for(int i = 0; i < 24; i++)
+             map[i] = new unsigned char[64];
+         
+         fmap = fopen("map08.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 9) {
+         Map.width = 32;
+         Map.height = 50;
+         Map.limitleft = 0;
+         Map.limitright = 640;
+         Map.limitup = 0;
+         Map.limitdown = 1000;
+         Map.number = 1;
+         Map.startingpointx = 40;
+         Map.startingpointy = 100;
+         Map.type = 1;
+         map = new unsigned char* [50];
+
+         for(int i = 0; i < 50; i++)
+             map[i] = new unsigned char[32];
+         
+         fmap = fopen("map09.map", "rb");
+         char mychar = ' ';
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+     }
+     
+     else if (mapnumber == 10) {
+         Map.width = 48;
+         Map.height = 66;
+         Map.limitleft = 0;
+         Map.limitright = 960;
+         Map.limitup = 0;
+         Map.limitdown = 1320;
+         Map.number = 3;
+         Map.startingpointx = 40;
+         Map.startingpointy = 260;
+         Map.type = 1;
+         map = new unsigned char* [66];
+
+         for(int i = 0; i < 66; i++)
+             map[i] = new unsigned char[48];
+         
+         fmap = fopen("map10.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 11) {
+         Map.width = 100;
+         Map.height = 30;
+         Map.limitleft = 0;
+         Map.limitright = 2000;
+         Map.limitup = 0;
+         Map.limitdown = 600;
+         Map.number = 1;
+         Map.startingpointx = 40;
+         Map.startingpointy = 300;
+         Map.type = 1;
+         map = new unsigned char* [30];
+
+         for(int i = 0; i < 30; i++)
+             map[i] = new unsigned char[100];
+         
+         fmap = fopen("map11.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+     
+     else if (mapnumber == 12) {
+         Map.width = 64;
+         Map.height = 24;
+         Map.limitleft = 0;
+         Map.limitright = 680;
+         Map.limitup = 0;
+         Map.limitdown = 480;
+         Map.number = 1;
+         Map.startingpointx = 40;
+         Map.startingpointy = 280;
+         Map.type = 1;
+         map = new unsigned char* [24];
+
+         for(int i = 0; i < 24; i++)
+             map[i] = new unsigned char[64];
+         
+         fmap = fopen("map12.map", "rb");
+         char mychar = ' ';
+
+         for(int i = 0; i < Map.height; i++) {
+             for(int j = 0; j < Map.width; j++) {
+                 do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (j == 0 && i != 0) do { mychar = getc(fmap); } while (mychar == ' ' || mychar == '\n');
+                 if (mychar != EOF) map[i][j] = mychar;
+             }
+         }
+         
+         fclose(fmap);
+
+     }
+else if (current_level == 2) {
+       bakg = load_bitmap("bg3.bmp", NULL);
+       background = create_bitmap(2000, 580);
+       scenario = create_bitmap( 2000, 580);
+       buffer = create_bitmap( 640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       draw_sprite(background, bakg, 0, 0);
+       draw_sprite(background, bakg, 1000, 0);
+       draw_sprite(background, bakg, 2000, 0);
+       dead = 1;
+       initiate_level(2);
+    }
+    
+    else if (current_level == 3) {
+       bakg = load_bitmap("bg2.bmp", NULL);
+       background = create_bitmap(3000, 580);
+       scenario = create_bitmap( 3000, 580);
+       buffer = create_bitmap( 640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       draw_sprite(background, bakg, 0, 0);
+       draw_sprite(background, bakg, 1000, 0);
+       draw_sprite(background, bakg, 2000, 0);
+       dead = 1;
+       initiate_level(3);
+    }
+    
+    else if (current_level == 4) {
+       scenario = create_bitmap( 1280, 480);
+       buffer = create_bitmap( 640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       dead = 1;
+       initiate_level(4);
+    }
+    
+    else if (current_level == 5) {
+       bakg = load_bitmap("bg4.bmp", NULL);
+       background = create_bitmap(1420, 540);
+       scenario = create_bitmap( 1420, 540);
+       buffer = create_bitmap( 640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(0,0,255));
+       draw_sprite(background, bakg, 0, 0);
+       draw_sprite(background, bakg, 608, 0);
+       dead = 1;
+       initiate_level(5);
+    }
+         
+    else if (current_level == 6) {
+       bakg = load_bitmap("bg4.bmp", NULL);
+       background = create_bitmap(1280, 480);
+       scenario = create_bitmap(1280, 480);
+       buffer = create_bitmap(640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       draw_sprite(background, bakg, 0, 0);
+       draw_sprite(background, bakg, 608, 0);
+       dead = 1;
+       initiate_level(6);
+    } 
+    
+    else if (current_level == 7) {
+       bakg = load_bitmap("bg5.bmp", NULL);
+       background = create_bitmap(1820, 660);
+       foreground = create_bitmap(1820, 660);
+       scenario = create_bitmap( 1820, 660);
+       buffer = create_bitmap( 640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(0,0,161));
+       clear_to_color(foreground, makecol(255,0,255));
+       draw_sprite(background, bakg, 0, 80);
+       draw_sprite(background, bakg, 400, 80);
+       draw_sprite(background, bakg, 800, 80);
+       dead = 1;
+       initiate_level(7);
+    }
+    
+    else if (current_level == 8) {
+       background = create_bitmap(1280, 480);
+       foreground = create_bitmap(1280, 480);
+       scenario = create_bitmap(1280, 480);
+       buffer = create_bitmap(640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(0,255,0));
+       clear_to_color(foreground, makecol(255,0,255));
+       dead = 1;
+       initiate_level(8);
+    } 
+    
+    else if (current_level == 9) {
+       bakg = load_bitmap("bg.bmp", NULL);
+       background = create_bitmap(640, 1000);
+       scenario = create_bitmap(640, 1000);
+       buffer = create_bitmap(640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(47,128,255));
+       draw_sprite(background, bakg, 0, 0);
+       draw_sprite(background, bakg, 0, 480);
+       dead = 1;
+       initiate_level(9);
+    } 
+    
+    else if (current_level == 10) {
+       background = create_bitmap(960, 1320);
+       scenario = create_bitmap(960, 1320);
+       buffer = create_bitmap(640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(0,255,0));
+       dead = 1;
+       initiate_level(10);
+    } 
+    
+    else if (current_level == 11) {
+       bakg = load_bitmap("bg6.bmp", NULL);
+       background = create_bitmap(2000, 600);
+       scenario = create_bitmap(2000, 600);
+       buffer = create_bitmap(640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(111,200,239));
+       draw_sprite(background, bakg, 0, 0);
+       draw_sprite(background, bakg, 640, 0);
+       dead = 1;
+       initiate_level(11);
+    } 
+
+    else if (current_level == 12) {
+       background = create_bitmap(1280, 480);
+       scenario = create_bitmap(1280, 480);
+       buffer = create_bitmap(640, 480);
+       clear_to_color(scenario, makecol(255,0,255));
+       clear_to_color(background, makecol(0,255,255));
+       dead = 1;
+       initiate_level(12);
+    } 
+     if (mapnumber == 1) {
+        if (dead == 1) {
+           destroysprite();
+           destroywall();
+           screenx = 0;
+           screeny = 0;
+           dead = 0;
+           player.direction = 0;
+           player.timer = 0;
+           player.x_speed = 0;
+           player.y_speed = 0;
+           limpation = 0;
+           player.timer = 0;
+           dieanimation = 0;
+           input_locked = 0;
+           screen_locked = 0;
+           bosslife = -1;
+           bossfight = 0;
+           //set_dvalues(doorrecord - 1);
+           load_map(1);
+        }
+        
+        texture = TEXTURES01;
+        for (int i = 0; i <= 27; i++){
+            for( int t = 0; t <= 511; t++){
+                 if( map[i][t] == '2') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '3') initialize_wall(40, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '4') initialize_wall(0, 40, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '5') initialize_wall(0, 60, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '6') initialize_wall(20, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '7') initialize_wall(40, 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == '8') initialize_wall(0, 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'a') initialize_wall(20 , 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'b') initialize_wall(60 , 100, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'c') initialize_wall(20 , 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'd') initialize_wall(20 , 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'e') initialize_wall(60 , 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'f') initialize_wall(40 , 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'g') initialize_wall(60 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'h') initialize_wall(0 , 20, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'i') initialize_wall(0 , 0, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'j') initialize_wall(60 , 80, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'k') initialize_wall(40 , 120, 20, 20, 20, t * 20, i * 20);
+                 else if( map[i][t] == 'l') initialize_wall(0 , 80, 20, 20, 20, t * 20, i * 20);
+            }       
+        }
+        
+        player.on_ground = TRUE;
+        player.x_position = Map.startingpointx;
+        player.y_position = Map.startingpointy;
+        player.current_weapon = 1;
+        player.hp = 15;
+        player.frame = PLAYER_MOVING01;
+        fire_key = 0;
+    
+        initialize_sprite(10, 880, 320, 0, 0);
+        initialize_sprite(10, 2920, 120, 0, 0);
+        initialize_sprite(10, 3220, 120, 0, 0);
+        initialize_sprite(10, 3720, 280, 0, 0);
+        initialize_sprite(10, 7480, 240, 0, 0);
+        initialize_sprite(10, 7690, 160, 0, 0);
+        initialize_sprite(10, 7900, 120, 0, 0);
+    
+        initialize_sprite(11, 900, 300, 0, 0);
+        initialize_sprite(11, 940, 300, 0, -5);
+        initialize_sprite(11, 980, 300, 0, -10);
+        initialize_sprite(11, 1020, 300, 0, -15);
+        initialize_sprite(11, 7000, 400, 0, 0);
+        initialize_sprite(11, 7100, 400, 0, -25);
+        initialize_sprite(11, 7200, 400, 0, -50);
+    
+        initialize_sprite(12, 1680, 220, 0, 0);
+        initialize_sprite(12, 5260, 380, 0, 0);
+        initialize_sprite(12, 5600, 320, 0, 0);
+        initialize_sprite(12, 5940, 260, 0, 0);
+        initialize_sprite(12, 7500, 320, 1, 0);
+    
+        initialize_sprite(14, 4320, 120, 0, 0);
+        initialize_sprite(14, 6100, 160, 0, 0);
+        initialize_sprite(14, 6180, 160, 0, -10);
+    
+        initialize_sprite(201, 7470, 360, 0, 0);
+        
+        initialize_sprite(1000, 8360, 280, 0, 0);
+        initialize_sprite(1000, 8970, 280, 0, 1);
+        
+        initialize_sprite(2001, 9000, 380, 0, 0);
+        initialize_sprite(2000, 9020, 380, 0, 0);
+        initialize_sprite(2000, 9100, 380, 0, 0);
+        initialize_sprite(2000, 9180, 380, 0, 0);
+        initialize_sprite(2000, 9260, 380, 0, 0);
+        
+        for (int i = 0; i < number_of_sprites; i++) {
+            if (sprites[i].type == 1000 && sprites[i].timer == doorrecord) sprites[i].timer = -1;
+        }
+    
+        draw_sprite( screen, scenario, 0, 0);
+    
+        starting = 1;
+        input_locked = 1;
+        stopall = 1;
+        draw();
+        rest(10);
+        clear_keybuf();
+        speed_counter = 1;
+        texture = -1;
+        
+    }

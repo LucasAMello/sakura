@@ -1,0 +1,122 @@
+	 /¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨\
+	| 		A Aventura de Sakura		   |
+	|		   por Doft © 2008		   |
+	 \................................................/
+
+ - Conteúdo -
+
+ I. Introdução
+ II. Controles
+ III. Dicas
+ IV. Cheats
+ V. Problemas e erros
+ VI. Distribuição
+ VII. Créditos
+ VIII. Contato
+
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- I. Introdução -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+   Antes de mais nada, obrigado por jogar meu jogo e por ler o "readme" antes(eu espero) de
+ jogar. Este jogo foi feito por um programador iniciante, por isso tem qualidade questionável,
+ mas eu espero que você se divirta com ele assim como eu me diverti fazendo-o. O jogo trata-se
+ de um side-scroller clássico, em que você deverá passar por várias fases diferentes, enfren-
+ tando inimigos diversos. Não há história alguma, apenas vá e atire em tudo que se mover!
+
+   Este software deve ser utilizado por seu próprio risco. Qualquer dano causado por ele não
+ poderá ser direcionado ao seu criador. Nenhuma garantia é oferecida.
+
+   Este jogo foi feito na linguagem C++, com o auxílio da biblioteca Allegro
+ (http://alleg.sourceforge.net) e compilado no Dev-C++ (www.bloodshed.net).
+
+ 
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- II. Controles -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+ F - Pula;
+ D - Atira;
+ S - Troca de arma(direita);
+ A - Troca de arma(esquerda);
+ Enter - Menu de jogo;
+ 1 ao 7 - Troca de arma;
+ O - Mostra Frames Por Segundo;
+ P - Para a música;
+ ESC - Sai do jogo (não esqueça de salvar o jogo antes!);
+
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  III. Dicas  -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+ * Caso o jogo apresente FPS muito baixo (abaixo dos 40), feche outros aplicativos
+ ou reinicie seu computador;
+ * Não esqueça de salvar seu jogo frequentemente!
+ * Cada chefe de fase possui fraqueza a uma arma, o que facilita bastante a luta.
+ * Pegue o máximo de cartas que conseguir! Algo bom pode acontecer ;)
+ * Não desista! O jogo é fácil, concentre-se e decore os ataques para se dar bem.
+
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-  IV. Cheats  -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+    Após vencer o jogo, se você cumprir certas exigências aparecerá uma tela ensinando um
+ código a você. Execute esse código para liberar os cheats, e em seguida pressione qualquer
+ destas teclas para o efeito desejado:
+
+ + = Muda a música de fundo(+);
+ - = Muda a música de fundo(-);
+ G = God mode (Invencibilidade);
+ H = Hard mode (Morte instantânea se for atingido);
+ N = Normal mode (Desabilita god/hard mode);
+ L = Recupera toda a energia;
+ K = Se mata (lol);
+ V = 9 vidas;
+ M = Todas as cartas;
+ J = Vá para a última fase;
+ B = Desabilita cheat mode;
+
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- V. Problemas e erros -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+ ! Qualquer erro ou bug deverá ser reportado ao dono do jogo !
+
+   - Se você está rodando Windows Vista e o jogo parar de funcionar nas fases, clique com
+ o botão direito no Sakura.exe, Propriedades, Compatibilidade, Executar em modo de
+ compatibilidade, Windows 98 / ME. Não sei por quê, só sei que funciona! :D
+   - Após matar o chefão, não fique tentando mecher a Sakura que nem um louco idiota retar-
+ dado, pois isso pode travar o jogo! :(
+
+ * Pelo seu bem e de seu computador, não modifique nenhum dos arquivos presentes;
+ * Caso o jogo trave, é aconselhável sair através de Alt + Tab e finalizar
+ pelo Ctrl + Alt + Del;
+
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- VI. Distribuição -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+   Você pode distribuir o jogo à vontade, desde que não modifique nada. Mas lembre-se que
+ eu não posso ser culpado por nenhum dano causado por esse programa.
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- VII.  Créditos -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+ Programador     -=- Doft
+
+ Design Gráfico  -=- Doft
+
+ Efeitos Sonoros -=- RPG Maker
+		     "The Match-Makers" (http://osabisi.sakura.ne.jp/m2)
+
+ Música          -=- Grupo while(1);
+		     Música do último chefe por V-King(victory-king@web.de)
+		     Música do encerramento por Jarel Jones(ArrowFox@mailandnews.com)
+
+ Agradecimentos  -=- Shawn Hargreaves, por ter feito Allegro
+                     A comunidade Allegro.cc
+		     Bloodshed por fazer o compilador Dev-C++
+		     CLAMP pelo manga Sakura Card Captors
+		     Capcom por ter feito ótimos jogos que me inspiraram
+		     Minha família e meus amigos, que sempre me apoiaram (mentira)
+
+
+ -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=- VIII.  Contato -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+   Qualquer dúvida, sugestão, crítica construtiva, comentário e afins deverá ser mandado
+ para o seguinte endereço de email: holydoft@hotmail.com
+
+
+					-={ EOF }=-
