@@ -1,0 +1,5 @@
+# Godot 4 editor metadata, imported resources, and generated caches.
+/.godot/
+
+# Legacy Godot 3 import cache, if the project is opened with older tooling.
+/.import/
