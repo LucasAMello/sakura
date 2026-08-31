@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains the archived source and assets for Sakura plus a preservation-minded Godot 4 port. Active development is in `godot_port/`. The current playable scope covers the complete first three stages: maps 10–14, maps 20–23, and maps 30–32, including all three bosses. World 4 is in progress: maps 40–42, layered terrain, water, transitions, ordinary enemies, and cards are ported, while ambient water effects and the Icy boss sequence are not yet ported.
+This repository contains the archived source and assets for Sakura plus a preservation-minded Godot 4 port. Active development is in `godot_port/`. The current playable scope covers Worlds 1–6 continuously: maps 10–14, 20–23, 30–32, 40–42, 50–53, and 60–62, including each world's checkpoint, boss, reward, and departure sequence. World 6 currently ends at its completion screen because World 7 is outside the implemented scope.
 
 Read `godot_port/README.md` before making changes, but verify every referenced file and stated value against the current tree. The README can lag behind recent playtest changes.
 
@@ -35,7 +35,7 @@ Useful original files include:
 - `old/2 Joguito/sprite.h`: entity initialization and constants
 - `old/2 Joguito/colision.h`: collision behavior
 - `old/2 Joguito/maps.h`: terrain and spawn data
-- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, `map30.map` through `map32.map`, and `map40.map` through `map42.map`: authoritative maps for the currently ported scope
+- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, `map30.map` through `map32.map`, `map40.map` through `map42.map`, `map50.map` through `map53.map`, and `map60.map` through `map62.map`: authoritative maps for the currently ported scope
 
 Search the archive before guessing. Follow entity type numbers through initialization, update, collision, and draw code because behavior is often split across several files.
 
@@ -45,14 +45,16 @@ Search the archive before guessing. Follow entity type numbers through initializ
 - `godot_port/scripts/world1/stage1.gd` is the controller for maps 10–14.
 - `godot_port/scripts/world2/stage2.gd` is the shared controller for maps 20–23.
 - `godot_port/scripts/world3/stage3.gd` is the shared controller for maps 30–32.
-- `godot_port/scripts/world4/stage4.gd` is the in-progress shared controller for maps 40–42.
+- `godot_port/scripts/world4/stage4.gd` is the shared controller for maps 40–42.
+- `godot_port/scripts/world5/stage5.gd` is the shared controller for maps 50–53.
+- `godot_port/scripts/world6/stage6.gd` is the shared controller for maps 60–62.
 - `godot_port/scripts/player/player.gd` owns movement, collision, damage, immunity, animation, firing, and scripted walking.
 - `godot_port/scripts/shared/enemy_base.gd` owns shared enemy behavior.
-- Individual enemy and boss scripts live in `godot_port/scripts/world1/`, `godot_port/scripts/world2/`, and `godot_port/scripts/world3/`; cross-world logic lives in `godot_port/scripts/shared/`.
-- Small scene wrappers in `godot_port/scenes/` select each map number through map32.
+- Individual enemy and boss scripts live in their owning `godot_port/scripts/world1/` through `world6/` folders; cross-world logic lives in `godot_port/scripts/shared/`.
+- Small scene wrappers in `godot_port/scenes/` select each implemented map number.
 - `SakuraProgress` is registered as an autoload in `godot_port/project.godot`. In scripts, resolve it with `get_node("/root/SakuraProgress")`; direct global identifier use has caused parser failures in this workspace.
 
-The game uses a 640×480 logical viewport and 60 fixed physics ticks per second. Original gameplay is tick-based. Keep tick-based logic for movement, collision, attacks, and animation. Use `delta` only for new visual behavior that cannot affect gameplay parity.
+The game uses a 640×480 logical viewport and 60 fixed physics ticks per second, while the original Allegro game updated gameplay at 30 Hz. Preserve the 60 Hz Godot physics rate, but convert original tick-based movement, collision, attacks, firing, and animation to the same real-time pace. World-local enemies and enemy projectiles can retain the archive's per-update values by running their gameplay update once every two physics ticks. Do not apply that world-local cadence to shared player movement or weapon tuning. Use `delta` only for new visual behavior that cannot affect gameplay parity.
 
 ## Current tuning that must be preserved
 
@@ -74,11 +76,11 @@ Unless the user requests otherwise:
 - The first boss's overall movement and state sequence are deliberately slower than the original.
 - The first boss's horizontal dash is 10 pixels per tick and uses one flight sprite.
 - Boss feathers move in two collision substeps of `20 / 3` pixels each.
-- World 2 enemies, active hazards, pickups, rewards, and boss logic use half the original update rate. Do not halve shared player movement or weapon tuning.
+- World 2 enemies, active hazards, pickups, rewards, and boss logic update once every two 60 Hz physics ticks to match the original 30 Hz real-time pace. Do not halve shared player movement or weapon tuning.
 - World 2 ghost masks drop small recovery 20% of the time and an extra life 10% of the time.
 - World 2 wall interiors use the alternating castle-brick background tiles; their decorative fill remains non-solid while the surrounding border tiles own collision.
 - World 2 uses the stage backdrop only on map20; maps 21–23 use a black background.
-- World 3 enemies, hazards, pickups, rewards, and boss logic use the original one-update-per-physics-tick rate.
+- World 3 and later world-local enemies, enemy projectiles, active hazards, and boss logic update once every two 60 Hz physics ticks to match the original 30 Hz real-time pace. This cadence must cover movement, acceleration, animation, state timers, and firing intervals together; avoid correcting only one of those dimensions.
 - World 1 and World 2 boss/checkpoint doors take 40 ticks to rise and 40 ticks to descend. World 3 doors retain their existing 20-tick motion.
 - Map14's falling-stage introduction uses the latest playtest timing: blocks fall 3 pixels per tick, activation and explosion intervals are four times the archive timing, and the boss entry wait is 120 ticks.
 - Card collectible spin animation runs at half its previous rate in every world; falling and collection fading retain their existing rates.

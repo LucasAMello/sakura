@@ -1,6 +1,6 @@
 # Third-stage parity record
 
-The third-stage implementation is based on the canonical `old/2 Joguito` sources and authoritative `map30.map` through `map32.map` files. Existing global player, weapon, damage, drop, door, and portal tuning remains unchanged. Unlike World 2, World 3 ordinary enemies, hazards, pickups, and boss logic run once per 60 Hz physics tick, matching the original update rate.
+The third-stage implementation is based on the canonical `old/2 Joguito` sources and authoritative `map30.map` through `map32.map` files. Existing global player, weapon, damage, drop, door, and portal tuning remains unchanged. Confirmed playtest correction: World 3 enemies, enemy projectiles, active hazards, and boss logic update once every two 60 Hz physics ticks so their movement, animation, state timing, and fire rate match the intended 30 Hz real-time pace.
 
 | Area | Evidence checked | Port result |
 |---|---|---|
@@ -14,4 +14,4 @@ The third-stage implementation is based on the canonical `old/2 Joguito` sources
 | Map32 transition | `Main.cpp`, `set_dvalues`, door source | Left door, playable checkpoint room, boss-death respawn, right door, scripted walk, fixed boss camera, and 20-tick door rise/descent tuning |
 | Thunder boss | `sprite.h`, `scripts.h`, `Main.cpp` event 5 | Lightning appearance, 30-point meter and HP, flicker/crouch/dash/takeoff loop, high-health shock-ball attack, randomized low-health beam patterns, reappearance, damage gating, death sequence, card reward, and portal departure |
 
-The release executable remains unavailable for direct visual comparison. Entry/reward portal presentation uses the already reviewed project-wide presentation, while map geometry, state order, timing, movement, damage, and spawn data follow the canonical source. Music, sound effects, menus, saving, weapon selection, and the stages after map32 remain project-wide omissions rather than missing World 3 gameplay entities.
+The release executable remains unavailable for direct visual comparison. Entry/reward portal presentation uses the already reviewed project-wide presentation. Map geometry, state order, per-update movement values, damage, and spawn data follow the canonical source, with enemy-side updates paced by the confirmed 30 Hz playtest correction above. Music, sound effects, menus, saving, and weapon selection remain project-wide omissions rather than missing World 3 gameplay entities.

@@ -3,3 +3,6 @@
 
 # Legacy Godot 3 import cache, if the project is opened with older tooling.
 /.import/
+
+# Godot 3 sidecar import metadata. Godot 4 keeps imports under .godot/.
+*.import

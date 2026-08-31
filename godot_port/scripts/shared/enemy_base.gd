@@ -63,6 +63,8 @@ func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 			var local_y := world_y - floori(position.y)
 			if sprite.flip_h:
 				local_x = image.get_width() - 1 - local_x
+			if sprite.flip_v:
+				local_y = image.get_height() - 1 - local_y
 			if local_x >= 0 and local_x < image.get_width() and local_y >= 0 and local_y < image.get_height():
 				if image.get_pixel(local_x, local_y).a > 0.01:
 					return true

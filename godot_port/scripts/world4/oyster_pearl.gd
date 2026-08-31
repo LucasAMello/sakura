@@ -10,6 +10,7 @@ var gameplay_active := false
 var timer := 0
 var velocity := Vector2.ZERO
 var lifetime := 0
+var update_phase := 0
 
 
 func _ready() -> void:
@@ -31,6 +32,9 @@ func set_gameplay_active(value: bool) -> void:
 
 func _physics_process(_delta: float) -> void:
 	if not gameplay_active or not is_instance_valid(player):
+		return
+	update_phase = (update_phase + 1) % 2
+	if update_phase != 0:
 		return
 	timer += 1
 	lifetime += 1

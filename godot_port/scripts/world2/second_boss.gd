@@ -154,8 +154,9 @@ func _update_meter_fill() -> void:
 
 func _update_active(split_active: bool) -> void:
 	_bounce_move()
-	if not split_active and hit_points <= 15 and position.y > 200.0 and position.y < 300.0:
+	if not split_active and hit_points <= 15 and position.y > 200.0 and position.y < 600.0 and position.x > 5560.0 and position.x < 5640.0:
 		state = BossState.SPLITTING
+		x_velocity *= -1.0
 		timer = 0
 		control_lock_requested.emit(true)
 

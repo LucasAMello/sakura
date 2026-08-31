@@ -139,6 +139,10 @@ func _build_stage_boss_area() -> void:
 		_build_boss_area()
 
 
+func _enemy_update_interval() -> int:
+	return 2
+
+
 func _physics_process(_delta: float) -> void:
 	if _handle_global_input():
 		return
@@ -316,7 +320,9 @@ func _on_boss_reward_collected() -> void:
 
 func _complete_departure() -> void:
 	progress.set_third_boss_checkpoint(false)
-	hud.show_message("THIRD STAGE COMPLETE\n\nPRESS R TO REPLAY")
+	if get_tree().current_scene == self:
+		progress.store_hp(player.hp)
+		get_tree().change_scene_to_file("res://scenes/map40.tscn")
 
 
 func _spawn_stage_objects() -> void:

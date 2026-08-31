@@ -45,6 +45,7 @@ var timer := 0
 var ending := false
 var sprite: Sprite2D
 var beam_segments: Array[Sprite2D] = []
+var update_phase := 0
 
 
 func _ready() -> void:
@@ -92,6 +93,9 @@ func setup(projectile_kind: int, map_terrain: SakuraTerrain, target_player: Saku
 
 
 func _physics_process(_delta: float) -> void:
+	update_phase = (update_phase + 1) % 2
+	if update_phase != 0:
+		return
 	timer += 1
 	match kind:
 		Kind.WALL_SHOT:

@@ -5,6 +5,7 @@ signal shot_requested(origin: Vector2, facing: int)
 signal died
 signal hp_changed(current_hp: int, maximum_hp: int)
 signal shot_count_changed(active: int)
+signal water_state_changed(entered_water: bool)
 
 const BODY_SIZE := Vector2(40, 80)
 const MAX_HP := 15
@@ -194,13 +195,16 @@ func _update_jump() -> void:
 
 
 func _update_water_state() -> void:
+	var was_in_water := in_water
 	if water_surface_y < 0.0:
 		in_water = false
-		return
-	if not in_water and position.y + 24.0 >= water_surface_y:
-		in_water = true
-	elif in_water and position.y + 29.0 < water_surface_y:
-		in_water = false
+	else:
+		if not in_water and position.y + 24.0 >= water_surface_y:
+			in_water = true
+		elif in_water and position.y + 29.0 < water_surface_y:
+			in_water = false
+	if in_water != was_in_water:
+		water_state_changed.emit(in_water)
 
 
 func _move_horizontal(amount: float) -> void:

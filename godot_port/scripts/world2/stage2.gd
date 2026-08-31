@@ -193,7 +193,8 @@ func _physics_process(_delta: float) -> void:
 
 func _update_playing() -> void:
 	if map_number == 23:
-		if player.facing > 0 and player.grounded and player.get_hit_rect().intersects(Rect2(4700, 440, 30, 100)):
+		if player.facing > 0 and player.get_hit_rect().intersects(Rect2(4700, 440, 30, 100), true):
+			player.position.x = 4660.0
 			_begin_checkpoint_entry()
 		return
 	if player.grounded and player.get_hit_rect().intersects(map_config["exit"]):
@@ -206,6 +207,10 @@ func _update_playing() -> void:
 func _update_checkpoint_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
+		player.position.y = move_toward(player.position.y, 460.0, 10.0)
+		if player.position.y == 460.0:
+			player.y_speed = 0.0
+			player.grounded = true
 		_set_door_opening(0, float(state_ticks) / 40.0)
 	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
@@ -233,12 +238,12 @@ func _update_boss_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		_set_door_opening(1, float(state_ticks) / 40.0)
-	elif state_ticks <= 80:
+	elif state_ticks <= 120:
 		_set_door_opening(1, 1.0)
 		player.scripted_step_right(2.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(5640, 380), float(state_ticks - 40) / 40.0)
-	elif state_ticks <= 120:
-		_set_door_opening(1, 1.0 - float(state_ticks - 80) / 40.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(5640, 380), float(state_ticks - 40) / 80.0)
+	elif state_ticks <= 160:
+		_set_door_opening(1, 1.0 - float(state_ticks - 120) / 40.0)
 	else:
 		_set_door_opening(1, 0.0)
 		camera_lock_position = Vector2(5640, 380)

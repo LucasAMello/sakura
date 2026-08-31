@@ -17,10 +17,10 @@ var debug_visible := false
 
 
 func _ready() -> void:
-	var player_meter := _make_sprite(preload("res://assets/hud/hud_player_meter.png"), Vector2(10, 180))
+	var player_meter := _make_sprite(preload("res://assets/hud/hud_player_meter.png"), Vector2(10, 80))
 	add_child(player_meter)
 	for index in range(SakuraPlayer.MAX_HP):
-		var bar := _make_sprite(LIFE_BAR, Vector2(13, 259 - index * 5))
+		var bar := _make_sprite(LIFE_BAR, Vector2(13, 159 - index * 5))
 		add_child(bar)
 		player_bars.append(bar)
 	boss_meter = _make_sprite(preload("res://assets/hud/hud_boss_meter.png"), Vector2(610, 100))

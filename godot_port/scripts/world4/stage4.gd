@@ -10,6 +10,11 @@ const OysterPearlScript = preload("res://scripts/world4/oyster_pearl.gd")
 const SandMoundScript = preload("res://scripts/world4/sand_mound.gd")
 const CardPickupScript = preload("res://scripts/world4/card_pickup.gd")
 const WaterLayerScript = preload("res://scripts/world4/water_layer.gd")
+const FourthBossScript = preload("res://scripts/world4/fourth_boss.gd")
+const WaterShotScript = preload("res://scripts/world4/water_shot.gd")
+const FourthBossRewardScript = preload("res://scripts/world4/fourth_boss_reward.gd")
+const WaterBubbleScript = preload("res://scripts/world4/water_bubble.gd")
+const WaterSplashScript = preload("res://scripts/world4/water_splash.gd")
 const STAGE4_ATLAS := preload("res://assets/world4/terrain.png")
 const STAGE4_BACKGROUND := preload("res://assets/world4/background.png")
 const STAGE4_SOURCE_RECTS := {
@@ -108,6 +113,11 @@ var seahorse_spawners: Array[World4SeahorseSpawner] = []
 var oyster_pearls: Array[World4OysterPearl] = []
 var sand_mounds: Array[World4SandMound] = []
 var cards: Array[World4CardPickup] = []
+var boss: FourthStageBoss
+var boss_reward: FourthBossReward
+var boss_health_was_visible_on_death := false
+var bubble_ticks := 0
+var water_effects: Array[Node2D] = []
 
 
 func _default_map_number() -> int:
@@ -137,6 +147,12 @@ func _setup_terrain() -> void:
 
 func _configure_checkpoint() -> void:
 	player.set_water_surface(map_config["water_surface"], map_config["starts_in_water"])
+	player.water_state_changed.connect(_on_player_water_state_changed)
+	if map_number == 42 and progress.fourth_boss_checkpoint:
+		player.position = Vector2(8800, 560)
+		checkpoint_active = true
+		camera_locked = true
+		camera_lock_position = Vector2(9040, 400)
 
 
 func _build_stage_boss_area() -> void:
@@ -157,6 +173,12 @@ func _build_stage_boss_area() -> void:
 	water_layer.z_index = 30
 	add_child(water_layer)
 	water_layer.setup(terrain.world_size, map_config["water_surface"])
+	if map_number == 42:
+		_build_boss_area()
+
+
+func _enemy_update_interval() -> int:
+	return 2
 
 
 func _physics_process(_delta: float) -> void:
@@ -171,16 +193,198 @@ func _physics_process(_delta: float) -> void:
 			_update_exit()
 		StageState.DYING:
 			_update_death()
+		StageState.CHECKPOINT_ENTRY:
+			_update_checkpoint_entry()
+		StageState.CHECKPOINT:
+			_update_checkpoint()
+		StageState.BOSS_ENTRY:
+			_update_boss_entry()
+		StageState.BOSS_INTRO:
+			_update_boss_intro()
+		StageState.BOSS:
+			_update_boss()
+		StageState.VICTORY:
+			_update_victory()
+	_update_water_effects()
 	_finish_physics_tick()
 
 
+func _update_water_effects() -> void:
+	for index in range(water_effects.size() - 1, -1, -1):
+		if not is_instance_valid(water_effects[index]):
+			water_effects.remove_at(index)
+	if not player.gameplay_active:
+		return
+	if not player.in_water:
+		bubble_ticks = 0
+		return
+	bubble_ticks += 1
+	if bubble_ticks >= 320:
+		bubble_ticks = 0
+		var bubble: World4WaterBubble = WaterBubbleScript.new()
+		bubble.position = player.position + Vector2(30.0 if player.facing > 0 else 4.0, 15.0)
+		bubble.z_index = 21
+		add_child(bubble)
+		bubble.setup(map_config["water_surface"], player.facing)
+		water_effects.append(bubble)
+
+
+func _on_player_water_state_changed(_entered_water: bool) -> void:
+	var splash: World4WaterSplash = WaterSplashScript.new()
+	splash.position = Vector2(player.position.x - 4.0, float(map_config["water_surface"]) - 14.0)
+	splash.z_index = 31
+	add_child(splash)
+	water_effects.append(splash)
+
+
 func _update_playing() -> void:
+	if map_number == 42 and player.facing > 0 and player.get_hit_rect().intersects(Rect2(8720, 540, 30, 100), true):
+		_begin_checkpoint_entry()
+		return
 	var exit_rect: Rect2 = map_config["exit"]
 	if exit_rect.has_area() and exit_rect.intersects(player.get_hit_rect()):
 		stage_state = StageState.EXITING
 		state_ticks = 0
 		_set_gameplay_active(false)
 		player.set_scripted_animation_active(true)
+
+
+func _update_checkpoint_entry() -> void:
+	state_ticks += 1
+	player.position.y = move_toward(player.position.y, 560.0, 10.0)
+	if player.position.y == 560.0:
+		player.y_speed = 0.0
+		player.grounded = true
+	if state_ticks <= 20:
+		_set_door_opening(0, float(state_ticks) / 20.0)
+	elif state_ticks <= 60:
+		_set_door_opening(0, 1.0)
+		player.scripted_step_right(2.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(9040, 400), float(state_ticks - 20) / 40.0)
+	elif state_ticks <= 80:
+		_set_door_opening(0, 1.0 - float(state_ticks - 60) / 20.0)
+	else:
+		_set_door_opening(0, 0.0)
+		camera_lock_position = Vector2(9040, 400)
+		progress.set_fourth_boss_checkpoint(true)
+		stage_state = StageState.CHECKPOINT
+		state_ticks = 0
+		player.set_scripted_animation_active(false)
+		_set_gameplay_active(true)
+
+
+func _update_checkpoint() -> void:
+	player.position.x = clampf(player.position.x, 8750.0, 9290.0)
+	if player.facing > 0 and player.get_hit_rect().intersects(Rect2(9330, 540, 30, 100), true):
+		_begin_boss_entry()
+
+
+func _update_boss_entry() -> void:
+	state_ticks += 1
+	if state_ticks <= 20:
+		_set_door_opening(1, float(state_ticks) / 20.0)
+	elif state_ticks <= 60:
+		_set_door_opening(1, 1.0)
+		player.scripted_step_right(2.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(9680, 400), float(state_ticks - 20) / 40.0)
+	elif state_ticks <= 80:
+		_set_door_opening(1, 1.0 - float(state_ticks - 60) / 20.0)
+	else:
+		_set_door_opening(1, 0.0)
+		camera_lock_position = Vector2(9680, 400)
+		player.position.y = 560.0
+		player.y_speed = 0.0
+		player.grounded = true
+		player.set_scripted_animation_active(false)
+		stage_state = StageState.BOSS_INTRO
+		state_ticks = 0
+		boss.set_gameplay_active(true)
+		boss.start_intro()
+
+
+func _update_boss_intro() -> void:
+	state_ticks += 1
+	if state_ticks >= 82:
+		stage_state = StageState.BOSS
+		state_ticks = 0
+		boss.start_fight()
+		_set_gameplay_active(true)
+
+
+func _update_boss() -> void:
+	player.position.x = clampf(player.position.x, 9360.0, 9960.0)
+
+
+func _on_boss_water_shot_requested(spawn_position: Vector2, direction: int, trailing: bool) -> void:
+	var shot: World4WaterShot = WaterShotScript.new()
+	_spawn_enemy(shot, spawn_position)
+	shot.configure(direction, trailing)
+	shot.set_gameplay_active(true)
+
+
+func _on_boss_defeated() -> void:
+	boss_reward_position = boss.position + Vector2(53, 12)
+	enemies.erase(boss)
+	stage_state = StageState.VICTORY
+	state_ticks = 0
+	_set_gameplay_active(false)
+	player.immunity_ticks = 0
+	hud.set_boss_health(0, false)
+	boss_reward_started = false
+	boss_reward_homing = false
+	hud.set_boss_flash(0.0)
+
+
+func _update_victory() -> void:
+	state_ticks += 1
+	if not boss_reward_started:
+		if state_ticks <= 255:
+			hud.set_boss_flash(float(state_ticks) / 255.0)
+			if state_ticks == 5:
+				for _burst in range(3):
+					_spawn_enemy_death(boss.position + Vector2(64, 30))
+			if state_ticks % 7 == 3 and is_instance_valid(boss):
+				_spawn_enemy_death(boss.position + Vector2(randi_range(0, 128), randi_range(0, 60)))
+			return
+		if state_ticks <= 285:
+			hud.set_boss_flash(1.0)
+			return
+		if is_instance_valid(boss):
+			boss.queue_free()
+		_spawn_boss_reward()
+	if not boss_reward_homing:
+		var fade_tick := state_ticks - 285
+		hud.set_boss_flash(1.0 - float(fade_tick) / 255.0)
+		if fade_tick >= 255:
+			boss_reward_homing = true
+			hud.set_boss_flash(0.0)
+			if is_instance_valid(boss_reward):
+				boss_reward.begin_homing()
+	if departure_ticks > 0:
+		_update_departure()
+
+
+func _spawn_boss_reward() -> void:
+	boss_reward_started = true
+	boss_reward = FourthBossRewardScript.new()
+	boss_reward.position = boss_reward_position
+	boss_reward.z_index = 32
+	add_child(boss_reward)
+	boss_reward.setup(player)
+	boss_reward.collected.connect(_on_boss_reward_collected)
+
+
+func _on_boss_reward_collected() -> void:
+	progress.collect_card(3)
+	progress.unlock_fourth_boss_reward()
+	_start_departure()
+
+
+func _complete_departure() -> void:
+	progress.set_fourth_boss_checkpoint(false)
+	if get_tree().current_scene == self:
+		progress.store_hp(player.hp)
+		get_tree().change_scene_to_file("res://scenes/map50.tscn")
 
 
 func _spawn_stage_objects() -> void:
@@ -267,6 +471,36 @@ func _set_gameplay_active(value: bool) -> void:
 	for pearl in oyster_pearls:
 		if is_instance_valid(pearl):
 			pearl.set_gameplay_active(value)
+	for effect in water_effects:
+		if is_instance_valid(effect) and effect.has_method("set_gameplay_active"):
+			effect.set_gameplay_active(value)
+
+
+func _before_player_death() -> void:
+	boss_health_was_visible_on_death = stage_state == StageState.BOSS or stage_state == StageState.BOSS_INTRO
+
+
+func _build_boss_area() -> void:
+	var door_texture: Texture2D = preload("res://assets/world4/door.png")
+	for door_position in [Vector2(8720, 540), Vector2(9330, 540)]:
+		var door := Sprite2D.new()
+		door.centered = false
+		door.texture = door_texture
+		door.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		door.position = door_position
+		door.z_index = 9
+		add_child(door)
+		boss_doors.append(door)
+	boss = FourthBossScript.new()
+	_spawn_enemy(boss, Vector2(9770, 570))
+	boss.water_shot_requested.connect(_on_boss_water_shot_requested)
+	boss.boss_defeated.connect(_on_boss_defeated)
+
+
+func _set_door_opening(index: int, amount: float) -> void:
+	if index < 0 or index >= boss_doors.size():
+		return
+	boss_doors[index].position.y = 540.0 - clampf(amount, 0.0, 1.0) * 100.0
 
 
 func _build_background() -> void:
@@ -306,5 +540,31 @@ func _update_background() -> void:
 			)
 
 
+func _update_camera() -> void:
+	if not is_instance_valid(camera) or not is_instance_valid(player):
+		return
+	if camera_locked:
+		camera.position = camera_lock_position
+		_update_background()
+		return
+	var center := player.get_center()
+	camera.position = Vector2(
+		clampf(center.x, VIEWPORT_HALF_SIZE.x, terrain.world_size.x - VIEWPORT_HALF_SIZE.x),
+		clampf(center.y, VIEWPORT_HALF_SIZE.y, terrain.world_size.y - VIEWPORT_HALF_SIZE.y)
+	)
+	_update_background()
+
+
+func _update_boss_hud() -> void:
+	var boss_visible := false
+	var displayed_boss_hp := 0
+	if is_instance_valid(boss):
+		boss_visible = stage_state == StageState.BOSS or stage_state == StageState.BOSS_INTRO or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
+		displayed_boss_hp = boss.hit_points
+		if stage_state == StageState.BOSS_INTRO:
+			displayed_boss_hp = clampi(int((state_ticks - 22) / 2.0), 0, 30)
+	hud.set_boss_health(displayed_boss_hp, boss_visible)
+
+
 func _stage_complete_message() -> String:
-	return "WORLD 4 PORT IN PROGRESS"
+	return "FOURTH STAGE COMPLETE\n\nPRESS R TO REPLAY"

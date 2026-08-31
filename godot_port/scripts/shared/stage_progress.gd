@@ -4,9 +4,15 @@ var carried_hp := -1
 var first_boss_reward := false
 var second_boss_reward := false
 var third_boss_reward := false
+var fourth_boss_reward := false
+var fifth_boss_reward := false
+var sixth_boss_reward := false
 var boss_checkpoint := false
 var second_boss_checkpoint := false
 var third_boss_checkpoint := false
+var fourth_boss_checkpoint := false
+var fifth_boss_checkpoint := false
+var sixth_boss_checkpoint := false
 var lives := 5
 var cards: Dictionary = {}
 
@@ -43,6 +49,30 @@ func unlock_third_boss_reward() -> void:
 
 func set_third_boss_checkpoint(value: bool) -> void:
 	third_boss_checkpoint = value
+
+
+func unlock_fourth_boss_reward() -> void:
+	fourth_boss_reward = true
+
+
+func set_fourth_boss_checkpoint(value: bool) -> void:
+	fourth_boss_checkpoint = value
+
+
+func unlock_fifth_boss_reward() -> void:
+	fifth_boss_reward = true
+
+
+func set_fifth_boss_checkpoint(value: bool) -> void:
+	fifth_boss_checkpoint = value
+
+
+func unlock_sixth_boss_reward() -> void:
+	sixth_boss_reward = true
+
+
+func set_sixth_boss_checkpoint(value: bool) -> void:
+	sixth_boss_checkpoint = value
 
 
 func has_card(card_id: int) -> bool:

@@ -9,6 +9,7 @@ const COOLDOWN_TICKS := 90
 var player: SakuraPlayer
 var gameplay_active := false
 var cooldown := 0
+var update_phase := 0
 
 
 func setup(target_player: SakuraPlayer) -> void:
@@ -21,6 +22,9 @@ func set_gameplay_active(value: bool) -> void:
 
 func _physics_process(_delta: float) -> void:
 	if not gameplay_active or not is_instance_valid(player):
+		return
+	update_phase = (update_phase + 1) % 2
+	if update_phase != 0:
 		return
 	if cooldown > 0:
 		cooldown -= 1

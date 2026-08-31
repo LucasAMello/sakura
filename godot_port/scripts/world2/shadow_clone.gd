@@ -23,10 +23,6 @@ func _ready() -> void:
 
 func configure(owner_boss: SecondStageBoss) -> void:
 	boss = owner_boss
-	if position.x >= 5660.0:
-		drift = -3.0
-	if owner_boss.x_velocity > 0.0:
-		x_velocity = -8.0
 
 
 func take_projectile_hit(damage: int) -> void:
