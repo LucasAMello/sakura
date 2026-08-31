@@ -31,8 +31,8 @@ enum BossState { WAITING, TURNING, TRANSFORMING, METER_FILL, ACTIVE, SPLITTING, 
 
 var state := BossState.WAITING
 var timer := 0
-var x_velocity := -15.0
-var y_velocity := -15.0
+var x_velocity := -8.0
+var y_velocity := -8.0
 var intro_meter_ticks := 0
 
 
@@ -164,10 +164,6 @@ func _update_splitting() -> void:
 	if timer == 6:
 		clone_requested.emit(position)
 	elif timer == 36:
-		if x_velocity < 0.0:
-			x_velocity = 15.0
-		if y_velocity > 0.0:
-			y_velocity = -15.0
 		state = BossState.ACTIVE_SPLIT
 		control_lock_requested.emit(false)
 	timer += 1

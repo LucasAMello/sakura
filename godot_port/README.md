@@ -1,12 +1,14 @@
 # Sakura — Godot port hand-off
 
-This is a preservation-minded Godot 4 port of Sakura, a C++/Allegro game originally released in 2008. The current playable milestone covers the complete first three stages: maps 10–14, 20–23, and 30–32.
+This is a preservation-minded Godot 4 port of Sakura, a C++/Allegro game originally released in 2008. The current playable milestone covers the complete first three stages: maps 10–14, 20–23, and 30–32. An intentionally incomplete World 4 slice now covers maps 40–42, layered terrain, water, transitions, ordinary enemies, and cards.
 
 The surviving Windows release crashes after its menu, so gameplay is being reconstructed from source code, maps, assets, and the creator's memory rather than compared against a working original executable.
 
 ## Current status
 
 Running the main project starts map10 and progresses continuously through the complete first, second, and third worlds. Defeating the shadow boss in map23 now continues directly to map30.
+
+World 4 is currently launched directly through `scenes/map40.tscn`; it is not yet connected to the third-stage completion flow.
 
 Implemented:
 
@@ -30,6 +32,7 @@ Implemented:
 - Original terrain, starts, exits, camera limits, background, and spawn tables for maps 30–32
 - Stage-three wall turrets, accelerating missiles, machines, orange flyers, four-way shockers, shock charges and balls, breakable card holder, and persistent cards
 - Map32 two-door checkpoint, boss-death respawn, Thunder boss intro, dash/takeoff cycle, high- and low-health attack patterns, reward, portal departure, and stage completion
+- Authoritative maps 40–42, World 4 scenario/foreground terrain layers, parallax background, animated water surfaces, underwater player gravity, map40/map41 transitions, Resetti and seahorse ambushes, four fish variants, oyster pairs/pearls, and loose or sand-mound cards
 
 Map14 now uses two door transitions around a playable intermission room. Entering the left door establishes the original `(2300, 300)` boss checkpoint and returns control to the player; entering the right door starts the boss-room sequence. Death during the boss sequence respawns in the intermission room. The checkpoint camera is `(2440, 320)`, so both adjacent room transitions pan only horizontally. The falling-block order and reward behavior follow the source structure, while the door and portal presentation incorporates confirmed playtest tuning.
 
@@ -68,7 +71,7 @@ For maps and gameplay behavior, start with:
 - `old/2 Joguito/scripts.h`: per-tick enemy behavior and animation
 - `old/2 Joguito/sprite.h`: entity initialization, dimensions, HP, damage, and speed
 - `old/2 Joguito/colision.h`: original collision behavior
-- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, and `map30.map` through `map32.map`: authoritative map data used by this port
+- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, `map30.map` through `map32.map`, and `map40.map` through `map42.map`: authoritative map data used by this port
 
 ## Asset policy
 
@@ -82,17 +85,18 @@ Folder 5 contains the correct release-era `playermo01.bmp`. The firing walk-fram
 
 Many BMPs that appear to have different hashes differ only in header DPI metadata. Compare decoded pixels before treating them as different artwork. The red-ball, spring, bird, terrain, and default-shot graphics checked across the archives were pixel-identical.
 
-Allegro transparency uses RGB `(255, 0, 255)`. Converted PNGs must replace that magenta with alpha without resizing or filtering the source pixels. Assets are grouped by ownership: `assets/player/`, `assets/menu/`, `assets/hud/`, `assets/world1/`, `assets/world2/`, and `assets/world3/`. Provenance is recorded beside the relevant assets in each folder.
+Allegro transparency uses RGB `(255, 0, 255)`. Converted PNGs must replace that magenta with alpha without resizing or filtering the source pixels. Assets are grouped by ownership: `assets/player/`, `assets/menu/`, `assets/hud/`, `assets/world1/`, `assets/world2/`, `assets/world3/`, and `assets/world4/`. Provenance is recorded beside the relevant assets in each folder.
 
 Godot `.import` files and the `.godot` import cache are generated metadata. Godot can regenerate them from the source PNGs. Do not treat them as original game assets.
 
 ## Project architecture
 
-Scripts are grouped by ownership in `scripts/player/`, `scripts/menu/`, `scripts/hud/`, `scripts/world1/`, `scripts/world2/`, and `scripts/world3/`. Cross-world systems live in `scripts/shared/`. Each world uses one shared stage implementation instead of copied map scripts.
+Scripts are grouped by ownership in `scripts/player/`, `scripts/menu/`, `scripts/hud/`, and `scripts/world1/` through `scripts/world4/`. Cross-world systems live in `scripts/shared/`. Each world uses one shared stage implementation instead of copied map scripts.
 
 | File | Responsibility |
 |---|---|
-| `scripts/world1/map10.gd` | Shared stage controller and `MAP_CONFIGS` for maps 10–14 |
+| `scripts/shared/stage_base.gd` | Shared stage lifecycle, player/HUD setup, entry presentation, projectiles, enemy registry, death flow, camera setup, and controls |
+| `scripts/world1/stage1.gd` | Stage-one controller and `MAP_CONFIGS` for maps 10–14 |
 | `scripts/shared/terrain.gd` | Dynamic map loader, tile rendering, solid checks, lethal cells, and world dimensions |
 | `scripts/player/player.gd` | Player movement, jump, animation, firing, HP, damage, and exit walk |
 | `scripts/shared/enemy_base.gd` | Shared enemy health, player contact, projectile mask checks, and drops |
@@ -127,8 +131,12 @@ Scripts are grouped by ownership in `scripts/player/`, `scripts/menu/`, `scripts
 | `scripts/world3/card_holder.gd`, `card_pickup.gd` | Breakable card holder and persistent World 3 cards |
 | `scripts/world3/third_boss.gd`, `third_boss_reward.gd` | Thunder's complete state machine and animated reward |
 | `scenes/map30.tscn`–`map32.tscn` | Small scene wrappers that select the stage-three `map_number` |
+| `scripts/world4/stage4.gd` | In-progress controller for maps 40–42, layered terrain, background, water, transitions, and initial spawns |
+| `scripts/world4/water_layer.gd`, `resetti.gd`, `seahorse.gd`, `fish.gd`, `oyster.gd` | Animated water overlay and World 4 ordinary enemy families |
+| `scripts/world4/sand_mound.gd`, `card_pickup.gd` | Breakable sand-mound holders and persistent loose cards |
+| `scenes/map40.tscn`–`map42.tscn` | Small scene wrappers that select the stage-four `map_number` |
 
-Despite its filename, `scripts/world1/map10.gd` is the shared first-stage controller. A future cleanup may rename it to `stage_map.gd`, but references and scene UIDs should be updated together.
+The four world controllers extend `scripts/shared/stage_base.gd`. They retain their map data, world-specific objects and backgrounds, camera constraints, timing rules, and boss sequences while the common stage lifecycle stays in one place.
 
 To add another similar map:
 
@@ -167,10 +175,10 @@ These choices were made during hands-on review and should not be silently revert
 - The first-boss health meter fills one point every two physics ticks, and pausing suspends both the boss and active feathers.
 - Player death fragments originate at the center of the 40×80 player body.
 - Scripted walks at ordinary map exits use the normal walk animation.
-- The first-boss life meter remains visible if the player dies during the fight, and the victory portal appears 40 pixels ahead in the direction Sakura is facing so she walks through its center.
+- The first-boss life meter remains visible if the player dies during the fight. Victory portals appear 40 pixels ahead in the direction Sakura is facing; her sprite is progressively clipped at the portal plane until the complete 54-pixel-wide frame has passed through.
 - World 2 enemies, hazards with active timing, pickups, rewards, and boss logic run at half the original tick rate. Shared player movement and weapon tuning remain global and are not halved.
 - World 3 gameplay runs at the original 60 Hz tick rate; the World 2 half-rate rule does not carry into later worlds.
-- World 3's `+` terrain token keeps its original one-pixel-wide solid strip rather than using a full 20-pixel collision tile.
+- World 3's `+` terrain token is a full-size, decorative 20×20 tile. The archive's `1` is its non-solid draw type, not a one-pixel width.
 - Map21 has no stage backdrop; spawned ghost masks immediately join active gameplay, and armor draws behind other enemies.
 - World 2 wall interiors use the alternating castle-brick background graphics while retaining the original non-solid decorative cells and solid border collision.
 - World 2 ghost masks retain their 20% small-recovery chance and have an exact 10% extra-life chance.
@@ -183,7 +191,7 @@ Original movement and animation logic is tick-based because the Allegro game ass
 
 ## Known omissions and risks
 
-- Music, sound effects, menus, saving, weapon changes, and stages after map32 are not implemented.
+- Music, sound effects, menus, saving, and weapon changes are not implemented. World 4 remains incomplete, and stages after map42 are not implemented.
 - Boss-room audio and the weapon unlocked by the first-boss reward still need restoration.
 - Stage-two card inventory persists for the current run, but save-file persistence and card-driven maximum-HP progression are not yet connected to menus or a save system.
 - Entry and exit presentation are functional approximations where the crashed release could not be observed.
@@ -191,36 +199,13 @@ Original movement and animation logic is tick-based because the Allegro game ass
 
 ## Validation
 
-From PowerShell in the `godot_port` directory's parent:
+This project intentionally has no automated or smoke tests. Contributors should not create or run tests. A headless editor load may be used only as a GDScript and resource compile check:
 
 ```powershell
 & $godot_executable --headless --path godot_port --editor --quit
-& $godot_executable --headless --path godot_port res://tests/tuning_smoke.tscn
-& $godot_executable --headless --path godot_port res://tests/stage2_smoke.tscn
-& $godot_executable --headless --path godot_port res://tests/stage3_smoke.tscn
 ```
 
-The validators currently check:
-
-- Godot parser, resource loading, and editor import for the complete project
-- Global and first-stage tuning for immunity, centered drops, portal visibility, READY visibility, cards and holders, turret explosions, boss doors, checkpoint camera, falling-block timing, enemy feedback, boss speeds, death HUD, and victory departure
-- Exact world sizes, map row counts, and ordinary object counts for maps 20–23
-- Ghost pursuit and fade momentum, mask emission and held animation, armor release, painting reveal, card persistence, and lethal shadow-spike damage
-- Map23 checkpoint, door sequence, boss intro, split clone, defeat, reward, and completion state
-- Exact map geometry and spawn counts for maps 30–32, portal visibility, one-pixel terrain, every ordinary World 3 attack family, map32 doors/checkpoint, both Thunder attack branches, reward, and completion
-
-These are automated checks, not substitutes for manual play. When testing manually, prioritize:
-
-1. Scene loading and GDScript parser errors
-2. Start and exit positions on the two vertical maps
-3. Camera limits and background coverage at every world edge
-4. Enemy ledge behavior and turret projectile direction
-5. HP carryover from one map to the next
-6. Map14 boss intro, arena limits, reward homing, and portal departure
-7. Maps 20–23 card placement, mask streams, spike reach, and vertical-map camera limits
-8. Map23 stage-to-checkpoint-to-boss flow, split-boss collision, reward homing, and portal departure
-9. Maps 30–32 background coverage, one-pixel barriers, enemy projectile directions, and vertical-map camera limits
-10. Map32 stage-to-checkpoint-to-boss flow, Thunder's dash/takeoff attacks, reward homing, and portal departure
+Gameplay validation is based on user playtest feedback.
 
 ## Porting specifications
 

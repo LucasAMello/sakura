@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains the archived source and assets for Sakura plus a preservation-minded Godot 4 port. Active development is in `godot_port/`. The current playable scope covers the complete first three stages: maps 10–14, maps 20–23, and maps 30–32, including all three bosses.
+This repository contains the archived source and assets for Sakura plus a preservation-minded Godot 4 port. Active development is in `godot_port/`. The current playable scope covers the complete first three stages: maps 10–14, maps 20–23, and maps 30–32, including all three bosses. World 4 is in progress: maps 40–42, layered terrain, water, transitions, ordinary enemies, and cards are ported, while ambient water effects and the Icy boss sequence are not yet ported.
 
 Read `godot_port/README.md` before making changes, but verify every referenced file and stated value against the current tree. The README can lag behind recent playtest changes.
 
@@ -15,6 +15,7 @@ Read `godot_port/README.md` before making changes, but verify every referenced f
 - Make focused changes. Avoid broad refactors while correcting a parity detail.
 - Do not add explanatory comments to source code unless the user explicitly requests comments. Put rationale in documentation or the handoff response.
 - Do not modify generated `.godot/` cache data or `.import` files as part of normal code changes.
+- Do not create or run tests, smoke tests, test scripts, or test scenes. A Godot parser/editor load may be used only as a compile check; it is not authorization to run gameplay tests.
 - Preserve pixel-art dimensions, nearest-neighbor filtering, and RGB `(255, 0, 255)` transparency conversion.
 
 ## Evidence order
@@ -34,15 +35,17 @@ Useful original files include:
 - `old/2 Joguito/sprite.h`: entity initialization and constants
 - `old/2 Joguito/colision.h`: collision behavior
 - `old/2 Joguito/maps.h`: terrain and spawn data
-- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, and `map30.map` through `map32.map`: authoritative maps for the first three stages
+- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, `map30.map` through `map32.map`, and `map40.map` through `map42.map`: authoritative maps for the currently ported scope
 
 Search the archive before guessing. Follow entity type numbers through initialization, update, collision, and draw code because behavior is often split across several files.
 
 ## Port architecture
 
-- `godot_port/scripts/world1/map10.gd` is the shared controller for maps 10–14 despite its name.
+- `godot_port/scripts/shared/stage_base.gd` owns behavior shared by every stage controller.
+- `godot_port/scripts/world1/stage1.gd` is the controller for maps 10–14.
 - `godot_port/scripts/world2/stage2.gd` is the shared controller for maps 20–23.
 - `godot_port/scripts/world3/stage3.gd` is the shared controller for maps 30–32.
+- `godot_port/scripts/world4/stage4.gd` is the in-progress shared controller for maps 40–42.
 - `godot_port/scripts/player/player.gd` owns movement, collision, damage, immunity, animation, firing, and scripted walking.
 - `godot_port/scripts/shared/enemy_base.gd` owns shared enemy behavior.
 - Individual enemy and boss scripts live in `godot_port/scripts/world1/`, `godot_port/scripts/world2/`, and `godot_port/scripts/world3/`; cross-world logic lives in `godot_port/scripts/shared/`.
@@ -76,7 +79,7 @@ Unless the user requests otherwise:
 - World 2 wall interiors use the alternating castle-brick background tiles; their decorative fill remains non-solid while the surrounding border tiles own collision.
 - World 2 uses the stage backdrop only on map20; maps 21–23 use a black background.
 - World 3 enemies, hazards, pickups, rewards, and boss logic use the original one-update-per-physics-tick rate.
-- Boss/checkpoint doors take 20 ticks to rise and 20 ticks to descend.
+- World 1 and World 2 boss/checkpoint doors take 40 ticks to rise and 40 ticks to descend. World 3 doors retain their existing 20-tick motion.
 - Map14's falling-stage introduction uses the latest playtest timing: blocks fall 3 pixels per tick, activation and explosion intervals are four times the archive timing, and the boss entry wait is 120 ticks.
 - Card collectible spin animation runs at half its previous rate in every world; falling and collection fading retain their existing rates.
 - The first-boss health meter fills one point every two physics ticks. The first boss and its active feathers must use pausable process mode even though the stage controller processes while paused.
@@ -115,24 +118,17 @@ Important behavior:
 
 ## Validation
 
-After GDScript changes:
-
-1. Run a Godot headless parse/editor load.
-2. Run the project headlessly for a few frames.
-3. Manually test the affected gameplay sequence when visual timing, collision, camera behavior, or animation is involved.
+Do not create or run automated or manual tests. After GDScript changes, a Godot headless parser/editor load is allowed strictly as a compile check. Gameplay validation comes from the user's playtest feedback.
 
 Godot may not be on `PATH`. On Windows, inspect the running Godot process for its executable path when available. Typical commands are:
 
 ```powershell
 & $godot_executable --headless --path godot_port --editor --quit
-& $godot_executable --headless --path godot_port --quit-after 3
 ```
 
 Errors about writing `user://`, editor settings, logs, or reading the Windows root certificate store can be sandbox-environment noise. Parser, resource-loading, scene, and runtime script errors are not.
 
-There may be no active static test scripts even if older documentation mentions them. Check `godot_port/tests/` before relying on a documented command.
-
-For boss-door, camera, animation, or speed changes, compilation alone is insufficient. Exercise the entire stage-to-intermission-to-boss flow and the boss-death sequence.
+Do not add test coverage for gameplay changes. Record any behavior that still needs user playtesting in the handoff instead.
 
 ## Handoff expectations
 

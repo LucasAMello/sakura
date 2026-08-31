@@ -3,60 +3,36 @@ extends Node2D
 
 const TILE_SIZE := 20
 
-const FIRST_STAGE_SOURCE_RECTS := {
-	"2": Vector2i(20, 0),
-	"3": Vector2i(40, 0),
-	"4": Vector2i(0, 40),
-	"5": Vector2i(0, 60),
-	"a": Vector2i(20, 40),
-	"b": Vector2i(60, 40),
-	"c": Vector2i(20, 20),
-	"d": Vector2i(20, 60),
-	"e": Vector2i(60, 60),
-	"f": Vector2i(40, 20),
-	"g": Vector2i(60, 0),
-	"h": Vector2i(0, 80),
-	"i": Vector2i(0, 0),
-	"j": Vector2i(60, 20),
-	"k": Vector2i(40, 60),
-	"l": Vector2i(0, 20),
-	"m": Vector2i(40, 40),
-}
-
 var cells: Array = []
-var atlas: Texture2D = preload("res://assets/world1/terrain.png")
-var source_rects: Dictionary = FIRST_STAGE_SOURCE_RECTS
-var non_solid_tokens := PackedStringArray(["0", "1"])
-var lethal_tokens := PackedStringArray(["0"])
+var atlas: Texture2D
+var source_rects: Dictionary = {}
+var non_solid_tokens := PackedStringArray()
+var lethal_tokens := PackedStringArray()
 var collision_sizes: Dictionary = {}
-var map_path := "res://maps/map10.map"
-var map_width := 450
-var map_height := 28
-var world_size := Vector2(9000, 560)
+var map_path := ""
+var map_width := 0
+var map_height := 0
+var world_size := Vector2.ZERO
 
 
 func setup(
 	path: String,
 	width: int,
 	height: int,
-	map_atlas: Texture2D = null,
-	map_source_rects: Dictionary = {},
-	map_non_solid_tokens: PackedStringArray = PackedStringArray(),
-	map_lethal_tokens: PackedStringArray = PackedStringArray(),
-	map_collision_sizes: Dictionary = {}
+	map_atlas: Texture2D,
+	map_source_rects: Dictionary,
+	map_non_solid_tokens: PackedStringArray,
+	map_lethal_tokens: PackedStringArray,
+	map_collision_sizes: Dictionary
 ) -> void:
 	map_path = path
 	map_width = width
 	map_height = height
 	world_size = Vector2(map_width * TILE_SIZE, map_height * TILE_SIZE)
-	if map_atlas != null:
-		atlas = map_atlas
-	if not map_source_rects.is_empty():
-		source_rects = map_source_rects
-	if not map_non_solid_tokens.is_empty():
-		non_solid_tokens = map_non_solid_tokens
-	if not map_lethal_tokens.is_empty() or not map_non_solid_tokens.is_empty():
-		lethal_tokens = map_lethal_tokens
+	atlas = map_atlas
+	source_rects = map_source_rects
+	non_solid_tokens = map_non_solid_tokens
+	lethal_tokens = map_lethal_tokens
 	collision_sizes = map_collision_sizes
 
 

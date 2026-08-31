@@ -4,8 +4,8 @@ extends SakuraEnemy
 const TEXTURE := preload("res://assets/world2/boss_ball.png")
 
 var boss: SecondStageBoss
-var x_velocity := 15.0
-var y_velocity := 15.0
+var x_velocity := 8.0
+var y_velocity := 8.0
 var timer := 0
 var drift := 3.0
 var active_motion := false
@@ -25,8 +25,8 @@ func configure(owner_boss: SecondStageBoss) -> void:
 	boss = owner_boss
 	if position.x >= 5660.0:
 		drift = -3.0
-		x_velocity *= -1.0
-		y_velocity *= -1.0
+	if owner_boss.x_velocity > 0.0:
+		x_velocity = -8.0
 
 
 func take_projectile_hit(damage: int) -> void:
@@ -36,7 +36,7 @@ func take_projectile_hit(damage: int) -> void:
 
 
 func _update_enemy() -> void:
-	if not is_instance_valid(boss) or boss.state == SecondStageBoss.BossState.DEFEATED:
+	if not is_instance_valid(boss):
 		queue_free()
 		return
 	if not active_motion:

@@ -6,8 +6,8 @@ const TEXTURES := [
 	preload("res://assets/world2/ghost_mask_2.png"),
 	preload("res://assets/world2/ghost_mask_3.png"),
 ]
-const SMALL_DROP_PERCENT := 20
-const EXTRA_LIFE_DROP_PERCENT := 10
+const SMALL_DROP_PERCENT := 30
+const EXTRA_LIFE_DROP_PERCENT := 5
 
 var move_direction := -1
 var stop_x := 0.0
@@ -60,7 +60,7 @@ func _update_enemy() -> void:
 		if y_velocity <= -2.0:
 			y_velocity = -2.0
 			oscillation_direction = 0
-	var movement := Vector2(move_direction * 5.0, y_velocity)
+	var movement := Vector2(move_direction * 3.0, y_velocity)
 	var candidate := Rect2(position + movement, body_size)
 	position += movement
 	if terrain.rect_hits_solid(candidate):

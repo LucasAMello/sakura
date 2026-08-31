@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://n3nupxdut5yr"]
 
-[ext_resource type="Script" uid="uid://4akrpksr3myd" path="res://scripts/world1/map10.gd" id="1_map10"]
+[ext_resource type="Script" uid="uid://4akrpksr3myd" path="res://scripts/world1/stage1.gd" id="1_stage"]
 
 [node name="Map10" type="Node2D" unique_id=1006111176]
-script = ExtResource("1_map10")
+script = ExtResource("1_stage")
+map_number = 10

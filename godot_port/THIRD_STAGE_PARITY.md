@@ -5,7 +5,7 @@ The third-stage implementation is based on the canonical `old/2 Joguito` sources
 | Area | Evidence checked | Port result |
 |---|---|---|
 | Map geometry and limits | `Main.cpp`, `maps.h`, map files | Original 20-pixel maps, map30's 10,000×600 world, map31's 2,000×1,600 vertical world, map32's 6,000×640 world, starts, invisible exits, camera limits, and transitions |
-| Terrain and background | `maps.h`, `TEXTURES04`, `textures05.bmp`, `bg4.bmp` | Complete thunder-stage atlas mapping, 608×480 repeating background, and the `+` token's original one-pixel-wide collision and rendering |
+| Terrain and background | `maps.h`, `initialize_wall` in `sprite.h`, `TEXTURES04`, `textures05.bmp`, `bg4.bmp`, manual playtest correction | Complete thunder-stage atlas mapping, 608×480 repeating background, and a full-size, decorative 20×20 `+` tile. The archive's `1` is its non-solid draw type, not its width; the following `20, 20` values are its dimensions. |
 | Spawn tables | `maps.h` | Original wall turrets, machines, orange flyers, shockers, cards, card holder, doors, and boss coordinates and initial timers |
 | Wall turrets and machines | `sprite.h`, `scripts.h`, `draw.h` | Original dimensions, HP, damage, paired directional fire, missile acceleration, random machine attacks, special machine destruction, and medium recovery rolls |
 | Orange flyers | `sprite.h`, `scripts.h`, `draw.h` | Player-relative aim states, nine-frame body cycle, three-frame propeller, vertical bob, directional shot origins, HP, damage, and small recovery chance |

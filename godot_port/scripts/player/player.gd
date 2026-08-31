@@ -51,6 +51,8 @@ var hp := MAX_HP
 var lives := 5
 var immunity_ticks := 0
 var dead := false
+var water_surface_y := -1.0
+var in_water := false
 
 
 func _ready() -> void:
@@ -69,6 +71,11 @@ func setup(map_terrain: SakuraTerrain) -> void:
 	terrain = map_terrain
 	hp = MAX_HP
 	hp_changed.emit(hp, MAX_HP)
+
+
+func set_water_surface(surface_y: float, starts_in_water: bool = false) -> void:
+	water_surface_y = surface_y
+	in_water = starts_in_water or (water_surface_y >= 0.0 and position.y + 24.0 >= water_surface_y)
 
 
 func set_gameplay_active(value: bool) -> void:
@@ -107,6 +114,7 @@ func _physics_process(_delta: float) -> void:
 			_update_sprite(0)
 		return
 
+	_update_water_state()
 	var left := Input.is_action_pressed("move_left")
 	var right := Input.is_action_pressed("move_right")
 	var direction := int(right) - int(left)
@@ -162,7 +170,7 @@ func _update_jump() -> void:
 			fall_ticks = 0
 		else:
 			ascent_ticks += 1
-			if ascent_ticks <= 10:
+			if ascent_ticks <= (2 if in_water else 10):
 				y_speed += 0.10
 			elif ascent_ticks <= 20:
 				y_speed += 0.06
@@ -173,14 +181,26 @@ func _update_jump() -> void:
 		_move_vertical(y_speed * 5.0)
 	else:
 		fall_ticks += 1
-		if fall_ticks <= 10:
+		if in_water:
+			y_speed += 0.04
+		elif fall_ticks <= 10:
 			y_speed += 0.04
 		elif fall_ticks <= 20:
 			y_speed += 0.06
 		else:
 			y_speed += 0.10
-		y_speed = minf(y_speed, 2.0)
+		y_speed = minf(y_speed, 1.2 if in_water else 2.0)
 		_move_vertical(y_speed * 5.0)
+
+
+func _update_water_state() -> void:
+	if water_surface_y < 0.0:
+		in_water = false
+		return
+	if not in_water and position.y + 24.0 >= water_surface_y:
+		in_water = true
+	elif in_water and position.y + 29.0 < water_surface_y:
+		in_water = false
 
 
 func _move_horizontal(amount: float) -> void:
