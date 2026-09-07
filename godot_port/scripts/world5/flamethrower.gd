@@ -26,12 +26,17 @@ func configure(is_vertical: bool, facing: int, initial_timer: int) -> void:
 
 func _update_enemy() -> void:
 	if timer == 45:
+		var spawn_position: Vector2
+		var flame_direction: int
 		if vertical:
 			var offset := Vector2(-9, -90 if direction == 1 else 80)
-			flame_requested.emit(true, position + offset, direction)
+			spawn_position = position + offset
+			flame_direction = direction
 		else:
 			var offset := Vector2(-90 if direction == 1 else 80, -9)
-			flame_requested.emit(false, position + offset, 0 if direction == 1 else 1)
+			spawn_position = position + offset
+			flame_direction = 0 if direction == 1 else 1
+		flame_requested.emit(vertical, spawn_position, flame_direction)
 	if timer == 76:
 		timer = 0
 	timer += 1

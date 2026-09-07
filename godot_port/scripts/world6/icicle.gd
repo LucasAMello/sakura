@@ -30,6 +30,7 @@ func _update_enemy() -> void:
 		var vertical_distance := player.position.y - position.y
 		if horizontal_distance > -140.0 and horizontal_distance < 100.0 and vertical_distance > 0.0 and vertical_distance < 300.0:
 			falling = true
+			get_node("/root/AudioManager").play_sfx("icefall")
 		return
 	timer += 1
 	vertical_speed = minf(39.0, vertical_speed + 4.0)
@@ -49,4 +50,3 @@ func _move_down(amount: float) -> bool:
 		position.y += step
 		remaining -= step
 	return true
-

@@ -1,0 +1,11 @@
+SAKURA GODOT PORT
+
+Original game and artwork: Sakura, 2008 archive
+Canonical preservation source: old/2 Joguito
+Godot port: Sakura Preservation Project
+
+Engine: Godot Engine 4.7.2
+MIDI renderer: FluidSynth 2.6.0
+General MIDI soundfont: MuseScore General
+
+The port preserves the original 640×480 pixel artwork, campaign maps, music compositions, sound effects, and gameplay structure. Original game content remains subject to its original ownership.

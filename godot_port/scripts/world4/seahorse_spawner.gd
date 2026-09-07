@@ -29,6 +29,8 @@ func _physics_process(_delta: float) -> void:
 	if cooldown > 0:
 		cooldown -= 1
 		return
-	if absf(player.get_center().x - position.x) <= ACTIVATION_DISTANCE:
+	var right_gap := player.position.x - position.x - 36.0
+	var left_gap := position.x - player.position.x - 40.0
+	if (right_gap > 0.0 and right_gap < ACTIVATION_DISTANCE) or (left_gap > 0.0 and left_gap < ACTIVATION_DISTANCE):
 		spawn_requested.emit(position)
 		cooldown = COOLDOWN_TICKS

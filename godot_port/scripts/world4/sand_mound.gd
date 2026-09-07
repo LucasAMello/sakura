@@ -15,6 +15,8 @@ var sprite: Sprite2D
 var card_id := 0
 var opened_state := false
 var timer := 0
+var update_phase := 0
+var gameplay_active := false
 
 
 func _ready() -> void:
@@ -29,6 +31,10 @@ func configure(contained_card_id: int) -> void:
 	card_id = contained_card_id
 
 
+func set_gameplay_active(value: bool) -> void:
+	gameplay_active = value
+
+
 func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 	return not opened_state and Rect2(position, BODY_SIZE).intersects(projectile_rect)
 
@@ -38,13 +44,18 @@ func take_projectile_hit(_damage: int, projectile_direction: int = 1) -> void:
 		return
 	opened_state = true
 	timer = 0
+	update_phase = 0
+	get_node("/root/AudioManager").play_sfx("sands", 1.0, 125.0 / 255.0)
 	sprite.texture = TEXTURES[1]
 	sprite.flip_h = projectile_direction < 0
 	opened.emit(position + Vector2(11.0, 0.0), card_id)
 
 
 func _physics_process(_delta: float) -> void:
-	if not opened_state:
+	if not opened_state or not gameplay_active:
+		return
+	update_phase = (update_phase + 1) % 2
+	if update_phase != 0:
 		return
 	timer += 1
 	if timer == 3:

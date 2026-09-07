@@ -35,11 +35,11 @@ func _update_enemy() -> void:
 		timer = 1
 	else:
 		timer += 1
-	if timer >= 1 and timer <= 5:
+	if timer >= 1 and timer <= 10:
 		_set_emerged_height(minf(FULL_HEIGHT, emerged_height + (6.0 if timer == 1 else 7.0)))
-	elif timer >= 16 and timer <= 20:
-		_set_emerged_height(maxf(0.0, emerged_height - (6.0 if timer == 20 else 7.0)))
-	elif timer >= 24:
+	elif timer >= 26 and timer <= 30:
+		_set_emerged_height(maxf(0.0, emerged_height - (6.0 if timer == 26 else 7.0)))
+	elif timer >= 34:
 		var horizontal_distance := absf(player.position.x - position.x)
 		if horizontal_distance > 110.0:
 			timer = 0

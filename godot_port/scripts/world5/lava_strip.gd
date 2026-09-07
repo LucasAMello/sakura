@@ -12,7 +12,6 @@ var strip_width := 60
 var timer := 0
 var gameplay_active := false
 var foreground := false
-var update_phase := 0
 
 
 func _ready() -> void:
@@ -32,9 +31,6 @@ func set_gameplay_active(value: bool) -> void:
 
 func _physics_process(_delta: float) -> void:
 	if not gameplay_active:
-		return
-	update_phase = (update_phase + 1) % 2
-	if update_phase != 0:
 		return
 	timer += 1
 	if timer % 15 == 0:

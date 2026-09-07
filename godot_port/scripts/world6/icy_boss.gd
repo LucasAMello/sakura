@@ -52,12 +52,14 @@ var direction := 1
 var damage_form := false
 var fight_started := false
 var intro_notified := false
+var boss_health := 30.0
 
 
 func _ready() -> void:
 	super._ready()
 	body_size = Vector2(154, 65)
 	hit_points = 30
+	boss_health = 30.0
 	contact_damage = 4
 	drops_recovery = false
 	_set_shadow(1, Vector2(154, 65))
@@ -86,11 +88,21 @@ func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 
 
 func take_projectile_hit(damage: int) -> void:
+	_take_boss_damage(float(damage))
+
+
+func take_weapon_hit(_damage: int, weapon_id: int) -> void:
+	_take_boss_damage(4.0 if weapon_id == 6 else 0.5)
+
+
+func _take_boss_damage(damage: float) -> void:
 	if defeated_state or not _can_receive_damage():
 		return
-	hit_points -= damage
+	boss_health -= damage
+	hit_points = ceili(boss_health)
 	hit_flash_ticks = 5
-	if hit_points <= 0:
+	if boss_health <= 0.0:
+		boss_health = 0.0
 		hit_points = 0
 		defeated_state = true
 		state = BossState.DEFEATED

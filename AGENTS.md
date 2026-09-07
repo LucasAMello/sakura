@@ -2,7 +2,7 @@
 
 ## Scope
 
-This repository contains the archived source and assets for Sakura plus a preservation-minded Godot 4 port. Active development is in `godot_port/`. The current playable scope covers Worlds 1–6 continuously: maps 10–14, 20–23, 30–32, 40–42, 50–53, and 60–62, including each world's checkpoint, boss, reward, and departure sequence. World 6 currently ends at its completion screen because World 7 is outside the implemented scope.
+This repository contains the archived source and assets for Sakura plus a preservation-minded Godot 4 port. Active development is in `godot_port/`. The port covers the complete canonical campaign: title/menu and stage select, Worlds 1–6, maps 70–80, six final-stage rematches, the final boss, and ending/credits. Later unfinished Sakura 2.0 features are outside scope.
 
 Read `godot_port/README.md` before making changes, but verify every referenced file and stated value against the current tree. The README can lag behind recent playtest changes.
 
@@ -35,7 +35,7 @@ Useful original files include:
 - `old/2 Joguito/sprite.h`: entity initialization and constants
 - `old/2 Joguito/colision.h`: collision behavior
 - `old/2 Joguito/maps.h`: terrain and spawn data
-- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, `map30.map` through `map32.map`, `map40.map` through `map42.map`, `map50.map` through `map53.map`, and `map60.map` through `map62.map`: authoritative maps for the currently ported scope
+- `old/2 Joguito/map10.map` through `map14.map`, `map20.map` through `map23.map`, `map30.map` through `map32.map`, `map40.map` through `map42.map`, `map50.map` through `map53.map`, `map60.map` through `map62.map`, and `map70.map` through `map80.map`: authoritative campaign maps
 
 Search the archive before guessing. Follow entity type numbers through initialization, update, collision, and draw code because behavior is often split across several files.
 
@@ -48,6 +48,9 @@ Search the archive before guessing. Follow entity type numbers through initializ
 - `godot_port/scripts/world4/stage4.gd` is the shared controller for maps 40–42.
 - `godot_port/scripts/world5/stage5.gd` is the shared controller for maps 50–53.
 - `godot_port/scripts/world6/stage6.gd` is the shared controller for maps 60–62.
+- `godot_port/scripts/world7/stage7.gd` controls maps 70–73 and the rematch hub; `stage80.gd` controls the final arena.
+- `godot_port/scripts/shared/game_flow.gd` is the only campaign scene router. Stage controllers must not hard-code the next elemental world.
+- `godot_port/scripts/shared/audio_manager.gd` owns track transitions, source loop offsets, and one-shot SFX playback.
 - `godot_port/scripts/player/player.gd` owns movement, collision, damage, immunity, animation, firing, and scripted walking.
 - `godot_port/scripts/shared/enemy_base.gd` owns shared enemy behavior.
 - Individual enemy and boss scripts live in their owning `godot_port/scripts/world1/` through `world6/` folders; cross-world logic lives in `godot_port/scripts/shared/`.
@@ -55,6 +58,14 @@ Search the archive before guessing. Follow entity type numbers through initializ
 - `SakuraProgress` is registered as an autoload in `godot_port/project.godot`. In scripts, resolve it with `get_node("/root/SakuraProgress")`; direct global identifier use has caused parser failures in this workspace.
 
 The game uses a 640×480 logical viewport and 60 fixed physics ticks per second, while the original Allegro game updated gameplay at 30 Hz. Preserve the 60 Hz Godot physics rate, but convert original tick-based movement, collision, attacks, firing, and animation to the same real-time pace. World-local enemies and enemy projectiles can retain the archive's per-update values by running their gameplay update once every two physics ticks. Do not apply that world-local cadence to shared player movement or weapon tuning. Use `delta` only for new visual behavior that cannot affect gameplay parity.
+
+The New Game dream/intro sequence is a presentation exception: the Sakura 2.0 source installs its `speed_counter` at 60 Hz, so its opening delay, text fades, falling animation, scene fades, and closing hold advance every Godot physics tick. Do not apply the two-tick world cadence to that cinematic.
+
+World 7 has the same conversion requirement as Worlds 3–6. Every reused or new enemy, hazard, projectile, animation, state timer, attack chooser, portal trigger, and firing interval must advance on the 30 Hz-equivalent world tick. Setting enemy movement to half speed while leaving its animation or firing timer at 60 Hz is incorrect. Final-boss projectiles use an explicit two-physics-tick phase; final-boss behavior uses `SakuraEnemy.update_interval_ticks = 2` through the stage spawn path. The player remains a 60 Hz controller throughout World 7.
+
+World 7 final-boss constants in `old/2 Joguito/scripts.h` are source-tick values and should be used directly on those two-tick update paths; do not double their timers or halve their per-update projectile motion a second time. Maps 71–73 change between `TEXTURES08` and `TEXTURES09` within each row, and map80 uses tokens `2` and `3` as non-solid atlas selectors rather than visible terrain. Preserve those selector rules when changing World 7 map rendering or collision.
+
+Weapons 2–7 also remain on the player's 60 Hz path. Translate original 30 Hz weapon timers to the same real time by doubling tick durations, and translate motion without losing collision substeps. Never place player weapon selection or active-shot accounting on the World 7 cadence.
 
 ## Current tuning that must be preserved
 
@@ -81,7 +92,11 @@ Unless the user requests otherwise:
 - World 2 wall interiors use the alternating castle-brick background tiles; their decorative fill remains non-solid while the surrounding border tiles own collision.
 - World 2 uses the stage backdrop only on map20; maps 21–23 use a black background.
 - World 3 and later world-local enemies, enemy projectiles, active hazards, and boss logic update once every two 60 Hz physics ticks to match the original 30 Hz real-time pace. This cadence must cover movement, acceleration, animation, state timers, and firing intervals together; avoid correcting only one of those dimensions.
-- World 1 and World 2 boss/checkpoint doors take 40 ticks to rise and 40 ticks to descend. World 3 doors retain their existing 20-tick motion.
+- Maps 70–80 and all final-boss attacks follow that same two-physics-tick cadence. Rematches reuse the owning boss controller and therefore retain that controller's existing cadence and manual tuning.
+- Original MIDI loop positions are beat markers, not percentages or sample offsets. Allegro loops by silencing active notes and seeking, so each looping track needs two renders: an initial section from its source `midi_seek` beat through the loop-end beat, and a fresh-state loop section from the loop-start beat through the loop-end beat. Do not point an OGG loop offset into a full render because it retains notes that began before the seek point. Use `godot_port/tools/midi_timing.py` and `midi_slice.py` when regenerating audio.
+- Do not assume Sakura's MIDI files use 120 BPM. Their explicit tick-zero tempo events must override the Standard MIDI default tempo; preserve event order when calculating marker times. World 1's corrected initial and loop sections are `71.641760` and `68.059672` seconds, and World 2's are `77.014892` and `73.432804` seconds.
+- World 1, World 2, and World 3 boss/checkpoint doors take 40 ticks to rise and 40 ticks to descend.
+- The World 3 boss updates movement and screen-flash interpolation every physics tick while preserving its tuned sequence timing: four physics ticks per sequence step, or two for the shock-ball attack. Fractional movement is retained and rendering uses pixel snapping. Takeoff frame-alignment offsets apply with their sprite changes. Dashes use frames 5 then 4. Beam visuals last nine physics ticks, three per frame; strike timing and wave spacing are unchanged.
 - Map14's falling-stage introduction uses the latest playtest timing: blocks fall 3 pixels per tick, activation and explosion intervals are four times the archive timing, and the boss entry wait is 120 ticks.
 - Card collectible spin animation runs at half its previous rate in every world; falling and collection fading retain their existing rates.
 - The first-boss health meter fills one point every two physics ticks. The first boss and its active feathers must use pausable process mode even though the stage controller processes while paused.

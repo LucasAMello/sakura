@@ -15,6 +15,7 @@ All PNGs preserve their original dimensions and pixels and replace Allegro's RGB
 | `fish_1_1.png`–`fish_4_3.png` | `old/2 Joguito/ewulfish11.bmp`–`ewulfish43.bmp` |
 | `oyster_lower.png`, `oyster_closed.png`, `oyster_open.png`, `oyster_mirrored.png` | `old/2 Joguito/ewul_ostra_parte_1.bmp`–`ewul_ostra_parte_4.bmp` |
 | `oyster_pearl.png` | `old/2 Joguito/ewul_ostra_ball_black_negresca.bmp` |
+| `fish_alert.png` | `old/2 Joguito/ha.bmp`, original 8×21 detection alert |
 | `sand_mound_1.png`–`sand_mound_4.png` | `old/2 Joguito/sandmorro.bmp`–`sandmorro3.bmp` |
 | `door.png` | `old/5 jogos new sakura/porta.bmp` |
 | `boss_turtle.png`, `boss_turtle_enter_1.png`–`boss_turtle_enter_3.png`, `boss_turtle_open_1.png`–`boss_turtle_open_2.png` | Matching `turtle*.bmp` files in `old/5 jogos new sakura/` |

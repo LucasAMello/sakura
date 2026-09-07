@@ -88,7 +88,7 @@ const MAP_CONFIGS := {
 		"sand_mounds": [[Vector2(6980, 164), 40]],
 	},
 	42: {
-		"width": 500, "height": 40, "start": Vector2(0, 260),
+		"width": 500, "height": 40, "start": Vector2(8000, 260),
 		"exit": Rect2(), "next": 0,
 		"water_surface": 300.0, "starts_in_water": false,
 		"background_rows": [60.0],
@@ -117,11 +117,8 @@ var boss: FourthStageBoss
 var boss_reward: FourthBossReward
 var boss_health_was_visible_on_death := false
 var bubble_ticks := 0
+var world_update_phase := 0
 var water_effects: Array[Node2D] = []
-
-
-func _default_map_number() -> int:
-	return 40
 
 
 func _first_map_number() -> int:
@@ -143,16 +140,17 @@ func _setup_terrain() -> void:
 		PackedStringArray(STAGE4_LETHAL),
 		{}
 	)
+	terrain.set_alpha_collision_tokens(PackedStringArray(["i", "n", ",", ".", "[", "]", "{", "}"]))
 
 
 func _configure_checkpoint() -> void:
-	player.set_water_surface(map_config["water_surface"], map_config["starts_in_water"])
-	player.water_state_changed.connect(_on_player_water_state_changed)
 	if map_number == 42 and progress.fourth_boss_checkpoint:
 		player.position = Vector2(8800, 560)
 		checkpoint_active = true
 		camera_locked = true
-		camera_lock_position = Vector2(9040, 400)
+		camera_lock_position = Vector2(9040, 520)
+	player.set_water_surface(map_config["water_surface"], map_config["starts_in_water"])
+	player.water_state_changed.connect(_on_player_water_state_changed)
 
 
 func _build_stage_boss_area() -> void:
@@ -181,9 +179,25 @@ func _enemy_update_interval() -> int:
 	return 2
 
 
+func _build_entry_portal() -> void:
+	super._build_entry_portal()
+	portal_back.z_index = player.z_index - 2
+	entry_player.z_index = player.z_index
+	entry_effect.z_index = 28
+	portal_front.z_index = 29
+
+
+func _start_departure(direction: int = 0) -> void:
+	super._start_departure(direction)
+	departure_back.z_index = player.z_index - 2
+	departure_player.z_index = player.z_index
+	departure_front.z_index = 29
+
+
 func _physics_process(_delta: float) -> void:
 	if _handle_global_input():
 		return
+	world_update_phase = (world_update_phase + 1) % 2
 	match stage_state:
 		StageState.ENTRY:
 			_update_entry()
@@ -230,6 +244,7 @@ func _update_water_effects() -> void:
 
 
 func _on_player_water_state_changed(_entered_water: bool) -> void:
+	get_node("/root/AudioManager").play_sfx("splash")
 	var splash: World4WaterSplash = WaterSplashScript.new()
 	splash.position = Vector2(player.position.x - 4.0, float(map_config["water_surface"]) - 14.0)
 	splash.z_index = 31
@@ -238,7 +253,7 @@ func _on_player_water_state_changed(_entered_water: bool) -> void:
 
 
 func _update_playing() -> void:
-	if map_number == 42 and player.facing > 0 and player.get_hit_rect().intersects(Rect2(8720, 540, 30, 100), true):
+	if map_number == 42 and player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(8720, 540, 30, 100), true):
 		_begin_checkpoint_entry()
 		return
 	var exit_rect: Rect2 = map_config["exit"]
@@ -255,17 +270,17 @@ func _update_checkpoint_entry() -> void:
 	if player.position.y == 560.0:
 		player.y_speed = 0.0
 		player.grounded = true
-	if state_ticks <= 20:
-		_set_door_opening(0, float(state_ticks) / 20.0)
-	elif state_ticks <= 60:
+	if state_ticks <= 40:
+		_set_door_opening(0, float(state_ticks) / 40.0)
+	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
 		player.scripted_step_right(2.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(9040, 400), float(state_ticks - 20) / 40.0)
-	elif state_ticks <= 80:
-		_set_door_opening(0, 1.0 - float(state_ticks - 60) / 20.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(9040, 520), float(state_ticks - 40) / 80.0)
+	elif state_ticks <= 160:
+		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
 	else:
 		_set_door_opening(0, 0.0)
-		camera_lock_position = Vector2(9040, 400)
+		camera_lock_position = Vector2(9040, 520)
 		progress.set_fourth_boss_checkpoint(true)
 		stage_state = StageState.CHECKPOINT
 		state_ticks = 0
@@ -275,23 +290,23 @@ func _update_checkpoint_entry() -> void:
 
 func _update_checkpoint() -> void:
 	player.position.x = clampf(player.position.x, 8750.0, 9290.0)
-	if player.facing > 0 and player.get_hit_rect().intersects(Rect2(9330, 540, 30, 100), true):
+	if player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(9330, 540, 30, 100), true):
 		_begin_boss_entry()
 
 
 func _update_boss_entry() -> void:
 	state_ticks += 1
-	if state_ticks <= 20:
-		_set_door_opening(1, float(state_ticks) / 20.0)
-	elif state_ticks <= 60:
+	if state_ticks <= 40:
+		_set_door_opening(1, float(state_ticks) / 40.0)
+	elif state_ticks <= 120:
 		_set_door_opening(1, 1.0)
 		player.scripted_step_right(2.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(9680, 400), float(state_ticks - 20) / 40.0)
-	elif state_ticks <= 80:
-		_set_door_opening(1, 1.0 - float(state_ticks - 60) / 20.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(9650, 520), float(state_ticks - 40) / 80.0)
+	elif state_ticks <= 160:
+		_set_door_opening(1, 1.0 - float(state_ticks - 120) / 40.0)
 	else:
 		_set_door_opening(1, 0.0)
-		camera_lock_position = Vector2(9680, 400)
+		camera_lock_position = Vector2(9650, 520)
 		player.position.y = 560.0
 		player.y_speed = 0.0
 		player.grounded = true
@@ -304,6 +319,8 @@ func _update_boss_entry() -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
+	if state_ticks >= 24 and state_ticks <= 82 and state_ticks % 2 == 0:
+		get_node("/root/AudioManager").play_sfx("recuperator")
 	if state_ticks >= 82:
 		stage_state = StageState.BOSS
 		state_ticks = 0
@@ -316,15 +333,23 @@ func _update_boss() -> void:
 
 
 func _on_boss_water_shot_requested(spawn_position: Vector2, direction: int, trailing: bool) -> void:
+	get_node("/root/AudioManager").play_sfx("turtlejato")
 	var shot: World4WaterShot = WaterShotScript.new()
 	_spawn_enemy(shot, spawn_position)
+	shot.z_index = 9
 	shot.configure(direction, trailing)
 	shot.set_gameplay_active(true)
 
 
 func _on_boss_defeated() -> void:
-	boss_reward_position = boss.position + Vector2(53, 12)
+	boss_reward_position = boss.position + boss.body_size * 0.5 - Vector2(11, 18)
 	enemies.erase(boss)
+	for index in range(enemies.size() - 1, -1, -1):
+		var enemy := enemies[index]
+		if is_instance_valid(enemy) and enemy is World4WaterShot:
+			enemies.remove_at(index)
+			enemy.hide()
+			enemy.queue_free()
 	stage_state = StageState.VICTORY
 	state_ticks = 0
 	_set_gameplay_active(false)
@@ -336,36 +361,43 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
+	_move_player_to_boss_departure(4)
+	if departure_ticks > 0:
+		_update_departure()
+	if world_update_phase != 0:
+		return
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 5:
 				for _burst in range(3):
-					_spawn_enemy_death(boss.position + Vector2(64, 30))
+					_spawn_boss_explosion(boss.position + Vector2(55, 30))
 			if state_ticks % 7 == 3 and is_instance_valid(boss):
-				_spawn_enemy_death(boss.position + Vector2(randi_range(0, 128), randi_range(0, 60)))
+				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 127) - 6, randi_range(0, 59) - 6))
 			return
-		if state_ticks <= 285:
+		if state_ticks <= 270:
 			hud.set_boss_flash(1.0)
 			return
 		if is_instance_valid(boss):
 			boss.queue_free()
 		_spawn_boss_reward()
 	if not boss_reward_homing:
-		var fade_tick := state_ticks - 285
+		var fade_tick := state_ticks - 270
 		hud.set_boss_flash(1.0 - float(fade_tick) / 255.0)
 		if fade_tick >= 255:
 			boss_reward_homing = true
 			hud.set_boss_flash(0.0)
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
-	if departure_ticks > 0:
-		_update_departure()
+			else:
+				_start_departure()
 
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
+	if _is_active_rematch():
+		return
 	boss_reward = FourthBossRewardScript.new()
 	boss_reward.position = boss_reward_position
 	boss_reward.z_index = 32
@@ -383,8 +415,7 @@ func _on_boss_reward_collected() -> void:
 func _complete_departure() -> void:
 	progress.set_fourth_boss_checkpoint(false)
 	if get_tree().current_scene == self:
-		progress.store_hp(player.hp)
-		get_tree().change_scene_to_file("res://scenes/map50.tscn")
+		_finish_elemental_or_rematch(4)
 
 
 func _spawn_stage_objects() -> void:
@@ -431,12 +462,12 @@ func _on_seahorse_requested(spawn_position: Vector2) -> void:
 	seahorse.set_gameplay_active(true)
 
 
-func _on_oyster_pearl_requested(spawn_position: Vector2) -> void:
+func _on_oyster_pearl_requested(spawn_position: Vector2, shot_direction: int) -> void:
 	var pearl: World4OysterPearl = OysterPearlScript.new()
 	pearl.position = spawn_position
-	pearl.z_index = 12
+	pearl.z_index = 9
 	add_child(pearl)
-	pearl.setup(terrain, player)
+	pearl.setup(terrain, player, shot_direction)
 	pearl.set_gameplay_active(true)
 	oyster_pearls.append(pearl)
 
@@ -455,7 +486,9 @@ func _on_sand_mound_opened(spawn_position: Vector2, card_id: int) -> void:
 		_spawn_card(spawn_position, card_id, true)
 
 
-func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
+func _damage_stage_object_in_rect(rect: Rect2, damage: int, weapon_id: int = 1) -> bool:
+	if weapon_id != 2:
+		return false
 	for mound in sand_mounds:
 		if is_instance_valid(mound) and mound.projectile_mask_overlap(rect):
 			mound.take_projectile_hit(damage)
@@ -465,6 +498,9 @@ func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
 
 func _set_gameplay_active(value: bool) -> void:
 	super._set_gameplay_active(value)
+	for mound in sand_mounds:
+		if is_instance_valid(mound):
+			mound.set_gameplay_active(value)
 	for spawner in seahorse_spawners:
 		if is_instance_valid(spawner):
 			spawner.set_gameplay_active(value)
@@ -510,7 +546,7 @@ func _build_background() -> void:
 	backdrop.color = Color8(0, 0, 161)
 	backdrop.z_index = -30
 	add_child(backdrop)
-	for index in range(4):
+	for index in range(6):
 		var sprite := Sprite2D.new()
 		sprite.centered = false
 		sprite.texture = STAGE4_BACKGROUND
@@ -528,14 +564,15 @@ func _update_background() -> void:
 	var sampled_x := viewport_top_left.x / 5.0
 	var world_offset_x := viewport_top_left.x - sampled_x
 	var texture_width := background_sprite.texture.get_width()
-	var source_x := floorf(sampled_x / texture_width) * texture_width
 	var rows: Array = map_config["background_rows"]
 	for index in range(background_sprites.size()):
-		var row_index := int(index / 2.0)
+		var row_index := int(index / 3.0)
 		background_sprites[index].visible = row_index < rows.size()
 		if row_index < rows.size():
+			var row_offset := -100.0 if map_number == 40 and row_index == 0 else 0.0
+			var source_x := floorf((sampled_x - row_offset) / texture_width) * texture_width + row_offset
 			background_sprites[index].position = Vector2(
-				world_offset_x + source_x + (index % 2) * texture_width,
+				world_offset_x + source_x + (index % 3) * texture_width,
 				rows[row_index]
 			)
 

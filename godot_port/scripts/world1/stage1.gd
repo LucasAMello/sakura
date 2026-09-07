@@ -38,6 +38,7 @@ const BACKGROUND_WIDTH := 1000.0
 const BACKGROUND_HEIGHT := 520.0
 const BACKGROUND_COLUMNS := 2
 const BACKGROUND_SPRITE_COUNT := 4
+const BACKGROUND_PARALLAX_FACTOR := 0.85
 const FIRST_BOSS_CAMERA_POSITION := Vector2(3200.0, 320.0)
 const BOSS_BLOCK_DELAY_SCALE := 4
 const BOSS_BLOCK_SEQUENCE_TICKS := 120
@@ -53,7 +54,7 @@ const MAP_CONFIGS := {
 		"red_balls": [
 			[Vector2(800, 320), 0], [Vector2(1480, 320), 0],
 			[Vector2(1780, 240), 1], [Vector2(2920, 120), 0],
-			[Vector2(3220, 120), 0], [Vector2(3700, 280), 0],
+			[Vector2(3220, 120), 0], [Vector2(3680, 280), 0],
 			[Vector2(5140, 400), 0], [Vector2(5500, 340), 0],
 			[Vector2(5800, 280), 0], [Vector2(7060, 420), 0],
 			[Vector2(7480, 240), 0], [Vector2(7700, 160), 0],
@@ -124,7 +125,7 @@ const MAP_CONFIGS := {
 		"turrets": [[Vector2(470, 700), 0]],
 		"birds": [],
 		"pumpkins": [[Vector2(600, 1740), 0], [Vector2(320, 1120), 0], [Vector2(400, 580), 0]],
-		"cards": [[Vector2(569, 1720), true, 28], [Vector2(620, 240), true, 13]],
+		"cards": [[Vector2(562, 1720), true, 28], [Vector2(620, 240), true, 13]],
 		"holder": [],
 	},
 	14: {
@@ -154,10 +155,6 @@ var boss_spawn_started := false
 var boss_meter_ticks := 0
 var boss_meter_fill_phase := 0
 var boss_reward: BossReward
-
-
-func _default_map_number() -> int:
-	return 14
 
 
 func _first_map_number() -> int:
@@ -275,7 +272,7 @@ func _update_intermission_entry() -> void:
 
 func _update_intermission() -> void:
 	player.position.x = clampf(player.position.x, 2160.0, 2690.0)
-	if player.get_hit_rect().end.x >= 2730.0:
+	if player.grounded and player.get_hit_rect().end.x >= 2730.0:
 		_begin_boss_intro()
 
 
@@ -296,11 +293,12 @@ func _begin_boss_intro() -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
-	if boss_spawn_started and is_instance_valid(boss) and boss.state != FirstStageBoss.BossState.ENTERING:
+	if boss_spawn_started and is_instance_valid(boss) and boss.state != FirstStageBoss.BossState.ENTERING and boss_meter_ticks < boss.hit_points:
 		boss_meter_fill_phase += 1
 		if boss_meter_fill_phase >= BOSS_METER_FILL_INTERVAL:
 			boss_meter_fill_phase = 0
 			boss_meter_ticks += 1
+			get_node("/root/AudioManager").play_sfx("recuperator")
 	if state_ticks <= 40:
 		_set_boss_door_opening(1, float(state_ticks) / 40.0)
 		return
@@ -372,7 +370,7 @@ func _on_boss_defeated() -> void:
 		enemies.erase(boss)
 		boss_reward_position = boss.position + boss.body_size * 0.5 - Vector2(11, 18)
 		for offset in [Vector2(0, 0), Vector2(35, 20), Vector2(-30, 40), Vector2(20, 70)]:
-			_spawn_enemy_death(boss.position + boss.body_size * 0.5 + offset)
+			_spawn_boss_explosion(boss.position + boss.body_size * 0.5 + offset)
 	for projectile in get_tree().get_nodes_in_group("boss_projectiles"):
 		projectile.queue_free()
 	stage_state = StageState.VICTORY
@@ -386,12 +384,13 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
+	_move_player_to_boss_departure(1)
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks % 7 == 3 and is_instance_valid(boss):
-				_spawn_enemy_death(boss.position + Vector2(randi_range(0, int(boss.body_size.x)), randi_range(0, int(boss.body_size.y))))
+				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, int(boss.body_size.x)), randi_range(0, int(boss.body_size.y))))
 			return
 		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
@@ -407,12 +406,16 @@ func _update_victory() -> void:
 			hud.set_boss_flash(0.0)
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
+			else:
+				_start_departure()
 	if departure_ticks > 0:
 		_update_departure()
 
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
+	if _is_active_rematch():
+		return
 	boss_reward = BossRewardScript.new()
 	boss_reward.position = boss_reward_position
 	boss_reward.z_index = 32
@@ -428,8 +431,7 @@ func _on_boss_reward_collected() -> void:
 
 func _complete_departure() -> void:
 	progress.set_boss_checkpoint(false)
-	progress.store_hp(player.hp)
-	get_tree().change_scene_to_file("res://scenes/map20.tscn")
+	_finish_elemental_or_rematch(1)
 
 
 func _spawn_stage_objects() -> void:
@@ -472,7 +474,7 @@ func _spawn_enemy_defeat_effect(enemy: SakuraEnemy, effect_position: Vector2) ->
 		_spawn_enemy_death(effect_position)
 
 
-func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
+func _damage_stage_object_in_rect(rect: Rect2, damage: int, _weapon_id: int = 1) -> bool:
 	if is_instance_valid(card_holder) and card_holder.projectile_mask_overlap(rect):
 		card_holder.take_projectile_hit(damage)
 		return true
@@ -493,6 +495,7 @@ func _spawn_card(spawn_position: Vector2, card_id: int, falls: bool) -> void:
 
 
 func _spawn_turret_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim60")
 	var effect: TurretDeathEffect = TurretDeathEffectScript.new()
 	effect.position = effect_position
 	effect.z_index = 30
@@ -516,15 +519,17 @@ func _update_background() -> void:
 	if not is_inside_tree() or not is_instance_valid(camera):
 		return
 	var viewport_top_left := camera.position - VIEWPORT_HALF_SIZE
-	var first_column := floori(viewport_top_left.x / BACKGROUND_WIDTH)
 	var background_y := float(map_config.get("background_y", 0.0))
-	var first_row := floori((viewport_top_left.y - background_y) / BACKGROUND_HEIGHT)
+	var sampled_origin := viewport_top_left * BACKGROUND_PARALLAX_FACTOR - Vector2(0.0, background_y)
+	var world_offset := viewport_top_left - sampled_origin
+	var first_column := floori(sampled_origin.x / BACKGROUND_WIDTH)
+	var first_row := floori(sampled_origin.y / BACKGROUND_HEIGHT)
 	for sprite_index in range(background_sprites.size()):
 		var column := sprite_index % BACKGROUND_COLUMNS
 		var row := floori(float(sprite_index) / float(BACKGROUND_COLUMNS))
-		background_sprites[sprite_index].position = Vector2(
+		background_sprites[sprite_index].position = world_offset + Vector2(
 			(first_column + column) * BACKGROUND_WIDTH,
-			(first_row + row) * BACKGROUND_HEIGHT + background_y
+			(first_row + row) * BACKGROUND_HEIGHT
 		)
 
 

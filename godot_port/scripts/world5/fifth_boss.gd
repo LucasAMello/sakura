@@ -25,12 +25,14 @@ enum BossState { WAITING, INTRO, IDLE, SPRAY, HADOUKEN, SLASH, DEFEATED }
 var state := BossState.WAITING
 var timer := 0
 var direction := 1
+var boss_health := 30.0
 
 
 func _ready() -> void:
 	super._ready()
 	body_size = Vector2(129, 106)
 	hit_points = 30
+	boss_health = 30.0
 	contact_damage = 4
 	drops_recovery = false
 	sprite.texture = IDLE_FRAMES[0]
@@ -48,11 +50,21 @@ func start_fight() -> void:
 
 
 func take_projectile_hit(damage: int) -> void:
+	_take_boss_damage(float(damage))
+
+
+func take_weapon_hit(_damage: int, weapon_id: int) -> void:
+	_take_boss_damage(3.0 if weapon_id == 5 else 0.5)
+
+
+func _take_boss_damage(damage: float) -> void:
 	if defeated_state or state == BossState.WAITING or state == BossState.INTRO:
 		return
-	hit_points -= damage
+	boss_health -= damage
+	hit_points = ceili(boss_health)
 	hit_flash_ticks = 5
-	if hit_points <= 0:
+	if boss_health <= 0.0:
+		boss_health = 0.0
 		hit_points = 0
 		defeated_state = true
 		state = BossState.DEFEATED
@@ -87,6 +99,8 @@ func _update_intro() -> void:
 		sprite.texture = FIRE_FRAMES[0]
 	elif timer == 4 or timer == 20:
 		sprite.texture = FIRE_FRAMES[1]
+		if timer == 4:
+			get_node("/root/AudioManager").play_sfx("roar")
 	elif timer == 6:
 		sprite.texture = FIRE_FRAMES[2]
 	elif timer == 24:
@@ -159,4 +173,3 @@ func _return_to_idle() -> void:
 
 func _death_effect_position() -> Vector2:
 	return position + Vector2(64, 53)
-

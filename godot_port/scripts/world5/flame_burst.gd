@@ -47,6 +47,8 @@ func _update_enemy() -> void:
 	if timer >= 29:
 		queue_free()
 		return
+	if timer < 27 and timer % 7 == 1:
+		get_node("/root/AudioManager").play_sfx_near_player("flamethrower", position, player.position, 1.0, 100.0 / 255.0)
 	if timer == 27:
 		sprite.texture = frames[7]
 	elif timer == 28:

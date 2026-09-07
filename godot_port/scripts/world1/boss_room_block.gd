@@ -48,6 +48,7 @@ func _physics_process(_delta: float) -> void:
 
 
 func _spawn_explosion(offset: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim13")
 	var explosion: TurretShotExplosion = ExplosionScript.new()
 	explosion.position = position + offset
 	explosion.z_index = 30

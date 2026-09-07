@@ -56,17 +56,19 @@ func _ready() -> void:
 	add_child(sprite)
 
 
-func setup(projectile_kind: int, map_terrain: SakuraTerrain, target_player: SakuraPlayer, projectile_direction: int = 0) -> void:
+func setup(projectile_kind: Kind, map_terrain: SakuraTerrain, target_player: SakuraPlayer, projectile_direction: int = 0) -> void:
 	kind = projectile_kind
 	terrain = map_terrain
 	player = target_player
 	direction = projectile_direction
 	match kind:
 		Kind.WALL_SHOT:
+			get_node("/root/AudioManager").play_sfx_near_player("wts", position, player.position, 1.0, 100.0 / 255.0)
 			sprite.texture = WALL_TEXTURES[0]
 			velocity = _wall_velocity(direction)
 			damage = 2
 		Kind.MISSILE:
+			get_node("/root/AudioManager").play_sfx_near_player("ewulmissile", position, player.position)
 			sprite.texture = MISSILE_TEXTURE
 			sprite.region_enabled = true
 			sprite.region_rect = Rect2(0, 0, 8, 11)
@@ -78,22 +80,27 @@ func setup(projectile_kind: int, map_terrain: SakuraTerrain, target_player: Saku
 			body_size = Vector2.ZERO
 			_apply_direction_transform(sprite, direction)
 		Kind.SHOCK_BALL:
+			get_node("/root/AudioManager").play_sfx_near_player("tiro4", position, player.position)
 			sprite.texture = BALL_TEXTURES[0]
 			sprite.position = Vector2(-5, -8)
 			body_size = Vector2(16, 16)
 			velocity = [Vector2(0, 10), Vector2(-10, 0), Vector2(0, -10), Vector2(10, 0)][direction]
 			damage = 3
 		Kind.BOSS_LIGHTNING:
+			get_node("/root/AudioManager").play_sfx("bigthunder")
 			sprite.texture = LIGHTNING_TEXTURES[0]
 			body_size = Vector2.ZERO
 		Kind.BOSS_BEAM:
+			get_node("/root/AudioManager").play_sfx("thundersound")
 			body_size = Vector2(34, 512)
 			damage = 3
+			_resolve_beam_strike()
 			_build_beam()
 
 
 func _physics_process(_delta: float) -> void:
-	update_phase = (update_phase + 1) % 2
+	var update_interval := 1 if kind == Kind.BOSS_BEAM else 2
+	update_phase = (update_phase + 1) % update_interval
 	if update_phase != 0:
 		return
 	timer += 1
@@ -172,22 +179,35 @@ func _update_lightning() -> void:
 
 
 func _update_beam() -> void:
-	if timer == 1 and is_instance_valid(player) and Rect2(position, body_size).intersects(player.get_hit_rect()):
-		player.take_damage(damage)
-	elif timer == 5:
+	if timer == 3:
 		_set_beam_texture(BEAM_TEXTURES[1])
-	elif timer == 9:
+	elif timer == 6:
 		_set_beam_texture(BEAM_TEXTURES[2])
-	elif timer >= 13:
+	elif timer >= 9:
 		queue_free()
+
+
+func _resolve_beam_strike() -> void:
+	var stage := get_parent() as StageBase
+	for height in range(int(body_size.y)):
+		var row := Rect2(position + Vector2(0, height), Vector2(body_size.x, 1))
+		var hits_solid := stage.projectile_hits_solid(row) if stage != null else terrain.rect_hits_solid(row)
+		if hits_solid:
+			body_size.y = height
+			break
+	if is_instance_valid(player) and Rect2(position, body_size).intersects(player.get_hit_rect()):
+		body_size.y = maxf(0.0, player.position.y - position.y)
+		player.take_damage(damage)
 
 
 func _move_and_hit(amount: Vector2) -> bool:
 	var steps := maxi(1, ceili(maxf(absf(amount.x), absf(amount.y))))
 	var step := amount / float(steps)
+	var stage := get_parent() as StageBase
 	for _index in range(steps):
 		var candidate := Rect2(position + step, body_size)
-		if terrain.rect_hits_solid(candidate):
+		var hits_solid := stage.projectile_hits_solid(candidate) if stage != null else terrain.rect_hits_solid(candidate)
+		if hits_solid:
 			return true
 		position += step
 		if is_instance_valid(player) and Rect2(position, body_size).intersects(player.get_hit_rect()):
@@ -220,6 +240,9 @@ func _apply_direction_transform(target: Sprite2D, projectile_direction: int) -> 
 		target.flip_v = true
 	elif projectile_direction == 3:
 		target.rotation = -PI * 0.5
+	if projectile_direction == 1 or projectile_direction == 3:
+		var half_size := target.texture.get_size() * 0.5
+		target.position = Vector2(-3, 2) + half_size - half_size.rotated(target.rotation)
 
 
 func _charge_ball_offset(projectile_direction: int) -> Vector2:
@@ -229,10 +252,15 @@ func _charge_ball_offset(projectile_direction: int) -> Vector2:
 func _build_beam() -> void:
 	sprite.visible = false
 	for index in range(4):
+		var segment_height := minf(128.0, body_size.y - index * 128.0)
+		if segment_height <= 0.0:
+			break
 		var segment := Sprite2D.new()
 		segment.centered = false
 		segment.position = Vector2(0, index * 128)
 		segment.texture = BEAM_TEXTURES[0]
+		segment.region_enabled = true
+		segment.region_rect = Rect2(0, 0, 34, segment_height)
 		segment.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		add_child(segment)
 		beam_segments.append(segment)

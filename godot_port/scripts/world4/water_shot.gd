@@ -19,7 +19,7 @@ var trailing := false
 var timer := 0
 var segment_count := 0
 var expanding := true
-var shrinking := false
+var blocking_edge := NAN
 var front_sprite: Sprite2D
 var end_sprite: Sprite2D
 var middle_sprites: Array[Sprite2D] = []
@@ -55,25 +55,29 @@ func take_projectile_hit(_damage: int) -> void:
 
 func _update_enemy() -> void:
 	timer += 1
-	if shrinking:
-		segment_count -= 2
-		if segment_count < 0:
-			queue_free()
-			return
-		body_size.x = 33.0 + segment_count * 16.0
-		_refresh_visuals()
-		return
+	blocking_edge = NAN
 	var should_move := not expanding or direction == 0 or trailing
-	if should_move and _move_or_hit(-32.0 if direction == 0 else 32.0):
-		_begin_shrinking()
-		return
+	if should_move:
+		_move_or_hit(-32.0 if direction == 0 else 32.0)
 	if expanding:
 		segment_count += 2
 		body_size.x += 32.0
 		if segment_count >= 10:
 			segment_count += 1
 			body_size.x += 16.0
+			if is_nan(blocking_edge):
+				_move_or_hit(-16.0 if direction == 0 else 16.0)
 			expanding = false
+	if is_nan(blocking_edge):
+		blocking_edge = _find_blocking_edge(get_hit_rect())
+	if not is_nan(blocking_edge):
+		if not trailing or not expanding:
+			segment_count -= 2
+			body_size.x -= 32.0
+			if segment_count <= 0:
+				queue_free()
+				return
+		position.x = blocking_edge - body_size.x if direction == 1 else blocking_edge - (3.0 if not trailing else 0.0)
 	_refresh_visuals()
 	if position.x + body_size.x < 0.0 or position.x > terrain.world_size.x:
 		queue_free()
@@ -83,15 +87,30 @@ func _move_or_hit(amount: float) -> bool:
 	var direction_sign := signf(amount)
 	for _step in range(int(absf(amount))):
 		var candidate := Rect2(position + Vector2(direction_sign, 0), body_size)
-		if candidate.position.x < 0.0 or candidate.end.x > terrain.world_size.x or terrain.rect_hits_solid(candidate):
+		var edge := _find_blocking_edge(candidate)
+		if not is_nan(edge):
+			blocking_edge = edge
 			return true
 		position.x += direction_sign
 	return false
 
 
-func _begin_shrinking() -> void:
-	shrinking = true
-	expanding = false
+func _find_blocking_edge(rect: Rect2) -> float:
+	if direction == 0 and rect.position.x < 9360.0:
+		return 9360.0
+	if direction == 1 and rect.end.x > terrain.world_size.x:
+		return terrain.world_size.x
+	var edge := NAN
+	for tile_y in range(floori(rect.position.y / 20.0), ceili(rect.end.y / 20.0)):
+		for tile_x in range(floori(rect.position.x / 20.0), ceili(rect.end.x / 20.0)):
+			var tile_rect := Rect2(tile_x * 20.0, tile_y * 20.0, 20.0, 20.0)
+			if terrain.rect_hits_solid(rect.intersection(tile_rect)):
+				var tile_edge := tile_rect.position.x if direction == 1 else tile_rect.end.x
+				if is_nan(edge):
+					edge = tile_edge
+				else:
+					edge = minf(edge, tile_edge) if direction == 1 else maxf(edge, tile_edge)
+	return edge
 
 
 func _make_piece(texture: Texture2D) -> Sprite2D:

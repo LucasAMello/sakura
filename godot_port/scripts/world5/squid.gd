@@ -26,6 +26,10 @@ func configure() -> void:
 	sprite.visible = false
 
 
+func take_weapon_hit(damage: int, weapon_id: int) -> void:
+	take_projectile_hit(3 if weapon_id == 5 else damage)
+
+
 func _update_enemy() -> void:
 	if state != 2:
 		sprite.texture = FRAMES[timer % 4]

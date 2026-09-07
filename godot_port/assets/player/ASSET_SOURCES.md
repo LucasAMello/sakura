@@ -23,3 +23,14 @@ Primary source: `old/5 jogos new sakura`.
 | `extra_life.png` | `vida.bmp` | `VIDA` |
 | `portal_1.png`–`portal_6.png` | `portal1.bmp`–`portal6.bmp` | `PORTAL1`–`PORTAL6` |
 | `death_1.png`–`death_5.png` | `pdie1.bmp`–`pdie5.bmp` | `PDIE1`–`PDIE5` |
+| `attack_overlay.png` | — | `AAA` in `old/4 Sakura2.0/Media/files.dat` |
+
+## Weapon-specific Sakura sprites
+
+The unsuffixed player frame is weapon 1; suffixes `A` through `F` are weapons 2 through 7 respectively. The port stores the weapon sets under `weapon2_wind/`, `weapon3_shadow/`, `weapon4_thunder/`, `weapon5_water/`, `weapon6_fire/`, and `weapon7_ice/`.
+
+At the user's request, each directory's `idle.png`, `walk2.png`, `jump.png`, `walk4.png`, and `walk5.png` come from `old/5 jogos new sakura/playermo01[a-f].bmp` through `playermo05[a-f].bmp`, respectively. All 30 frames retain their original 54×80 dimensions, with RGB `(255, 0, 255)` converted to transparent pixels. Animation order, frame timing, and collision dimensions are unchanged.
+
+The five `fire_*` equivalents still come from the corresponding `PLAYER_MOVING12*`–`PLAYER_MOVING52*` objects in `old/2 Joguito/files.dat`.
+
+The later completed source draws `AAA` over every firing player frame. The port preserves its direction-dependent horizontal placement and its original two-pixel vertical adjustment for the jump and fifth walk frames.

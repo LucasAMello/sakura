@@ -50,7 +50,7 @@ func _physics_process(_delta: float) -> void:
 	for _substep in range(6):
 		position.x += move_direction * 1.5
 		var rect := Rect2(position, BODY_SIZE)
-		if terrain.rect_hits_solid(rect):
+		if stage.projectile_hits_solid(rect):
 			_end()
 			return
 		if stage.damage_enemy_in_rect(rect, 1):

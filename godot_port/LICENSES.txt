@@ -1,0 +1,9 @@
+Godot Engine is distributed under the MIT license.
+https://godotengine.org/license/
+
+FluidSynth is distributed under the GNU Lesser General Public License. It was used as a build-time renderer and is not bundled in the game package.
+https://github.com/FluidSynth/fluidsynth
+
+MuseScore General attribution and licensing for the rendered MIDI soundtrack are included in assets/audio/licenses/MuseScore_General_License.md.
+
+Original Sakura code, artwork, music, maps, and sound effects remain subject to their original ownership and are not relicensed by this port.

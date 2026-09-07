@@ -29,8 +29,8 @@ func _update_enemy() -> void:
 	var projectile: EnemyProjectile = EnemyProjectileScript.new()
 	projectile.position = position + Vector2(59 if direction == 1 else 0, 16)
 	projectile.z_index = 11
-	projectile.setup(terrain, player, direction)
 	get_parent().add_child(projectile)
+	projectile.setup(terrain, player, direction)
 
 
 func _roll_drop() -> int:

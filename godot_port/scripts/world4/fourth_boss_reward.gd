@@ -18,6 +18,7 @@ var player: SakuraPlayer
 var sprite: Sprite2D
 var timer := 0
 var state := 0
+var update_phase := 0
 
 
 func _ready() -> void:
@@ -40,11 +41,15 @@ func begin_homing() -> void:
 
 
 func _physics_process(_delta: float) -> void:
+	update_phase = (update_phase + 1) % 2
+	if update_phase != 0:
+		return
 	timer += 1
 	if state == 0:
 		return
 	if state == 1:
 		sprite.texture = FRAMES[int(timer / 2.0) % FRAMES.size()]
+		sprite.flip_h = timer % 16 >= 10
 		var target := player.position + Vector2(14, 22)
 		position.x = move_toward(position.x, target.x, 5.0)
 		position.y = move_toward(position.y, target.y, 5.0)

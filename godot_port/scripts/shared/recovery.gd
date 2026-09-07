@@ -47,6 +47,7 @@ func _physics_process(_delta: float) -> void:
 			player.add_health(3)
 		else:
 			player.add_life()
+		get_node("/root/AudioManager").play_sfx("recuperators")
 		queue_free()
 
 

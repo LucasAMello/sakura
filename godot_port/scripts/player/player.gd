@@ -1,7 +1,7 @@
 class_name SakuraPlayer
 extends Node2D
 
-signal shot_requested(origin: Vector2, facing: int)
+signal shot_requested(origin: Vector2, facing: int, weapon_id: int)
 signal died
 signal hp_changed(current_hp: int, maximum_hp: int)
 signal shot_count_changed(active: int)
@@ -9,6 +9,7 @@ signal water_state_changed(entered_water: bool)
 
 const BODY_SIZE := Vector2(40, 80)
 const MAX_HP := 15
+const MAX_SUPPORTED_HP := 20
 const MAX_X_SPEED := 4.0
 
 const NORMAL_TEXTURES := [
@@ -25,12 +26,25 @@ const FIRING_TEXTURES := [
 	preload("res://assets/player/player_fire_walk4.png"),
 	preload("res://assets/player/player_fire_walk5.png"),
 ]
+const NORMAL_FRAME_FILES := ["idle.png", "walk2.png", "jump.png", "walk4.png", "walk5.png"]
+const FIRING_FRAME_FILES := ["fire_idle.png", "fire_walk2.png", "fire_jump.png", "fire_walk4.png", "fire_walk5.png"]
+const WEAPON_SPRITE_DIRECTORIES := {
+	2: "weapon2_wind",
+	3: "weapon3_shadow",
+	4: "weapon4_thunder",
+	5: "weapon5_water",
+	6: "weapon6_fire",
+	7: "weapon7_ice",
+}
 const FLASH_SHADER := preload("res://shaders/white_flash.gdshader")
+const ATTACK_OVERLAY_TEXTURE := preload("res://assets/player/attack_overlay.png")
 const WALK_SEQUENCE := [0, 1, 2, 1, 0, 3, 4, 3]
 const ANIMATION_SPEED := 8
+const WEAPON_INTERVALS := {1: 25, 2: 100, 3: 1, 4: 100, 5: 80, 6: 140, 7: 100}
 
 var terrain: SakuraTerrain
 var sprite: Sprite2D
+var attack_overlay: Sprite2D
 var flash_material: ShaderMaterial
 var gameplay_active := false
 var scripted_animation_active := false
@@ -43,12 +57,17 @@ var ascent_ticks := 0
 var fall_ticks := 0
 var landed_this_tick := false
 var jump_latched := false
+var jump_blocked_until_release := false
 var walk_tick := 0
 var firing_ticks := 0
 var fire_interval := 25
 var fire_counter := fire_interval
 var active_shots := 0
+var current_weapon := 1
+var normal_textures_by_weapon: Dictionary = {1: NORMAL_TEXTURES}
+var firing_textures_by_weapon: Dictionary = {1: FIRING_TEXTURES}
 var hp := MAX_HP
+var maximum_hp := MAX_HP
 var lives := 5
 var immunity_ticks := 0
 var dead := false
@@ -58,6 +77,7 @@ var in_water := false
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_load_weapon_sprite_sets()
 	sprite = Sprite2D.new()
 	sprite.centered = false
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -65,13 +85,40 @@ func _ready() -> void:
 	flash_material.shader = FLASH_SHADER
 	sprite.material = flash_material
 	add_child(sprite)
+	attack_overlay = Sprite2D.new()
+	attack_overlay.centered = false
+	attack_overlay.texture = ATTACK_OVERLAY_TEXTURE
+	attack_overlay.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	attack_overlay.visible = false
+	add_child(attack_overlay)
 	_update_sprite(0)
 
 
-func setup(map_terrain: SakuraTerrain) -> void:
+func _load_weapon_sprite_sets() -> void:
+	for weapon_id in range(2, 8):
+		var directory: String = WEAPON_SPRITE_DIRECTORIES[weapon_id]
+		var normal_set: Array[Texture2D] = []
+		var firing_set: Array[Texture2D] = []
+		for file_name in NORMAL_FRAME_FILES:
+			normal_set.append(load("res://assets/player/%s/%s" % [directory, file_name]))
+		for file_name in FIRING_FRAME_FILES:
+			firing_set.append(load("res://assets/player/%s/%s" % [directory, file_name]))
+		normal_textures_by_weapon[weapon_id] = normal_set
+		firing_textures_by_weapon[weapon_id] = firing_set
+
+
+func setup(map_terrain: SakuraTerrain, initial_maximum_hp: int = MAX_HP) -> void:
 	terrain = map_terrain
-	hp = MAX_HP
-	hp_changed.emit(hp, MAX_HP)
+	maximum_hp = clampi(initial_maximum_hp, MAX_HP, MAX_SUPPORTED_HP)
+	hp = maximum_hp
+	select_weapon(get_node("/root/SakuraProgress").selected_weapon)
+	hp_changed.emit(hp, maximum_hp)
+
+
+func set_maximum_hp(value: int) -> void:
+	maximum_hp = clampi(value, MAX_HP, MAX_SUPPORTED_HP)
+	hp = mini(hp, maximum_hp)
+	hp_changed.emit(hp, maximum_hp)
 
 
 func set_water_surface(surface_y: float, starts_in_water: bool = false) -> void:
@@ -81,6 +128,10 @@ func set_water_surface(surface_y: float, starts_in_water: bool = false) -> void:
 
 func set_gameplay_active(value: bool) -> void:
 	gameplay_active = value
+
+
+func block_jump_until_release() -> void:
+	jump_blocked_until_release = true
 
 
 func set_scripted_animation_active(value: bool) -> void:
@@ -99,6 +150,11 @@ func get_hit_rect() -> Rect2:
 
 func get_center() -> Vector2:
 	return position + BODY_SIZE * 0.5
+
+
+func get_normal_frame_texture(frame_index: int) -> Texture2D:
+	var textures: Array = normal_textures_by_weapon.get(current_weapon, NORMAL_TEXTURES)
+	return textures[frame_index]
 
 
 func _hit_rect_offset(offset: Vector2) -> Rect2:
@@ -121,6 +177,7 @@ func _physics_process(_delta: float) -> void:
 	var direction := int(right) - int(left)
 	_update_horizontal(direction)
 	_update_jump()
+	_update_weapon_selection()
 	_update_fire()
 	_update_animation(direction)
 
@@ -147,6 +204,11 @@ func _update_horizontal(direction: int) -> void:
 
 func _update_jump() -> void:
 	var jump_pressed := Input.is_action_pressed("jump")
+	if jump_blocked_until_release:
+		if jump_pressed:
+			jump_pressed = false
+		else:
+			jump_blocked_until_release = false
 	if not jump_pressed:
 		jump_latched = false
 
@@ -213,10 +275,24 @@ func _move_horizontal(amount: float) -> void:
 	while remaining > 0.0001:
 		var step := minf(1.0, remaining) * direction
 		var candidate := _hit_rect_offset(Vector2(step, 0))
+		var slope_supported := grounded and terrain.rect_hits_slope(_hit_rect_offset(Vector2(0, 1)))
 		if terrain.rect_hits_solid(candidate):
-			x_speed = 0.0
-			break
+			var climbed := false
+			if grounded and terrain.rect_hits_slope(candidate):
+				for rise in range(1, 3):
+					if not terrain.rect_hits_solid(_hit_rect_offset(Vector2(0, -rise))) and not terrain.rect_hits_solid(_hit_rect_offset(Vector2(step, -rise))):
+						position.y -= rise
+						climbed = true
+						break
+			if not climbed:
+				x_speed = 0.0
+				break
 		position.x += step
+		if slope_supported:
+			for drop in range(1, 4):
+				if terrain.rect_hits_solid(_hit_rect_offset(Vector2(0, drop))):
+					position.y += drop - 1
+					break
 		remaining -= absf(step)
 	position.x = maxf(0.0, position.x)
 
@@ -229,9 +305,7 @@ func _move_vertical(amount: float) -> void:
 		var candidate := _hit_rect_offset(Vector2(0, step))
 		if terrain.rect_hits_solid(candidate):
 			if direction > 0.0:
-				var tile_size := float(SakuraTerrain.TILE_SIZE)
-				var surface_y := floorf(candidate.end.y / tile_size) * tile_size
-				position.y = surface_y - BODY_SIZE.y
+				position.y = floorf(candidate.end.y - 0.001) - BODY_SIZE.y
 				grounded = true
 				fall_ticks = 0
 				landed_this_tick = true
@@ -257,19 +331,80 @@ func _update_fire() -> void:
 	var just_pressed := Input.is_action_just_pressed("fire")
 	if pressed:
 		fire_counter += 1
-		if active_shots < 4 and (just_pressed or fire_counter >= fire_interval):
+		var shot_limit := 4 if current_weapon == 1 or current_weapon == 4 else 1
+		var shot_available := current_weapon == 2 or active_shots < shot_limit
+		var cooldown_ready := fire_counter >= fire_interval or (just_pressed and current_weapon != 2)
+		if shot_available and cooldown_ready:
 			_fire()
 	else:
 		fire_counter = mini(fire_counter + 1, fire_interval)
 
 
 func _fire() -> void:
-	var origin := position + Vector2(40 if facing > 0 else -21, 35)
-	active_shots += 1
+	var origin := _weapon_origin()
+	if current_weapon != 2:
+		active_shots += 1
 	fire_counter = 0
 	firing_ticks = 5
 	shot_count_changed.emit(active_shots)
-	shot_requested.emit(origin, facing)
+	shot_requested.emit(origin, facing, current_weapon)
+
+
+func _weapon_origin() -> Vector2:
+	match current_weapon:
+		2:
+			return position + Vector2(25 if facing > 0 else -46, 20)
+		3:
+			return position + Vector2(50 if facing > 0 else -21, 0)
+		4:
+			return position + Vector2(40 if facing > 0 else -21, 30)
+		5:
+			return position + Vector2(40 if facing > 0 else -21, 20)
+		6:
+			return position + Vector2(40 if facing > 0 else -21, 28)
+		7:
+			return position + Vector2(40 if facing > 0 else -21, 30)
+	return position + Vector2(40 if facing > 0 else -21, 35)
+
+
+func _update_weapon_selection() -> void:
+	if Input.is_action_pressed("fire"):
+		return
+	if Input.is_action_just_pressed("weapon_next"):
+		_cycle_weapon(1)
+	elif Input.is_action_just_pressed("weapon_previous"):
+		_cycle_weapon(-1)
+	else:
+		for weapon_id in range(1, 8):
+			if Input.is_action_just_pressed("weapon_%d" % weapon_id):
+				_select_weapon(weapon_id)
+				break
+
+
+func _cycle_weapon(direction: int) -> void:
+	var candidate := current_weapon
+	for _index in range(7):
+		candidate = wrapi(candidate - 1 + direction, 0, 7) + 1
+		if get_node("/root/SakuraProgress").is_weapon_unlocked(candidate):
+			_select_weapon(candidate)
+			return
+
+
+func cycle_weapon(direction: int) -> void:
+	_cycle_weapon(direction)
+
+
+func select_weapon(weapon_id: int) -> void:
+	_select_weapon(weapon_id)
+
+
+func _select_weapon(weapon_id: int) -> void:
+	if not get_node("/root/SakuraProgress").is_weapon_unlocked(weapon_id):
+		return
+	current_weapon = weapon_id
+	get_node("/root/SakuraProgress").selected_weapon = weapon_id
+	fire_interval = WEAPON_INTERVALS[current_weapon]
+	fire_counter = fire_interval
 
 
 func projectile_ended() -> void:
@@ -299,16 +434,26 @@ func _update_sprite(frame_index: int) -> void:
 		return
 	if dead or presentation_hidden:
 		sprite.visible = false
+		attack_overlay.visible = false
 		return
 	if immunity_ticks > 0 and immunity_ticks % 4 >= 2:
 		sprite.visible = false
+		attack_overlay.visible = false
 		return
 	sprite.visible = true
-	var textures := FIRING_TEXTURES if Input.is_action_pressed("fire") else NORMAL_TEXTURES
+	var firing := gameplay_active and Input.is_action_pressed("fire")
+	var texture_sets: Dictionary = firing_textures_by_weapon if firing else normal_textures_by_weapon
+	var textures: Array = texture_sets.get(current_weapon, NORMAL_TEXTURES)
 	sprite.texture = textures[frame_index]
 	flash_material.set_shader_parameter("flash_amount", 1.0 if immunity_ticks > 0 and immunity_ticks % 8 == 0 else 0.0)
 	sprite.flip_h = facing < 0
 	sprite.position.x = -10.0 if facing < 0 else 0.0
+	attack_overlay.visible = firing
+	attack_overlay.flip_h = facing < 0
+	attack_overlay.position = Vector2(
+		26.0 if facing < 0 else 2.0,
+		28.0 if (frame_index == 2 or frame_index == 4) else 26.0
+	)
 
 
 func _update_immunity() -> void:
@@ -321,7 +466,7 @@ func take_damage(amount: int) -> void:
 		return
 	hp -= amount
 	immunity_ticks = 80
-	hp_changed.emit(hp, MAX_HP)
+	hp_changed.emit(hp, maximum_hp)
 	if hp <= 0:
 		_die()
 
@@ -329,8 +474,8 @@ func take_damage(amount: int) -> void:
 func add_health(amount: int) -> void:
 	if dead:
 		return
-	hp = mini(MAX_HP, hp + amount)
-	hp_changed.emit(hp, MAX_HP)
+	hp = mini(maximum_hp, hp + amount)
+	hp_changed.emit(hp, maximum_hp)
 
 
 func add_life() -> void:
@@ -360,4 +505,5 @@ func _die() -> void:
 	lives = progress.lose_life()
 	gameplay_active = false
 	sprite.visible = false
+	attack_overlay.visible = false
 	died.emit()

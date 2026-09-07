@@ -34,12 +34,14 @@ var timer := 0
 var x_velocity := -8.0
 var y_velocity := -8.0
 var intro_meter_ticks := 0
+var boss_health := 30.0
 
 
 func _ready() -> void:
 	super._ready()
 	body_size = Vector2(50, 50)
 	hit_points = 30
+	boss_health = 30.0
 	contact_damage = 3
 	drops_recovery = false
 	sprite.texture = SHADOW_TEXTURES[0]
@@ -58,11 +60,21 @@ func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 
 
 func take_projectile_hit(damage: int) -> void:
+	_take_boss_damage(float(damage))
+
+
+func take_weapon_hit(_damage: int, weapon_id: int) -> void:
+	_take_boss_damage(3.0 if weapon_id == 2 else 0.5)
+
+
+func _take_boss_damage(damage: float) -> void:
 	if state != BossState.ACTIVE and state != BossState.ACTIVE_SPLIT:
 		return
-	hit_points -= damage
+	boss_health -= damage
+	hit_points = ceili(boss_health)
 	hit_flash_ticks = 5
-	if hit_points <= 0:
+	if boss_health <= 0.0:
+		boss_health = 0.0
 		hit_points = 0
 		state = BossState.DEFEATED
 		defeated_state = true
@@ -74,6 +86,10 @@ func take_projectile_hit(damage: int) -> void:
 
 func receive_clone_hit(damage: int) -> void:
 	take_projectile_hit(damage)
+
+
+func receive_clone_weapon_hit(damage: int, weapon_id: int) -> void:
+	take_weapon_hit(damage, weapon_id)
 
 
 func _update_enemy() -> void:
@@ -146,6 +162,7 @@ func _update_transforming() -> void:
 
 func _update_meter_fill() -> void:
 	intro_meter_ticks += 1
+	get_node("/root/AudioManager").play_sfx("recuperator")
 	if intro_meter_ticks >= 30:
 		state = BossState.ACTIVE
 		timer = 0
@@ -156,13 +173,14 @@ func _update_active(split_active: bool) -> void:
 	_bounce_move()
 	if not split_active and hit_points <= 15 and position.y > 200.0 and position.y < 600.0 and position.x > 5560.0 and position.x < 5640.0:
 		state = BossState.SPLITTING
-		x_velocity *= -1.0
+		x_velocity = -absf(x_velocity)
 		timer = 0
 		control_lock_requested.emit(true)
 
 
 func _update_splitting() -> void:
 	if timer == 6:
+		get_node("/root/AudioManager").play_sfx("tiro3")
 		clone_requested.emit(position)
 	elif timer == 36:
 		state = BossState.ACTIVE_SPLIT

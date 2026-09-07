@@ -6,13 +6,14 @@ const TEXTURES := [
 	preload("res://assets/world2/ghost_mask_2.png"),
 	preload("res://assets/world2/ghost_mask_3.png"),
 ]
-const SMALL_DROP_PERCENT := 30
-const EXTRA_LIFE_DROP_PERCENT := 5
+const SMALL_DROP_PERCENT := 20
+const EXTRA_LIFE_DROP_PERCENT := 10
 
 var move_direction := -1
 var stop_x := 0.0
 var timer := 0
 var y_velocity := 0.0
+var horizontal_speed := 3.0
 var oscillation_direction := 0
 var fading := false
 var fade_level := 160
@@ -26,9 +27,10 @@ func _ready() -> void:
 	sprite.texture = TEXTURES[0]
 
 
-func configure(direction: int, destination_x: float) -> void:
+func configure(direction: int, destination_x: float, movement_speed: float = 3.0) -> void:
 	move_direction = 1 if direction > 0 else -1
 	stop_x = destination_x
+	horizontal_speed = movement_speed
 	sprite.flip_h = move_direction > 0
 
 
@@ -60,7 +62,7 @@ func _update_enemy() -> void:
 		if y_velocity <= -2.0:
 			y_velocity = -2.0
 			oscillation_direction = 0
-	var movement := Vector2(move_direction * 3.0, y_velocity)
+	var movement := Vector2(move_direction * horizontal_speed, y_velocity)
 	var candidate := Rect2(position + movement, body_size)
 	position += movement
 	if terrain.rect_hits_solid(candidate):

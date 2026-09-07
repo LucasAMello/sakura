@@ -10,7 +10,7 @@ const STUN_FRAMES := [
 	preload("res://assets/world1/pumpkin_4.png"),
 	preload("res://assets/world1/pumpkin_5.png"),
 ]
-const PATROL_SPEED := 5.0
+const PATROL_SPEED := 3.0
 const CHASE_SPEED := 10.0
 const STUN_DURATION_TICKS := 180
 

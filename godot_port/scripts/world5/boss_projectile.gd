@@ -144,6 +144,8 @@ func _move_axis(amount: Vector2) -> bool:
 
 
 func _begin_impact() -> void:
+	if kind == Kind.HADOUKEN:
+		get_node("/root/AudioManager").play_sfx("haduex")
 	state = 1
 	timer = 0
 	contact_damage = 0

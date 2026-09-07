@@ -115,10 +115,6 @@ var defeated_clone_positions: Array[Vector2] = []
 var world2_tick_phase := 0
 
 
-func _default_map_number() -> int:
-	return 23
-
-
 func _first_map_number() -> int:
 	return 20
 
@@ -193,8 +189,10 @@ func _physics_process(_delta: float) -> void:
 
 func _update_playing() -> void:
 	if map_number == 23:
-		if player.facing > 0 and player.get_hit_rect().intersects(Rect2(4700, 440, 30, 100), true):
+		if player.position.x >= 4660.0:
 			player.position.x = 4660.0
+			player.x_speed = minf(player.x_speed, 0.0)
+		if player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(4700, 440, 30, 100), true):
 			_begin_checkpoint_entry()
 		return
 	if player.grounded and player.get_hit_rect().intersects(map_config["exit"]):
@@ -230,7 +228,7 @@ func _update_checkpoint_entry() -> void:
 
 func _update_checkpoint() -> void:
 	player.position.x = clampf(player.position.x, 4730.0, 5270.0)
-	if player.facing > 0 and player.get_hit_rect().intersects(Rect2(5310, 440, 30, 100), true):
+	if player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(5310, 440, 30, 100), true):
 		_begin_boss_entry()
 
 
@@ -301,30 +299,30 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
+	_move_player_to_boss_departure(2)
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 5:
 				for burst in range(3):
-					_spawn_enemy_death(boss.position + Vector2(25, 25))
+					_spawn_boss_explosion(boss.position + Vector2(25, 25))
 					for clone_position in defeated_clone_positions:
-						_spawn_enemy_death(clone_position + Vector2(25, 25))
+						_spawn_boss_explosion(clone_position + Vector2(25, 25))
 			if state_ticks % 7 == 3 and is_instance_valid(boss):
-				_spawn_enemy_death(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
+				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
 			if state_ticks % 7 == 6:
 				for clone_position in defeated_clone_positions:
-					_spawn_enemy_death(clone_position + Vector2(randi_range(0, 46), randi_range(0, 46)))
+					_spawn_boss_explosion(clone_position + Vector2(randi_range(0, 46), randi_range(0, 46)))
 			return
 		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
 			return
 		if is_instance_valid(boss):
 			boss.queue_free()
-	for clone in get_tree().get_nodes_in_group("second_boss_clones"):
-		if is_instance_valid(clone):
-			defeated_clone_positions.append(clone.position)
-			clone.queue_free()
+		for clone in get_tree().get_nodes_in_group("second_boss_clones"):
+			if is_instance_valid(clone):
+				clone.queue_free()
 		_spawn_boss_reward()
 	if not boss_reward_homing:
 		var fade_tick := state_ticks - 285
@@ -334,10 +332,14 @@ func _update_victory() -> void:
 			hud.set_boss_flash(0.0)
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
+			else:
+				_start_departure()
 
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
+	if _is_active_rematch():
+		return
 	boss_reward = SecondBossRewardScript.new()
 	boss_reward.position = boss_reward_position
 	boss_reward.z_index = 32
@@ -355,8 +357,7 @@ func _on_boss_reward_collected() -> void:
 func _complete_departure() -> void:
 	progress.set_second_boss_checkpoint(false)
 	if get_tree().current_scene == self:
-		progress.store_hp(player.hp)
-		get_tree().change_scene_to_file("res://scenes/map30.tscn")
+		_finish_elemental_or_rematch(2)
 
 
 func _spawn_stage_objects() -> void:

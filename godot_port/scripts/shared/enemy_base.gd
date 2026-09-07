@@ -105,6 +105,18 @@ func take_projectile_hit(damage: int) -> void:
 		queue_free()
 
 
+func take_weapon_hit(damage: int, _weapon_id: int) -> void:
+	take_projectile_hit(damage)
+
+
+func take_water_splash_hit() -> void:
+	take_weapon_hit(1, 5)
+
+
+func accepts_weapon_hit(_weapon_id: int) -> bool:
+	return true
+
+
 func _roll_drop() -> int:
 	if drops_recovery and randi() % 3 == 0:
 		return DropType.SMALL

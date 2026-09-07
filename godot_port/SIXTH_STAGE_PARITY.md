@@ -10,4 +10,4 @@ World 6 covers maps 60–62 and is based on the canonical `old/2 Joguito` source
 | Map62 transition | `Main.cpp`, `set_dvalues` | Boss checkpoint, two doors, checkpoint respawn, scripted traversal, fixed boss camera, and boss-room floor caps |
 | Icy boss | `sprite.h`, `scripts.h`, `colision.h`, `draw.h` | 30 HP, shadow entrance, vulnerable emergence forms, player-relative repositioning, health-tiered projectile patterns, five attack variants, reward, portal departure, and completion screen |
 
-World 6 ends at its completion screen because World 7 is not implemented. Music, sound effects, menus, saving, and weapon selection remain project-wide omissions rather than missing World 6 gameplay entities.
+World 6 victory records the Icy card, returns to stage select, and unlocks the canonical World 7 route once all six bosses are complete. Canonical music, sound effects, menus, JSON and legacy saving, pause weapon selection, and control remapping are provided by the shared project systems. Maps 70–80, the six boss rematches, final boss, and ending are covered in `FINAL_STAGE_PARITY.md`.

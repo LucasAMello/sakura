@@ -94,10 +94,6 @@ var boss_meter_ticks := 0
 var boss_health_was_visible_on_death := false
 
 
-func _default_map_number() -> int:
-	return 60
-
-
 func _first_map_number() -> int:
 	return 60
 
@@ -185,7 +181,7 @@ func _physics_process(_delta: float) -> void:
 
 
 func _update_playing() -> void:
-	if map_number == 62 and player.facing > 0 and player.get_hit_rect().intersects(Rect2(2740, 960, 30, 140), true):
+	if map_number == 62 and player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(2740, 960, 30, 140), true):
 		_begin_checkpoint_entry()
 		return
 	var exit_rect: Rect2 = map_config["exit"]
@@ -222,7 +218,7 @@ func _update_checkpoint_entry() -> void:
 
 func _update_checkpoint() -> void:
 	player.position.x = clampf(player.position.x, 2770.0, 3310.0)
-	if player.facing > 0 and player.get_hit_rect().intersects(Rect2(3350, 960, 30, 140), true):
+	if player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(3350, 960, 30, 140), true):
 		_begin_boss_entry()
 
 
@@ -262,6 +258,8 @@ func _update_boss_intro() -> void:
 	if not boss_intro_ready:
 		return
 	boss_meter_ticks += 1
+	if boss_meter_ticks % 2 == 0:
+		get_node("/root/AudioManager").play_sfx("recuperator")
 	if boss_meter_ticks >= 60:
 		stage_state = StageState.BOSS
 		state_ticks = 0
@@ -274,6 +272,7 @@ func _update_boss() -> void:
 
 
 func _on_boss_attack_requested(spawn_position: Vector2, variant: int, direction: int) -> void:
+	get_node("/root/AudioManager").play_sfx("tiro7")
 	var attack: World6IcyAttack = IcyAttackScript.new()
 	_spawn_enemy(attack, spawn_position)
 	attack.configure(variant, direction)
@@ -294,15 +293,16 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
+	_move_player_to_boss_departure(6)
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 5:
 				for _burst in range(3):
-					_spawn_enemy_death(boss.position + Vector2(60, 70))
+					_spawn_boss_explosion(boss.position + Vector2(60, 70))
 			if state_ticks % 7 == 3 and is_instance_valid(boss):
-				_spawn_enemy_death(boss.position + Vector2(randi_range(0, 120), randi_range(0, 140)))
+				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 120), randi_range(0, 140)))
 			return
 		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
@@ -318,12 +318,16 @@ func _update_victory() -> void:
 			hud.set_boss_flash(0.0)
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
+			else:
+				_start_departure()
 	if departure_ticks > 0:
 		_update_departure()
 
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
+	if _is_active_rematch():
+		return
 	boss_reward = SixthBossRewardScript.new()
 	boss_reward.position = boss_reward_position
 	boss_reward.z_index = 32
@@ -340,7 +344,7 @@ func _on_boss_reward_collected() -> void:
 
 func _complete_departure() -> void:
 	progress.set_sixth_boss_checkpoint(false)
-	hud.show_message("SIXTH STAGE COMPLETE\n\nPRESS R TO REPLAY")
+	_finish_elemental_or_rematch(6)
 
 
 func _spawn_stage_objects() -> void:
@@ -410,7 +414,7 @@ func _on_holder_opened(spawn_position: Vector2, card_id: int) -> void:
 		_spawn_card(spawn_position, card_id, true)
 
 
-func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
+func _damage_stage_object_in_rect(rect: Rect2, damage: int, _weapon_id: int = 1) -> bool:
 	for holder in card_holders:
 		if is_instance_valid(holder) and holder.projectile_mask_overlap(rect):
 			holder.take_projectile_hit(damage)
@@ -463,7 +467,7 @@ func _build_background() -> void:
 	var fill := ColorRect.new()
 	fill.position = Vector2.ZERO
 	fill.size = Vector2(map_config["width"] * 20, map_config["height"] * 20)
-	fill.color = Color8(0, 16, 63) if map_number == 62 else Color8(111, 200, 239)
+	fill.color = Color8(0, 16, 63) if map_number == 62 or map_number == 74 else Color8(111, 200, 239)
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fill.z_index = -200
 	add_child(fill)

@@ -38,12 +38,18 @@ var state := BossState.WAITING
 var timer := 0
 var direction := 0
 var intro_notified := false
+var boss_health := 30.0
+
+
+func set_update_interval(_ticks: int) -> void:
+	super.set_update_interval(4)
 
 
 func _ready() -> void:
 	super._ready()
 	body_size = Vector2(128, 60)
 	hit_points = 30
+	boss_health = 30.0
 	contact_damage = 4
 	drops_recovery = false
 	sprite.texture = CLOSED
@@ -67,12 +73,22 @@ func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 	return super.projectile_mask_overlap(projectile_rect)
 
 
-func take_projectile_hit(damage: int) -> void:
+func take_projectile_hit(_damage: int) -> void:
+	_take_boss_damage(0.5)
+
+
+func take_weapon_hit(_damage: int, weapon_id: int) -> void:
+	_take_boss_damage(3.0 if weapon_id == 4 else 0.5)
+
+
+func _take_boss_damage(damage: float) -> void:
 	if defeated_state or state == BossState.WAITING or state == BossState.INTRO:
 		return
-	hit_points -= damage
+	boss_health -= damage
+	hit_points = ceili(boss_health)
 	hit_flash_ticks = 5
-	if hit_points <= 0:
+	if boss_health <= 0.0:
+		boss_health = 0.0
 		hit_points = 0
 		defeated_state = true
 		state = BossState.DEFEATED
@@ -104,6 +120,8 @@ func _update_intro() -> void:
 		timer += 1
 		if timer == 2 or timer == 10:
 			sprite.texture = OPEN_1
+			if timer == 2:
+				get_node("/root/AudioManager").play_sfx("roar")
 		elif timer == 3:
 			sprite.texture = OPEN_2
 		elif timer == 11:
@@ -119,7 +137,7 @@ func _update_idle() -> void:
 		return
 	timer = 0
 	var chooses_shot := randi() % 2 == 0
-	if hit_points > 20:
+	if boss_health > 20.0:
 		if direction == 0:
 			state = BossState.SHOOT_LEFT if chooses_shot else BossState.DASH_LEFT
 		else:
@@ -169,6 +187,8 @@ func _update_dash() -> void:
 		var offset_x := 40.0 if direction == 0 else 58.0
 		water_shot_requested.emit(position + Vector2(offset_x, 25), 1 - direction, true)
 	elif timer >= 8:
+		if timer == 10:
+			get_node("/root/AudioManager").play_sfx("turtledash")
 		var movement := -32.0 if direction == 0 else 32.0
 		if _dash_hits_obstacle(movement):
 			timer = 0
@@ -193,17 +213,18 @@ func _update_recovery(rapid: bool) -> void:
 		position.y -= 3.0
 		if not recovering_on_right:
 			position.x -= 32.0
-		body_size.x = 128.0
+			body_size.x = 128.0
 	elif timer == (5 if rapid else 11):
 		sprite.texture = ENTER_1
 		position.y -= 2.0
 	elif timer == (6 if rapid else 12):
 		sprite.texture = CLOSED
 		position.y -= 1.0
+		body_size.x = 128.0
 	elif timer >= (7 if rapid else 13):
 		timer = 0
 		if rapid:
-			state = BossState.CHAIN_RIGHT if direction == 1 else BossState.CHAIN_LEFT
+			state = BossState.CHAIN_RIGHT if direction == 1 else BossState.RAPID_SHOOT_LEFT
 		else:
 			state = BossState.IDLE_RIGHT if direction == 1 else BossState.IDLE_LEFT
 
@@ -227,7 +248,6 @@ func _dash_hits_obstacle(amount: float) -> bool:
 			return true
 		if is_instance_valid(player) and candidate.intersects(player.get_hit_rect()):
 			player.take_damage(contact_damage)
-			return true
 		position.x += step_direction
 	return false
 

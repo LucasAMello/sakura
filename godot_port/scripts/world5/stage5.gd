@@ -142,10 +142,6 @@ var boss_health_was_visible_on_death := false
 var background_base_positions: Array[Vector2] = []
 
 
-func _default_map_number() -> int:
-	return 50
-
-
 func _first_map_number() -> int:
 	return 50
 
@@ -252,13 +248,8 @@ func _update_checkpoint_entry() -> void:
 	player.y_speed = 0.0
 	player.grounded = true
 	progress.set_fifth_boss_checkpoint(true)
-	if progress.fifth_boss_reward:
-		stage_state = StageState.COMPLETE
-		_set_gameplay_active(false)
-		hud.show_message("FIFTH STAGE COMPLETE\n\nPRESS R TO REPLAY")
-	else:
-		stage_state = StageState.CHECKPOINT
-		_set_gameplay_active(true)
+	stage_state = StageState.CHECKPOINT
+	_set_gameplay_active(true)
 
 
 func _update_checkpoint() -> void:
@@ -291,6 +282,8 @@ func _update_boss_entry() -> void:
 func _update_boss_intro() -> void:
 	state_ticks += 1
 	_update_scripted_boss_fall()
+	if state_ticks >= 25 and state_ticks <= 54:
+		get_node("/root/AudioManager").play_sfx("recuperator")
 	if state_ticks >= 54:
 		player.position.y = 2220.0
 		player.y_speed = 0.0
@@ -328,15 +321,16 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
+	_move_player_to_boss_departure(5)
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 5:
 				for burst in range(3):
-					_spawn_enemy_death(boss.position + Vector2(64, 53))
+					_spawn_boss_explosion(boss.position + Vector2(64, 53))
 			if state_ticks % 7 == 3 and is_instance_valid(boss):
-				_spawn_enemy_death(boss.position + Vector2(randi_range(0, 128), randi_range(0, 60)))
+				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 128), randi_range(0, 60)))
 			return
 		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
@@ -352,12 +346,16 @@ func _update_victory() -> void:
 			hud.set_boss_flash(0.0)
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
+			else:
+				_start_departure()
 	if departure_ticks > 0:
 		_update_departure()
 
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
+	if _is_active_rematch():
+		return
 	boss_reward = FifthBossRewardScript.new()
 	boss_reward.position = boss_reward_position
 	boss_reward.z_index = 32
@@ -375,8 +373,7 @@ func _on_boss_reward_collected() -> void:
 func _complete_departure() -> void:
 	progress.set_fifth_boss_checkpoint(false)
 	if get_tree().current_scene == self:
-		progress.store_hp(player.hp)
-		get_tree().change_scene_to_file("res://scenes/map60.tscn")
+		_finish_elemental_or_rematch(5)
 
 
 func _spawn_stage_objects() -> void:
@@ -440,6 +437,11 @@ func _on_falling_fire_requested(spawn_position: Vector2) -> void:
 
 
 func _on_boss_projectile_requested(kind: int, spawn_position: Vector2, direction: int) -> void:
+	match kind:
+		World5BossProjectile.Kind.SPRAY:
+			get_node("/root/AudioManager").play_sfx("fireyflame")
+		World5BossProjectile.Kind.SLASH_STRAIGHT, World5BossProjectile.Kind.SLASH_RISING:
+			get_node("/root/AudioManager").play_sfx("fireslash")
 	var projectile: World5BossProjectile = BossProjectileScript.new()
 	_spawn_enemy(projectile, spawn_position)
 	projectile.z_index = 9 if kind == World5BossProjectile.Kind.SPRAY or kind == World5BossProjectile.Kind.HADOUKEN else 10
@@ -460,7 +462,7 @@ func _on_card_holder_opened(spawn_position: Vector2, card_id: int) -> void:
 		_spawn_card(spawn_position, card_id, true)
 
 
-func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
+func _damage_stage_object_in_rect(rect: Rect2, damage: int, _weapon_id: int = 1) -> bool:
 	if is_instance_valid(card_holder) and card_holder.projectile_mask_overlap(rect):
 		card_holder.take_projectile_hit(damage)
 		return true

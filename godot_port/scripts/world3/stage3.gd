@@ -78,7 +78,7 @@ const MAP_CONFIGS := {
 		"wall_turrets": [[Vector2(820, 280), 2, 0], [Vector2(240, 380), 0, 0], [Vector2(430, 380), 0, 15], [Vector2(620, 380), 0, 0], [Vector2(720, 920), 1, 0], [Vector2(880, 1340), 0, 0]],
 		"machines": [Vector2(560, 150), Vector2(930, 1470), Vector2(1740, 490), Vector2(1840, 230)],
 		"oranges": [[Vector2(1660, 1200), 0], [Vector2(1240, 1000), 0], [Vector2(1240, 220), 0]],
-		"shockers": [[Vector2(110, 796), 2, -10], [Vector2(876, 680), 1, 0], [Vector2(876, 780), 1, -10], [Vector2(216, 1100), 3, 0], [Vector2(216, 1180), 3, -12], [Vector2(216, 1260), 3, -24], [Vector2(436, 1140), 1, -6], [Vector2(436, 1220), 1, -18], [Vector2(110, 1316), 0, -24], [Vector2(170, 1316), 0, -44], [Vector2(1276, 820), 3, 0], [Vector2(1696, 920), 3, 0]],
+		"shockers": [[Vector2(110, 796), 2, 0], [Vector2(876, 680), 1, 0], [Vector2(876, 780), 1, -10], [Vector2(216, 1100), 3, 0], [Vector2(216, 1180), 3, -12], [Vector2(216, 1260), 3, -24], [Vector2(436, 1140), 1, -6], [Vector2(436, 1220), 1, -18], [Vector2(110, 1316), 0, -24], [Vector2(170, 1316), 0, -44], [Vector2(1276, 820), 3, 0], [Vector2(1696, 920), 3, 0]],
 		"cards": [[Vector2(80, 1480), false, 6], [Vector2(1760, 400), false, 17]],
 		"holder": [],
 	},
@@ -99,10 +99,6 @@ var card_holder: World3CardHolder
 var boss: ThirdStageBoss
 var boss_reward: ThirdBossReward
 var boss_health_was_visible_on_death := false
-
-
-func _default_map_number() -> int:
-	return 30
 
 
 func _first_map_number() -> int:
@@ -172,7 +168,10 @@ func _physics_process(_delta: float) -> void:
 
 func _update_playing() -> void:
 	if map_number == 32:
-		if player.facing > 0 and player.grounded and player.get_hit_rect().intersects(Rect2(4720, 380, 30, 100)):
+		if player.position.x >= 4680.0:
+			player.position.x = 4680.0
+			player.x_speed = minf(player.x_speed, 0.0)
+		if player.facing > 0 and player.grounded and player.get_hit_rect().intersects(Rect2(4720, 380, 30, 100), true):
 			_begin_checkpoint_entry()
 		return
 	if player.grounded and player.get_hit_rect().intersects(map_config["exit"]):
@@ -184,14 +183,14 @@ func _update_playing() -> void:
 
 func _update_checkpoint_entry() -> void:
 	state_ticks += 1
-	if state_ticks <= 20:
-		_set_door_opening(0, float(state_ticks) / 20.0)
-	elif state_ticks <= 60:
+	if state_ticks <= 40:
+		_set_door_opening(0, float(state_ticks) / 40.0)
+	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
-		player.scripted_step_right(2.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(5040, 400), float(state_ticks - 20) / 40.0)
-	elif state_ticks <= 80:
-		_set_door_opening(0, 1.0 - float(state_ticks - 60) / 20.0)
+		player.scripted_step_right(1.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(5040, 400), float(state_ticks - 40) / 80.0)
+	elif state_ticks <= 160:
+		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
 	else:
 		_set_door_opening(0, 0.0)
 		camera_lock_position = Vector2(5040, 400)
@@ -204,27 +203,29 @@ func _update_checkpoint_entry() -> void:
 
 func _update_checkpoint() -> void:
 	player.position.x = clampf(player.position.x, 4750.0, 5290.0)
-	if player.facing > 0 and player.get_hit_rect().intersects(Rect2(5330, 380, 30, 100), true):
+	if player.position.x >= 5290.0:
+		player.x_speed = minf(player.x_speed, 0.0)
+	if player.grounded and player.facing > 0 and player.get_hit_rect().intersects(Rect2(5330, 380, 30, 100), true):
 		_begin_boss_entry()
 
 
 func _update_boss_entry() -> void:
 	state_ticks += 1
-	if state_ticks <= 20:
-		_set_door_opening(1, float(state_ticks) / 20.0)
-	elif state_ticks <= 60:
+	if state_ticks <= 40:
+		_set_door_opening(1, float(state_ticks) / 40.0)
+	elif state_ticks <= 120:
 		_set_door_opening(1, 1.0)
-		player.scripted_step_right(2.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 400), float(state_ticks - 20) / 40.0)
-	elif state_ticks <= 80:
-		_set_door_opening(1, 1.0 - float(state_ticks - 60) / 20.0)
+		player.scripted_step_right(1.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 400), float(state_ticks - 40) / 80.0)
+	elif state_ticks <= 160:
+		_set_door_opening(1, 1.0 - float(state_ticks - 120) / 40.0)
 	else:
 		_set_door_opening(1, 0.0)
 		camera_lock_position = Vector2(5600, 400)
 		player.position.y = 400.0
 		player.y_speed = 0.0
 		player.grounded = true
-		player.set_scripted_animation_active(false)
+		player.set_scripted_animation_active(true)
 		stage_state = StageState.BOSS_INTRO
 		state_ticks = 0
 		boss.set_gameplay_active(false)
@@ -232,22 +233,25 @@ func _update_boss_entry() -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
-	if state_ticks <= 40:
-		player.scripted_step_right(5.0)
-	elif state_ticks == 57:
+	if state_ticks <= 80:
+		player.scripted_step_right(2.5)
+	elif state_ticks == 81:
+		player.set_scripted_animation_active(false)
+	elif state_ticks == 97:
 		_spawn_boss_projectile(World3Projectile.Kind.BOSS_LIGHTNING, Vector2(5750, 160))
-	elif state_ticks == 60:
+	elif state_ticks == 100:
 		hud.set_boss_flash(0.5)
-	elif state_ticks == 61:
+	elif state_ticks == 101:
 		hud.set_boss_flash(1.0)
 		boss.visible = true
-	elif state_ticks == 62:
+	elif state_ticks == 102:
 		hud.set_boss_flash(0.5)
-	elif state_ticks == 63:
+	elif state_ticks == 103:
 		hud.set_boss_flash(0.0)
-	elif state_ticks >= 68 and state_ticks < 98:
-		pass
-	elif state_ticks == 98:
+	elif state_ticks >= 108 and state_ticks < 168:
+		if (state_ticks - 108) % 2 == 0:
+			get_node("/root/AudioManager").play_sfx("recuperator")
+	elif state_ticks == 168:
 		stage_state = StageState.BOSS
 		state_ticks = 0
 		player.set_scripted_animation_active(false)
@@ -257,7 +261,9 @@ func _update_boss_intro() -> void:
 
 
 func _update_boss() -> void:
-	player.position.x = clampf(player.position.x, 5340.0, 5920.0)
+	player.position.x = clampf(player.position.x, 5360.0, 5920.0)
+	if player.position.x <= 5360.0:
+		player.x_speed = maxf(player.x_speed, 0.0)
 
 
 func _on_boss_defeated() -> void:
@@ -274,15 +280,16 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
+	_move_player_to_boss_departure(3)
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 5:
 				for burst in range(3):
-					_spawn_enemy_death(boss.position + Vector2(25, 25))
+					_spawn_boss_explosion(boss.position + Vector2(25, 25))
 			if state_ticks % 7 == 3 and is_instance_valid(boss):
-				_spawn_enemy_death(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
+				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
 			return
 		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
@@ -298,12 +305,16 @@ func _update_victory() -> void:
 			hud.set_boss_flash(0.0)
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
+			else:
+				_start_departure()
 	if departure_ticks > 0:
 		_update_departure()
 
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
+	if _is_active_rematch():
+		return
 	boss_reward = ThirdBossRewardScript.new()
 	boss_reward.position = boss_reward_position
 	boss_reward.z_index = 32
@@ -321,8 +332,7 @@ func _on_boss_reward_collected() -> void:
 func _complete_departure() -> void:
 	progress.set_third_boss_checkpoint(false)
 	if get_tree().current_scene == self:
-		progress.store_hp(player.hp)
-		get_tree().change_scene_to_file("res://scenes/map40.tscn")
+		_finish_elemental_or_rematch(3)
 
 
 func _spawn_stage_objects() -> void:
@@ -356,6 +366,7 @@ func _spawn_stage_objects() -> void:
 
 func _spawn_enemy_defeat_effect(enemy: SakuraEnemy, effect_position: Vector2) -> void:
 	if enemy is World3Machine:
+		get_node("/root/AudioManager").play_sfx("anim60")
 		var machine_effect: World3MachineDeathEffect = MachineDeathEffectScript.new()
 		machine_effect.position = effect_position
 		machine_effect.z_index = 30
@@ -377,7 +388,7 @@ func _spawn_card(spawn_position: Vector2, card_id: int, falls: bool) -> void:
 	card.setup(terrain, player, card_id, falls)
 
 
-func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
+func _damage_stage_object_in_rect(rect: Rect2, damage: int, _weapon_id: int = 1) -> bool:
 	if is_instance_valid(card_holder) and card_holder.projectile_mask_overlap(rect):
 		card_holder.take_projectile_hit(damage)
 		return true
@@ -386,6 +397,7 @@ func _damage_stage_object_in_rect(rect: Rect2, damage: int) -> bool:
 
 func _before_player_death() -> void:
 	boss_health_was_visible_on_death = stage_state == StageState.BOSS or stage_state == StageState.BOSS_INTRO
+	hud.set_boss_flash(0.0)
 
 
 func _build_background() -> void:
@@ -448,6 +460,8 @@ func _build_boss_area() -> void:
 
 
 func _on_boss_flash_requested(alpha: float) -> void:
+	if stage_state == StageState.DYING:
+		return
 	hud.set_boss_flash(alpha)
 
 
@@ -502,8 +516,8 @@ func _update_boss_hud() -> void:
 	var boss_visible := false
 	var displayed_boss_hp := 0
 	if is_instance_valid(boss):
-		boss_visible = stage_state == StageState.BOSS or (stage_state == StageState.BOSS_INTRO and state_ticks >= 68) or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
+		boss_visible = stage_state == StageState.BOSS or (stage_state == StageState.BOSS_INTRO and state_ticks >= 108) or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
 		displayed_boss_hp = boss.hit_points
 		if stage_state == StageState.BOSS_INTRO:
-			displayed_boss_hp = clampi(state_ticks - 67, 0, 30)
+			displayed_boss_hp = clampi(floori(float(state_ticks - 108) / 2.0) + 1, 0, 30)
 	hud.set_boss_health(displayed_boss_hp, boss_visible)

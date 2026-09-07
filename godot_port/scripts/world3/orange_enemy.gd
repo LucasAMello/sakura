@@ -17,6 +17,7 @@ const PROPELLERS := [
 var timer := 0
 var bob_tick := 0
 var propeller_tick := 0
+var attack_update_phase := 0
 var direction := 2
 var propeller: Sprite2D
 
@@ -48,10 +49,13 @@ func _update_enemy() -> void:
 		direction = 3
 	else:
 		direction = 2
-	_update_frame()
 	_update_bob()
 	propeller.texture = PROPELLERS[propeller_tick % PROPELLERS.size()]
 	propeller_tick += 1
+	attack_update_phase = (attack_update_phase + 1) % 2
+	if attack_update_phase == 0:
+		return
+	_update_frame()
 	if timer == 8:
 		var shot_direction := 5 if direction == 1 else 8 if direction == 2 else 3
 		var offset := Vector2(-3, 46) if direction == 1 else Vector2(16, 50) if direction == 2 else Vector2(35, 46)
@@ -60,9 +64,12 @@ func _update_enemy() -> void:
 		timer = 1
 	else:
 		timer += 1
+	sprite.flip_h = timer >= 9
 
 
 func _update_frame() -> void:
+	if timer % 2 != 0:
+		return
 	var sequence_index := mini(int(timer / 2.0), 8)
 	var sequences := {
 		1: [0, 1, 2, 1, 6, 7, 8, 7, 0],
@@ -70,7 +77,6 @@ func _update_frame() -> void:
 		3: [6, 7, 8, 7, 0, 1, 2, 1, 6],
 	}
 	sprite.texture = FRAMES[sequences[direction][sequence_index]]
-	sprite.flip_h = timer >= 9
 
 
 func _update_bob() -> void:

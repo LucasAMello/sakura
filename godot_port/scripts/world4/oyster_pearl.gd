@@ -11,6 +11,7 @@ var timer := 0
 var velocity := Vector2.ZERO
 var lifetime := 0
 var update_phase := 0
+var shot_direction := 0
 
 
 func _ready() -> void:
@@ -21,9 +22,10 @@ func _ready() -> void:
 	add_child(sprite)
 
 
-func setup(map_terrain: SakuraTerrain, target_player: SakuraPlayer) -> void:
+func setup(map_terrain: SakuraTerrain, target_player: SakuraPlayer, firing_direction: int) -> void:
 	terrain = map_terrain
 	player = target_player
+	shot_direction = firing_direction
 
 
 func set_gameplay_active(value: bool) -> void:
@@ -41,9 +43,10 @@ func _physics_process(_delta: float) -> void:
 	if timer <= 5:
 		return
 	if timer == 6:
-		var offset := player.get_center() - Rect2(position, BODY_SIZE).get_center()
-		var horizontal_speed := 10.0 if absf(offset.x) < 120.0 else 15.0 if absf(offset.x) < 240.0 else 20.0
-		velocity.x = signf(offset.x) * horizontal_speed
+		var offset := player.position - position
+		var horizontal_gap := offset.x - 20.0 if shot_direction == 1 else -offset.x - 40.0
+		var horizontal_speed := 20.0 if horizontal_gap >= 180.0 else 15.0 if horizontal_gap >= 125.0 else 10.0
+		velocity.x = horizontal_speed if shot_direction == 1 else -horizontal_speed
 		velocity.y = -14.0 if offset.y < -20.0 else -10.0 if offset.y < 0.0 else -6.0
 	else:
 		velocity.y += 2.0

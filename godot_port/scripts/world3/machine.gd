@@ -17,6 +17,10 @@ func configure(machine_direction: int = 0) -> void:
 	sprite.flip_h = direction != 0
 
 
+func take_weapon_hit(damage: int, weapon_id: int) -> void:
+	take_projectile_hit(3 if weapon_id == 5 else damage)
+
+
 func _update_enemy() -> void:
 	if timer == 50:
 		var attack := randi() % 3

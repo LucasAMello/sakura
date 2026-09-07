@@ -115,6 +115,7 @@ func _start_dash_pass() -> void:
 	body_size = Vector2(113, 43)
 	position.y = 195.0 if randi() % 2 == 0 else 305.0
 	sprite.flip_h = dash_direction > 0
+	get_node("/root/AudioManager").play_sfx("windydash")
 	_set_state(BossState.DASHING)
 
 
@@ -152,6 +153,7 @@ func _update_feather_attack() -> void:
 
 
 func _fire_feather(y_offset: float) -> void:
+	get_node("/root/AudioManager").play_sfx("penasound")
 	var feather: BossFeather = FeatherScript.new()
 	var direction := 1 if sprite.flip_h else -1
 	feather.position = position + Vector2(35.0, y_offset)
@@ -161,9 +163,17 @@ func _fire_feather(y_offset: float) -> void:
 
 
 func take_projectile_hit(damage: int) -> void:
+	_take_boss_damage(damage * 0.5)
+
+
+func take_weapon_hit(_damage: int, weapon_id: int) -> void:
+	_take_boss_damage(4.0 if weapon_id == 7 else 0.5)
+
+
+func _take_boss_damage(damage: float) -> void:
 	if defeated_state or not vulnerable:
 		return
-	boss_health -= damage * 0.5
+	boss_health -= damage
 	hit_points = ceili(boss_health)
 	hit_flash_ticks = 5
 	if boss_health <= 0.0:

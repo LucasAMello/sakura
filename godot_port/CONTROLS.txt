@@ -1,0 +1,12 @@
+SAKURA CONTROLS
+
+Arrow keys    Move / navigate menus
+F             Jump / confirm
+D             Fire
+A / S         Previous / next unlocked weapon
+1–7           Select weapon directly
+Enter         Confirm / pause
+Escape        Back / open or close pause
+F3            Compatibility information
+
+Controls can be changed from Options. Music and sound levels can be changed from Options or the pause menu.

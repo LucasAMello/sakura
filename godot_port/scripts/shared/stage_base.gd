@@ -4,6 +4,7 @@ extends Node2D
 const TerrainScript = preload("res://scripts/shared/terrain.gd")
 const PlayerScript = preload("res://scripts/player/player.gd")
 const ProjectileScript = preload("res://scripts/player/projectile.gd")
+const WeaponProjectileScript = preload("res://scripts/player/weapon_projectile.gd")
 const RecoveryScript = preload("res://scripts/shared/recovery.gd")
 const HUDScript = preload("res://scripts/hud/hud.gd")
 const PlayerDeathEffectScript = preload("res://scripts/player/death_effect.gd")
@@ -60,6 +61,27 @@ var departure_player: Sprite2D
 var departure_portal_center := Vector2.ZERO
 var departure_target_player_position := Vector2.ZERO
 var departure_walk_direction := 1
+var pause_column := 0
+var pause_row := 0
+var pause_page := 0
+var pause_option_selection := 0
+var pause_binding_index := -1
+var victory_target := Vector2.ZERO
+var victory_target_set := false
+
+const PAUSE_BINDING_ACTIONS := [
+	"move_up", "move_down", "move_right", "move_left", "jump",
+	"fire", "weapon_next", "weapon_previous", "pause", "quit",
+]
+
+
+func _init() -> void:
+	child_entered_tree.connect(_on_stage_child_entered_tree)
+
+
+func _on_stage_child_entered_tree(node: Node) -> void:
+	if node.process_mode == Node.PROCESS_MODE_INHERIT:
+		node.process_mode = Node.PROCESS_MODE_PAUSABLE
 
 
 func _ready() -> void:
@@ -67,8 +89,6 @@ func _ready() -> void:
 	randomize()
 	progress = get_node("/root/SakuraProgress")
 	_install_input_actions()
-	if map_number == 0:
-		map_number = _default_map_number()
 	map_config = _map_configs()[map_number]
 	_build_background()
 	terrain = TerrainScript.new()
@@ -81,12 +101,13 @@ func _ready() -> void:
 	_configure_checkpoint()
 	player.z_index = 20
 	add_child(player)
-	player.setup(terrain)
-	player.hp = progress.take_hp(SakuraPlayer.MAX_HP)
+	player.setup(terrain, progress.maximum_hp())
+	player.hp = progress.take_hp(progress.maximum_hp())
 	player.lives = progress.lives
 	player.set_presentation_hidden(true)
 	player.shot_requested.connect(_on_shot_requested)
 	player.died.connect(_on_player_died)
+	progress.maximum_hp_changed.connect(_on_maximum_hp_changed)
 	_spawn_stage_objects()
 	_build_entry_portal()
 	_build_stage_boss_area()
@@ -95,27 +116,146 @@ func _ready() -> void:
 	add_child(hud)
 	hud.set_ready_visible(_entry_should_show_ready())
 	_set_gameplay_active(false)
+	get_node("/root/AudioManager").play_music("world%d" % _world_number())
 
 
 func _handle_global_input() -> bool:
-	if Input.is_action_just_pressed("pause") and stage_state != StageState.DYING:
+	if Input.is_action_just_pressed("quit") and stage_state != StageState.DYING and not get_tree().paused:
+		if _world_number() == 7:
+			get_node("/root/GameFlow").leave_final_stage()
+		else:
+			get_node("/root/GameFlow").complete_elemental_stage(_world_number())
+		return true
+	if Input.is_action_just_pressed("pause") and stage_state != StageState.DYING and not get_tree().paused:
+		pause_column = 0
+		pause_row = 0
+		pause_page = 0
+		pause_option_selection = 0
+		pause_binding_index = -1
 		_set_paused(not get_tree().paused)
 		return true
 	if get_tree().paused:
-		if Input.is_action_just_pressed("restart"):
-			_set_paused(false)
-			get_tree().reload_current_scene()
-		elif Input.is_action_just_pressed("quit"):
-			get_tree().quit()
+		_handle_pause_input()
 		return true
-	if Input.is_action_just_pressed("quit"):
-		get_tree().quit()
 	if Input.is_action_just_pressed("restart"):
 		get_tree().reload_current_scene()
 		return true
 	if Input.is_action_just_pressed("toggle_debug"):
 		hud.toggle_debug()
 	return false
+
+
+func _handle_pause_input() -> void:
+	if pause_binding_index >= 0:
+		return
+	if Input.is_action_just_pressed("pause"):
+		_set_paused(false)
+		return
+	if pause_page == 1:
+		if Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("quit"):
+			pause_page = 0
+	elif pause_page == 2:
+		_handle_pause_options()
+	else:
+		_handle_pause_grid()
+	if not is_inside_tree() or not get_tree().paused:
+		return
+	hud.set_pause_selection(pause_column, pause_row, pause_page, pause_option_selection, pause_binding_index, player, get_node("/root/SakuraSettings"), progress)
+
+
+func _handle_pause_grid() -> void:
+	if Input.is_action_just_pressed("move_up"):
+		pause_row = wrapi(pause_row - 1, 0, 6)
+		_pause_skip_locked(-1)
+	elif Input.is_action_just_pressed("move_down"):
+		pause_row = wrapi(pause_row + 1, 0, 6)
+		_pause_skip_locked(1)
+	elif Input.is_action_just_pressed("move_left") and pause_row != 4:
+		pause_column = 1 - pause_column
+		_pause_skip_locked(-1)
+	elif Input.is_action_just_pressed("move_right") and pause_row != 4:
+		pause_column = 1 - pause_column
+		_pause_skip_locked(1)
+	elif Input.is_action_just_pressed("jump"):
+		_activate_pause_cell()
+
+
+func _pause_skip_locked(direction: int) -> void:
+	if pause_row == 4:
+		pause_column = 0
+	var attempts := 0
+	while not _pause_cell_available(pause_column, pause_row) and attempts < 12:
+		pause_row = wrapi(pause_row + direction, 0, 6)
+		if pause_row == 4:
+			pause_column = 0
+		attempts += 1
+
+
+func _pause_cell_available(column: int, row: int) -> bool:
+	if row >= 4:
+		return true
+	var weapons := [[1, 2], [4, 5], [7, 6], [3, 0]]
+	var weapon_id: int = weapons[row][column]
+	return weapon_id == 0 or progress.is_weapon_unlocked(weapon_id)
+
+
+func _activate_pause_cell() -> void:
+	get_node("/root/AudioManager").play_sfx("accept")
+	if pause_row < 4:
+		var weapons := [[1, 2], [4, 5], [7, 6], [3, 0]]
+		var weapon_id: int = weapons[pause_row][pause_column]
+		if weapon_id > 0:
+			player.select_weapon(weapon_id)
+		else:
+			_set_paused(false)
+			if _world_number() == 7:
+				get_node("/root/GameFlow").leave_final_stage()
+			else:
+				get_node("/root/GameFlow").complete_elemental_stage(_world_number())
+	elif pause_row == 4:
+		pause_page = 2
+		pause_option_selection = 0
+	elif pause_column == 0:
+		_set_paused(false)
+	else:
+		pause_page = 1
+
+
+func _handle_pause_options() -> void:
+	if Input.is_action_just_pressed("move_up"):
+		pause_option_selection = wrapi(pause_option_selection - 1, 0, 4)
+	elif Input.is_action_just_pressed("move_down"):
+		pause_option_selection = wrapi(pause_option_selection + 1, 0, 4)
+	elif Input.is_action_just_pressed("move_left"):
+		_adjust_pause_option(-1)
+	elif Input.is_action_just_pressed("move_right"):
+		_adjust_pause_option(1)
+	elif Input.is_action_just_pressed("quit"):
+		pause_page = 0
+	elif Input.is_action_just_pressed("jump"):
+		if pause_option_selection == 2:
+			pause_binding_index = 0
+		elif pause_option_selection == 3:
+			pause_page = 0
+
+
+func _adjust_pause_option(direction: int) -> void:
+	var settings := get_node("/root/SakuraSettings")
+	if pause_option_selection == 0:
+		settings.set_music_volume(clampf(settings.music_volume + direction, 0.0, 1.0))
+	elif pause_option_selection == 1:
+		settings.set_sfx_volume(settings.sfx_volume + direction / 255.0)
+
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not get_tree().paused or pause_binding_index < 0 or not event.pressed or event.echo:
+		return
+	get_node("/root/SakuraSettings").set_key(PAUSE_BINDING_ACTIONS[pause_binding_index], event.physical_keycode)
+	pause_binding_index += 1
+	if pause_binding_index >= PAUSE_BINDING_ACTIONS.size():
+		pause_binding_index = -1
+	hud.set_pause_selection(pause_column, pause_row, pause_page, pause_option_selection, pause_binding_index, player, get_node("/root/SakuraSettings"), progress)
+	get_viewport().set_input_as_handled()
 
 
 func _finish_physics_tick() -> void:
@@ -157,8 +297,13 @@ func _update_exit() -> void:
 
 func _update_death() -> void:
 	state_ticks += 1
+	if state_ticks < 100 and state_ticks % 20 == 0:
+		get_node("/root/AudioManager").play_sfx("die")
 	if state_ticks >= 100:
-		get_tree().reload_current_scene()
+		if progress.game_over_pending:
+			get_node("/root/GameFlow").game_over()
+		else:
+			get_tree().reload_current_scene()
 
 
 func _start_departure(direction: int = 0) -> void:
@@ -167,7 +312,7 @@ func _start_departure(direction: int = 0) -> void:
 	departure_walk_direction = -1 if departure_walk_direction < 0 else 1
 	player.facing = departure_walk_direction
 	departure_portal_center = player.get_center() + Vector2(departure_walk_direction * 40.0, 0.0)
-	var texture_width := SakuraPlayer.NORMAL_TEXTURES[0].get_width()
+	var texture_width := player.get_normal_frame_texture(0).get_width()
 	var sprite_offset_x := -10.0 if departure_walk_direction < 0 else 0.0
 	var target_x := departure_portal_center.x - sprite_offset_x
 	if departure_walk_direction < 0:
@@ -193,6 +338,49 @@ func _start_departure(direction: int = 0) -> void:
 	departure_front.z_index = 22
 	departure_front.visible = false
 	add_child(departure_front)
+
+
+func _move_player_to_boss_departure(world_number: int) -> void:
+	if departure_ticks > 0:
+		return
+	if not victory_target_set:
+		victory_target_set = true
+		match world_number:
+			1:
+				if player.position.x >= 3100.0 and player.position.x < 3260.0:
+					victory_target = Vector2(3180, 180)
+				elif player.position.x >= 3460.0 and player.position.x < 3620.0:
+					victory_target = Vector2(3540, 180)
+				else:
+					victory_target = Vector2(3360, 300)
+			2:
+				victory_target = Vector2(5480, 460)
+			3:
+				victory_target = Vector2(5460, 400)
+			4:
+				victory_target = Vector2(9580, 560)
+			5:
+				victory_target = Vector2(5420, 2220)
+			6:
+				if player.position.x >= 3400.0 and player.position.x < 3500.0:
+					victory_target = Vector2(3450, 990)
+				elif player.position.x >= 3720.0 and player.position.x < 3820.0:
+					victory_target = Vector2(3770, 990)
+				else:
+					victory_target = Vector2(3600, 1020)
+	player.position.y = move_toward(player.position.y, victory_target.y, 5.0)
+	var distance := victory_target.x - player.position.x
+	if absf(distance) >= 4.0:
+		player.set_scripted_animation_active(true)
+		player.scripted_step(1 if distance > 0.0 else -1, 4.0)
+	else:
+		player.position.x = victory_target.x
+		player.x_speed = 0.0
+	if player.position == victory_target:
+		player.y_speed = 0.0
+		player.grounded = true
+		player.walk_tick = 0
+		player.set_scripted_animation_active(false)
 
 
 func _update_departure() -> void:
@@ -237,7 +425,7 @@ func _update_departure_player() -> void:
 		player.set_scripted_animation_active(false)
 	var sequence_index := int(player.walk_tick / float(SakuraPlayer.ANIMATION_SPEED))
 	var frame_index: int = SakuraPlayer.WALK_SEQUENCE[sequence_index]
-	departure_player.texture = SakuraPlayer.NORMAL_TEXTURES[frame_index]
+	departure_player.texture = player.get_normal_frame_texture(frame_index)
 	departure_player.flip_h = departure_walk_direction < 0
 	var texture_size := departure_player.texture.get_size()
 	var sprite_offset_x := -10.0 if departure_walk_direction < 0 else 0.0
@@ -332,26 +520,57 @@ func _spawn_recovery(spawn_position: Vector2, drop_type: int) -> void:
 	recovery.setup(terrain, player, drop_type)
 
 
-func _on_shot_requested(origin: Vector2, direction: int) -> void:
-	var projectile: DefaultProjectile = ProjectileScript.new()
-	projectile.position = origin
-	projectile.z_index = 15
-	add_child(projectile)
-	projectile.setup(terrain, player, self, direction)
-	projectile.finished.connect(player.projectile_ended, CONNECT_ONE_SHOT)
+func _on_shot_requested(origin: Vector2, direction: int, weapon_id: int) -> void:
+	var shot_volume := 205.0 / 255.0 if weapon_id == 1 else 1.0
+	get_node("/root/AudioManager").play_sfx("tiro%d" % weapon_id, 1.0, shot_volume)
+	if (weapon_id == 1):
+		var projectile: ProjectileScript = ProjectileScript.new()
+		projectile.position = origin
+		projectile.z_index = 15
+		add_child(projectile)
+		projectile.setup(terrain, player, self, direction)
+		projectile.finished.connect(player.projectile_ended, CONNECT_ONE_SHOT)
+	else:
+		var projectile: WeaponProjectileScript = WeaponProjectileScript.new()
+		projectile.position = origin
+		projectile.z_index = 15
+		add_child(projectile)
+		projectile.setup(terrain, player, self, direction, weapon_id)
+		if weapon_id != 2:
+			projectile.finished.connect(player.projectile_ended, CONNECT_ONE_SHOT)
 
 
-func damage_enemy_in_rect(rect: Rect2, damage: int) -> bool:
-	if _damage_stage_object_in_rect(rect, damage):
+func _on_maximum_hp_changed(value: int) -> void:
+	player.set_maximum_hp(value)
+	hud.show_maximum_hp_sparkle(value)
+	get_node("/root/AudioManager").play_sfx("sparkle")
+
+
+func projectile_hits_solid(rect: Rect2) -> bool:
+	if terrain.rect_hits_solid(rect):
+		return true
+	for door in boss_doors:
+		if is_instance_valid(door) and door.visible and door.texture != null:
+			if Rect2(door.position, door.texture.get_size()).intersects(rect):
+				return true
+	return false
+
+
+func damage_enemy_in_rect(rect: Rect2, damage: int, weapon_id: int = 1, water_splash: bool = false) -> bool:
+	if _damage_stage_object_in_rect(rect, damage, weapon_id):
 		return true
 	for enemy in enemies:
-		if is_instance_valid(enemy) and not enemy.defeated_state and enemy.projectile_mask_overlap(rect):
-			enemy.take_projectile_hit(damage)
+		if is_instance_valid(enemy) and not enemy.defeated_state and enemy.accepts_weapon_hit(weapon_id) and enemy.projectile_mask_overlap(rect):
+			if water_splash:
+				enemy.take_water_splash_hit()
+			else:
+				enemy.take_weapon_hit(damage, weapon_id)
 			return true
 	return false
 
 
 func _on_player_died() -> void:
+	get_node("/root/AudioManager").play_sfx("die")
 	_before_player_death()
 	stage_state = StageState.DYING
 	state_ticks = 0
@@ -364,6 +583,15 @@ func _on_player_died() -> void:
 
 
 func _spawn_enemy_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim40")
+	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
+	effect.position = effect_position
+	effect.z_index = 30
+	add_child(effect)
+
+
+func _spawn_boss_explosion(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim13")
 	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
 	effect.position = effect_position
 	effect.z_index = 30
@@ -465,7 +693,7 @@ func _entry_should_show_ready() -> bool:
 
 func _set_entry_player(frame_index: int, revealing: bool) -> void:
 	entry_player.visible = true
-	entry_player.texture = SakuraPlayer.NORMAL_TEXTURES[frame_index]
+	entry_player.texture = player.get_normal_frame_texture(frame_index)
 	entry_player.position = player.position
 	if revealing:
 		var reveal_step := state_ticks - 46
@@ -531,8 +759,12 @@ func _stage_state_label() -> String:
 
 
 func _set_paused(value: bool) -> void:
+	if not value and get_tree().paused and Input.is_action_pressed("jump"):
+		player.block_jump_until_release()
 	get_tree().paused = value
 	hud.set_paused(value)
+	if value:
+		hud.set_pause_selection(pause_column, pause_row, pause_page, pause_option_selection, pause_binding_index, player, get_node("/root/SakuraSettings"), progress)
 
 
 func _install_input_actions() -> void:
@@ -555,8 +787,19 @@ func _bind_key(action: StringName, key: Key) -> void:
 		InputMap.action_add_event(action, event)
 
 
-func _default_map_number() -> int:
-	return 0
+func _world_number() -> int:
+	return clampi(int(map_number / 10.0), 1, 7)
+
+
+func _is_active_rematch() -> bool:
+	return progress.active_rematch_world == _world_number() or progress.has_boss_reward(_world_number() - 1)
+
+
+func _finish_elemental_or_rematch(world_number: int) -> void:
+	if progress.active_rematch_world == world_number:
+		get_node("/root/GameFlow").finish_active_rematch()
+	else:
+		get_node("/root/GameFlow").complete_elemental_stage(world_number)
 
 
 func _first_map_number() -> int:
@@ -607,7 +850,7 @@ func _entry_has_portal() -> bool:
 	return map_number == _first_map_number() or _entry_has_checkpoint()
 
 
-func _entry_complete_state() -> int:
+func _entry_complete_state() -> StageState:
 	return StageState.CHECKPOINT if _entry_has_checkpoint() else StageState.PLAYING
 
 
@@ -623,7 +866,7 @@ func _spawn_enemy_defeat_effect(_enemy: SakuraEnemy, effect_position: Vector2) -
 	_spawn_enemy_death(effect_position)
 
 
-func _damage_stage_object_in_rect(_rect: Rect2, _damage: int) -> bool:
+func _damage_stage_object_in_rect(_rect: Rect2, _damage: int, _weapon_id: int = 1) -> bool:
 	return false
 
 

@@ -10,4 +10,6 @@ World 5 covers maps 50–53 and is based on the canonical `old/2 Joguito` source
 | Map53 transition | `Main.cpp`, `set_dvalues` | Checkpoint shaft, boss-death respawn, camera handoff, and boss-room activation |
 | Scaled boss | `sprite.h`, `scripts.h`, `colision.h`, `draw.h` | 30 HP, randomized attack state machine, three projectile families, damage windows, reward, portal departure, and progression to map60 |
 
-Music, sound effects, menus, saving, and weapon selection remain project-wide omissions rather than missing World 5 gameplay entities.
+Canonical music, sound effects, menus, JSON and legacy saving, pause weapon selection, and control remapping are provided by the shared project systems.
+
+Flamethrowers create their damaging flame at source timer `45`; the flame owns the guarded `flamethrower` sound on animation timers `1`, `8`, `15`, and `22`, matching types 39/40. Flamemet ledge checks treat the tiles rewritten to `1` by the original map loader as empty, use the post-move coordinate for the original 20-pixel boundary snap, and resolve wall movement one pixel at a time to prevent repeated turn overlap.

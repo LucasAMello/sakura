@@ -31,6 +31,12 @@ func take_projectile_hit(damage: int) -> void:
 		hit_flash_ticks = 5
 
 
+func take_weapon_hit(damage: int, weapon_id: int) -> void:
+	if is_instance_valid(boss):
+		boss.receive_clone_weapon_hit(damage, weapon_id)
+		hit_flash_ticks = 5
+
+
 func _update_enemy() -> void:
 	if not is_instance_valid(boss):
 		queue_free()

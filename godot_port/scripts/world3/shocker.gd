@@ -24,6 +24,10 @@ func configure(shocker_direction: int, initial_timer: int = 0) -> void:
 	_apply_direction_transform()
 
 
+func take_weapon_hit(damage: int, weapon_id: int) -> void:
+	take_projectile_hit(3 if weapon_id == 5 else damage)
+
+
 func _update_enemy() -> void:
 	timer += 1
 	if timer > 9 and timer < 14:

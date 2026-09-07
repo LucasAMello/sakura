@@ -26,9 +26,15 @@ func configure(surface_y: float) -> void:
 	_update_sprite_geometry()
 
 
+func take_weapon_hit(damage: int, weapon_id: int) -> void:
+	take_projectile_hit(4 if weapon_id == 4 else damage)
+
+
 func _update_enemy() -> void:
 	if not is_instance_valid(player):
 		return
+	if state != 3 or timer == 0:
+		sprite.flip_h = player.position.x > position.x
 	timer += 1
 	match state:
 		1:
@@ -37,17 +43,22 @@ func _update_enemy() -> void:
 			if timer >= 6:
 				state = 3
 				timer = 0
-				body_size = Vector2(30.0, 30.0)
-				sprite.texture = TEXTURES[2]
+				body_size = Vector2(40.0, 41.0)
+				sprite.texture = TEXTURES[1]
 				sprite.region_enabled = false
 				_update_sprite_geometry()
 		3:
 			if timer == 1:
-				horizontal_speed = -25.0 if player.get_center().x < get_hit_rect().get_center().x else 25.0
+				body_size = Vector2(30.0, 30.0)
+				sprite.texture = TEXTURES[2]
+				sprite.flip_h = false
+				_update_sprite_geometry()
+				horizontal_speed = 25.0 if player.position.x > position.x else -25.0
+			else:
+				sprite.rotation_degrees = fposmod(sprite.rotation_degrees + 24.0 * 360.0 / 256.0, 360.0)
 			if timer >= 10:
 				position.x += horizontal_speed
-				sprite.rotation_degrees += 24.0
-			if absf(player.position.x - position.x) > 640.0:
+			if position.x - player.position.x - 40.0 > 640.0 or player.position.x - position.x - 30.0 > 640.0:
 				queue_free()
 
 
@@ -60,23 +71,22 @@ func _update_emergence() -> void:
 		sprite.visible = true
 		_update_sprite_geometry()
 		return
-	if position.y <= player.position.y or position.y <= water_surface_y + 20.0:
-		position.y = maxf(position.y, water_surface_y + 20.0)
+	if position.y <= player.position.y:
 		state = 2
 		timer = 0
-		body_size = Vector2(40.0, 41.0)
-		sprite.texture = TEXTURES[1]
-		sprite.region_enabled = false
-		_update_sprite_geometry()
+	elif position.y <= water_surface_y + 20.0:
+		position.y = water_surface_y + 20.0
+		state = 2
+		timer = 0
 	else:
 		position.y -= 17.0
 
 
 func _update_sprite_geometry() -> void:
 	if sprite.region_enabled:
-		sprite.region_rect = Rect2(0.0, 51.0 - visible_height, 36.0, visible_height)
-	sprite.centered = false
-	sprite.position = Vector2.ZERO
+		sprite.region_rect = Rect2(0.0, 0.0, 36.0, visible_height)
+	sprite.centered = sprite.texture == TEXTURES[2]
+	sprite.position = body_size * 0.5 if sprite.centered else Vector2.ZERO
 
 
 func projectile_mask_overlap(projectile_rect: Rect2) -> bool:

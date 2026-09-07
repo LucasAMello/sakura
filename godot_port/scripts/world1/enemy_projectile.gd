@@ -8,6 +8,7 @@ const SPEED_PER_TICK := 10.0
 
 var terrain: SakuraTerrain
 var player: SakuraPlayer
+var sprite: Sprite2D
 var move_direction := -1
 var lifetime := 40
 var exploded := false
@@ -15,7 +16,7 @@ var exploded := false
 
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	var sprite := Sprite2D.new()
+	sprite = Sprite2D.new()
 	sprite.centered = false
 	sprite.texture = TEXTURE
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -27,6 +28,8 @@ func setup(map_terrain: SakuraTerrain, target_player: SakuraPlayer, direction: i
 	terrain = map_terrain
 	player = target_player
 	move_direction = 1 if direction == 1 else -1
+	sprite.flip_h = move_direction > 0
+	get_node("/root/AudioManager").play_sfx_near_player("turret", position, target_player.position, 1.0, 100.0 / 255.0)
 
 
 func _physics_process(_delta: float) -> void:
@@ -54,5 +57,6 @@ func _explode() -> void:
 	var explosion: TurretShotExplosion = ExplosionScript.new()
 	explosion.position = position + Vector2(10, -7)
 	explosion.z_index = z_index
+	explosion.setup(player)
 	get_parent().add_child(explosion)
 	queue_free()
