@@ -15,7 +15,7 @@ const STAGE6_ATLAS := preload("res://assets/world6/terrain.png")
 const STAGE6_BACKGROUND := preload("res://assets/world6/background.png")
 
 const STAGE6_SOURCE_RECTS := {
-	"0": Vector2i(120, 40), "2": Vector2i(20, 0), "3": Vector2i(40, 0), "4": Vector2i(60, 0),
+	"2": Vector2i(20, 0), "3": Vector2i(40, 0), "4": Vector2i(60, 0),
 	"5": Vector2i(20, 20), "6": Vector2i(40, 20), "7": Vector2i(60, 20),
 	"8": Vector2i(20, 40), "9": Vector2i(40, 40), "-": Vector2i(60, 40),
 	"a": Vector2i(0, 0), "A": Vector2i(0, 0), "b": Vector2i(0, 20),
@@ -135,7 +135,7 @@ func _build_stage_boss_area() -> void:
 		PackedStringArray(),
 		{}
 	)
-	overlay_terrain.z_index = 1
+	overlay_terrain.z_index = -1
 	add_child(overlay_terrain)
 	for data in map_config["ice_blocks"]:
 		var block := Sprite2D.new()
@@ -198,14 +198,14 @@ func _update_checkpoint_entry() -> void:
 	if player.position.y == 1020.0:
 		player.y_speed = 0.0
 		player.grounded = true
-	if state_ticks <= 20:
-		_set_door_opening(0, float(state_ticks) / 20.0)
-	elif state_ticks <= 60:
+	if state_ticks <= 40:
+		_set_door_opening(0, float(state_ticks) / 40.0)
+	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
-		player.scripted_step_right(4.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(3060, 960), float(state_ticks - 20) / 40.0)
-	elif state_ticks <= 80:
-		_set_door_opening(0, 1.0 - float(state_ticks - 60) / 20.0)
+		player.scripted_step_right(2.0)
+		camera_lock_position = transition_camera_start.lerp(Vector2(3060, 960), float(state_ticks - 40) / 80.0)
+	elif state_ticks <= 160:
+		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
 	else:
 		_set_door_opening(0, 0.0)
 		camera_lock_position = Vector2(3060, 960)
@@ -224,14 +224,14 @@ func _update_checkpoint() -> void:
 
 func _update_boss_entry() -> void:
 	state_ticks += 1
-	if state_ticks <= 20:
-		_set_door_opening(1, float(state_ticks) / 20.0)
-	elif state_ticks <= 54:
+	if state_ticks <= 40:
+		_set_door_opening(1, float(state_ticks) / 40.0)
+	elif state_ticks <= 108:
 		_set_door_opening(1, 1.0)
-		player.scripted_step_right(5.0)
-		camera_lock_position = transition_camera_start.lerp(Vector2(3630, 960), float(state_ticks - 20) / 34.0)
-	elif state_ticks <= 74:
-		_set_door_opening(1, 1.0 - float(state_ticks - 54) / 20.0)
+		player.scripted_step_right(2.5)
+		camera_lock_position = transition_camera_start.lerp(Vector2(3630, 960), float(state_ticks - 40) / 68.0)
+	elif state_ticks <= 148:
+		_set_door_opening(1, 1.0 - float(state_ticks - 108) / 40.0)
 	else:
 		_set_door_opening(1, 0.0)
 		camera_lock_position = Vector2(3630, 960)

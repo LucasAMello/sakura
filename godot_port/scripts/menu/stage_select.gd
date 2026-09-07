@@ -85,6 +85,7 @@ func _update_final_stage_reveal() -> void:
 	)
 	if final_stage_reveal_ticks >= FINAL_STAGE_REVEAL_TICKS:
 		final_stage_boulder.visible = false
+		get_node("/root/SakuraProgress").finish_final_stage_reveal()
 		final_stage_reveal_ticks = -1
 
 

@@ -10,7 +10,6 @@ var gameplay_active := false
 var timer := 0
 var velocity := Vector2.ZERO
 var lifetime := 0
-var update_phase := 0
 var shot_direction := 0
 
 
@@ -35,28 +34,25 @@ func set_gameplay_active(value: bool) -> void:
 func _physics_process(_delta: float) -> void:
 	if not gameplay_active or not is_instance_valid(player):
 		return
-	update_phase = (update_phase + 1) % 2
-	if update_phase != 0:
-		return
 	timer += 1
 	lifetime += 1
-	if timer <= 5:
+	if timer <= 10:
 		return
-	if timer == 6:
+	if timer == 11:
 		var offset := player.position - position
 		var horizontal_gap := offset.x - 20.0 if shot_direction == 1 else -offset.x - 40.0
-		var horizontal_speed := 20.0 if horizontal_gap >= 180.0 else 15.0 if horizontal_gap >= 125.0 else 10.0
+		var horizontal_speed := 10.0 if horizontal_gap >= 180.0 else 7.5 if horizontal_gap >= 125.0 else 5.0
 		velocity.x = horizontal_speed if shot_direction == 1 else -horizontal_speed
-		velocity.y = -14.0 if offset.y < -20.0 else -10.0 if offset.y < 0.0 else -6.0
+		velocity.y = (-7.0 if offset.y < -20.0 else -5.0 if offset.y < 0.0 else -3.0) - 0.25
 	else:
-		velocity.y += 2.0
+		velocity.y += 0.5
 	if not _move_axis(Vector2(velocity.x, 0.0)) or not _move_axis(Vector2(0.0, velocity.y)):
 		queue_free()
 		return
 	if Rect2(position, BODY_SIZE).intersects(player.get_hit_rect()):
 		player.take_damage(2)
 		queue_free()
-	elif lifetime > 180 or position.x < -40.0 or position.x > terrain.world_size.x + 40.0 or position.y > terrain.world_size.y + 40.0:
+	elif lifetime > 360 or position.x < -40.0 or position.x > terrain.world_size.x + 40.0 or position.y > terrain.world_size.y + 40.0:
 		queue_free()
 
 

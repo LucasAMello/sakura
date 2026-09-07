@@ -36,9 +36,9 @@ func _update_enemy() -> void:
 		return
 	timer += 1
 	sprite.texture = FRAMES[int(((timer - 1) % 6) / 2.0)]
-	var speed := 10.0
+	var speed := PumpkinEnemy.PATROL_SPEED * 2.0
 	if player.grounded and is_equal_approx(player.position.y + 60.0, position.y) and absf(player.position.x - position.x) < 240.0:
-		speed = 20.0
+		speed = PumpkinEnemy.CHASE_SPEED * 2.0
 	var candidate := Rect2(position + Vector2(move_direction * speed, 0), body_size)
 	var floor_left := terrain.is_solid_at(Vector2(candidate.position.x + 1, candidate.end.y))
 	var floor_right := terrain.is_solid_at(Vector2(candidate.end.x - 1, candidate.end.y))

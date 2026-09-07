@@ -69,6 +69,8 @@ func _physics_process(_delta: float) -> void:
 	else:
 		next_sprite.visible = false
 	next_alpha = 0
+	sprite.modulate.a = 200.0 / 255.0
+	next_sprite.modulate.a = 0.0
 
 
 func projectile_mask_overlap(projectile_rect: Rect2) -> bool:

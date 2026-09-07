@@ -88,7 +88,7 @@ const MAP_CONFIGS := {
 		"sand_mounds": [[Vector2(6980, 164), 40]],
 	},
 	42: {
-		"width": 500, "height": 40, "start": Vector2(8000, 260),
+		"width": 500, "height": 40, "start": Vector2(0, 260),
 		"exit": Rect2(), "next": 0,
 		"water_surface": 300.0, "starts_in_water": false,
 		"background_rows": [60.0],
@@ -154,6 +154,7 @@ func _configure_checkpoint() -> void:
 
 
 func _build_stage_boss_area() -> void:
+	terrain.z_index = 24
 	foreground_terrain = TerrainScript.new()
 	foreground_terrain.setup(
 		"res://maps/map%d.map" % map_number,
@@ -183,15 +184,15 @@ func _build_entry_portal() -> void:
 	super._build_entry_portal()
 	portal_back.z_index = player.z_index - 2
 	entry_player.z_index = player.z_index
-	entry_effect.z_index = 28
-	portal_front.z_index = 29
+	entry_effect.z_index = player.z_index - 1
+	portal_front.z_index = 22
 
 
 func _start_departure(direction: int = 0) -> void:
 	super._start_departure(direction)
 	departure_back.z_index = player.z_index - 2
 	departure_player.z_index = player.z_index
-	departure_front.z_index = 29
+	departure_front.z_index = 22
 
 
 func _physics_process(_delta: float) -> void:

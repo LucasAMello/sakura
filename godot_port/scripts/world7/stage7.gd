@@ -64,7 +64,7 @@ const GHOST_MASK_SPAWNERS := {
 	70: [{"position": Vector2(5280, 380), "destination": 2600.0, "span": 170}],
 	72: [{"position": Vector2(6340, 400), "destination": 4020.0, "span": 200}],
 }
-const ATLAS_TOGGLE_TOKENS := PackedStringArray(["_", "+", "=", "`", "M"])
+const ATLAS_TOGGLE_TOKENS := ["_", "+", "=", "`", "M"]
 
 var portal_sprites: Array[Sprite2D] = []
 var seahorse_spawners: Array[World4SeahorseSpawner] = []
@@ -95,11 +95,11 @@ func _setup_terrain() -> void:
 	terrain.setup("res://maps/map%d.map" % map_number, map_config["width"], map_config["height"], STAGE7_ATLAS, SOURCE_RECTS, non_solid, PackedStringArray(["0"]), {})
 	match map_number:
 		71:
-			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 0, ATLAS_TOGGLE_TOKENS, {97: 1})
+			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 0, PackedStringArray(ATLAS_TOGGLE_TOKENS), {97: 1})
 		72:
-			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 1, ATLAS_TOGGLE_TOKENS, {97: 0, 445: 1})
+			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 1, PackedStringArray(ATLAS_TOGGLE_TOKENS), {97: 0, 445: 1})
 		73:
-			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 1, ATLAS_TOGGLE_TOKENS, {25: 0, 100: 1})
+			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 1, PackedStringArray(ATLAS_TOGGLE_TOKENS), {25: 0, 100: 1})
 		80:
 			terrain.configure_atlas_switching([STAGE7_ATLAS, STAGE7_FINAL_ATLAS], 0, PackedStringArray(), {}, {"2": 0, "3": 1}, PackedStringArray(["2", "3"]))
 
@@ -318,12 +318,12 @@ func _on_falling_fire_requested(spawn_position: Vector2) -> void:
 	fire.set_gameplay_active(true)
 
 
-func _on_oyster_pearl_requested(spawn_position: Vector2) -> void:
+func _on_oyster_pearl_requested(spawn_position: Vector2, shot_direction: int) -> void:
 	var pearl: World4OysterPearl = OysterPearlScript.new()
 	pearl.position = spawn_position
-	pearl.z_index = 12
+	pearl.z_index = 9
 	add_child(pearl)
-	pearl.setup(terrain, player)
+	pearl.setup(terrain, player, shot_direction)
 	pearl.set_gameplay_active(true)
 	oyster_pearls.append(pearl)
 

@@ -20,6 +20,7 @@ var active_rematch_world := 0
 var final_stage_return_position := Vector2.ZERO
 var game_over_pending := false
 var final_stage_reveal_pending := false
+var final_stage_reveal_seen := false
 
 var first_boss_reward: bool:
 	get:
@@ -52,6 +53,7 @@ func reset_new_game() -> void:
 	final_stage_return_position = Vector2.ZERO
 	game_over_pending = false
 	final_stage_reveal_pending = false
+	final_stage_reveal_seen = false
 
 
 func begin_stage(world_number: int) -> void:
@@ -128,9 +130,12 @@ func is_final_stage_unlocked() -> bool:
 
 
 func consume_final_stage_reveal() -> bool:
-	var pending := final_stage_reveal_pending
+	return is_final_stage_unlocked() and not final_stage_reveal_seen
+
+
+func finish_final_stage_reveal() -> void:
 	final_stage_reveal_pending = false
-	return pending
+	final_stage_reveal_seen = true
 
 
 func unlock_first_boss_reward() -> void:
@@ -283,7 +288,7 @@ func save_game() -> Dictionary:
 	for key in cards.keys():
 		card_ids.append(int(key))
 	card_ids.sort()
-	var payload := {"version": SAVE_VERSION, "cards": card_ids}
+	var payload := {"version": SAVE_VERSION, "cards": card_ids, "final_stage_reveal_seen": final_stage_reveal_seen}
 	var file := FileAccess.open(SAVE_TEMP_PATH, FileAccess.WRITE)
 	if file == null:
 		return {"ok": false, "message": "Unable to create save file."}
@@ -332,6 +337,8 @@ func load_game() -> Dictionary:
 		loaded_cards[card_id] = true
 	reset_new_game()
 	cards = loaded_cards
+	final_stage_reveal_seen = bool(data.get("final_stage_reveal_seen", false))
+	final_stage_reveal_pending = is_final_stage_unlocked() and not final_stage_reveal_seen
 	return {"ok": true, "message": "Game Loaded."}
 
 
@@ -349,7 +356,7 @@ func _encode_legacy_save() -> String:
 	var final_mask := 0
 	if has_card(51):
 		final_mask |= 4
-	if is_final_stage_unlocked():
+	if final_stage_reveal_seen:
 		final_mask |= 2
 	encoded += _legacy_character_for_mask(final_mask)
 	return encoded
@@ -384,7 +391,8 @@ func _load_legacy_game() -> Dictionary:
 		decoded_cards[51] = true
 	reset_new_game()
 	cards = decoded_cards
-	final_stage_reveal_pending = is_final_stage_unlocked() and not bool(final_mask & 2)
+	final_stage_reveal_seen = bool(final_mask & 2)
+	final_stage_reveal_pending = is_final_stage_unlocked() and not final_stage_reveal_seen
 	return {"ok": true, "message": "Game Loaded."}
 
 

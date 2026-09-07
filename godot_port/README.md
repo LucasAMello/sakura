@@ -26,6 +26,8 @@ Controls can be remapped from Options. Music and SFX levels apply immediately an
 
 ## Saves and settings
 
+The final-stage boulder reveal is recorded once its fade finishes and preserved in saves. Older native saves without that flag replay the reveal once when all six bosses are complete.
+
 The single versioned campaign slot is `user://sakura_save.json`. On Windows that resolves beneath `%APPDATA%\Godot\app_userdata\Sakura — Godot Port\`. The v1 schema stores only validated collected-card IDs; boss completion, weapon unlocks, final-stage access, score, and maximum HP are derived when loading. A missing, corrupt, duplicate, out-of-range, or unsupported save is rejected before active progress is changed.
 
 Saving also writes the original 18-character Allegro slot as `user://save.sav`. When the JSON slot is absent, Load Game accepts and validates that legacy format, so an original campaign save can be copied into the Godot user-data directory and migrated without losing collected cards. Controls and audio levels are stored in `user://sakura_settings.json`. HP, lives, selected weapon, checkpoints, active map, and final-stage rematch state are transient.

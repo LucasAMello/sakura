@@ -261,16 +261,16 @@ func _update_checkpoint() -> void:
 func _update_boss_entry() -> void:
 	state_ticks += 1
 	_update_scripted_boss_fall()
-	if state_ticks <= 32:
+	if state_ticks <= 64:
 		var distance := 5460.0 - player.position.x
 		if absf(distance) > 0.0:
-			player.scripted_step(1 if distance > 0.0 else -1, minf(4.0, absf(distance)))
+			player.scripted_step(1 if distance > 0.0 else -1, minf(2.0, absf(distance)))
 		else:
 			player.facing = 1
-	elif state_ticks == 33:
+	elif state_ticks <= 66:
 		player.facing = 1
-	elif state_ticks <= 53:
-		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 2160), float(state_ticks - 33) / 20.0)
+	elif state_ticks <= 106:
+		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 2160), float(state_ticks - 66) / 40.0)
 	else:
 		camera_lock_position = Vector2(5600, 2160)
 		stage_state = StageState.BOSS_INTRO
@@ -282,9 +282,9 @@ func _update_boss_entry() -> void:
 func _update_boss_intro() -> void:
 	state_ticks += 1
 	_update_scripted_boss_fall()
-	if state_ticks >= 25 and state_ticks <= 54:
+	if state_ticks >= 50 and state_ticks <= 108 and state_ticks % 2 == 0:
 		get_node("/root/AudioManager").play_sfx("recuperator")
-	if state_ticks >= 54:
+	if state_ticks >= 108:
 		player.position.y = 2220.0
 		player.y_speed = 0.0
 		player.grounded = true
@@ -542,7 +542,7 @@ func _update_boss_hud() -> void:
 		boss_visible = stage_state == StageState.BOSS or stage_state == StageState.BOSS_INTRO or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
 		displayed_boss_hp = boss.hit_points
 		if stage_state == StageState.BOSS_INTRO:
-			displayed_boss_hp = clampi(state_ticks - 24, 0, 30)
+			displayed_boss_hp = clampi(int(state_ticks / 2.0) - 24, 0, 30)
 	hud.set_boss_health(displayed_boss_hp, boss_visible)
 
 

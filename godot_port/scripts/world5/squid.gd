@@ -31,8 +31,6 @@ func take_weapon_hit(damage: int, weapon_id: int) -> void:
 
 
 func _update_enemy() -> void:
-	if state != 2:
-		sprite.texture = FRAMES[timer % 4]
 	match state:
 		0:
 			_update_waiting()
@@ -47,6 +45,8 @@ func _update_enemy() -> void:
 			if timer == 10:
 				state = 0
 				timer = 0
+	if state != 2:
+		sprite.texture = FRAMES[timer % 4]
 	_update_surface_clip()
 
 
@@ -61,6 +61,7 @@ func _update_waiting() -> void:
 		state = 1
 		vertical_speed = -25.0
 		sprite.visible = true
+		_update_rising()
 
 
 func _update_rising() -> void:
@@ -94,6 +95,7 @@ func _update_turnaround() -> void:
 		body_size = Vector2(25, 59)
 		position += Vector2(2, -20)
 		state = 3
+		_update_falling()
 
 
 func _update_falling() -> void:

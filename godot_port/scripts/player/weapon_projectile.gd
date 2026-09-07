@@ -323,6 +323,9 @@ func _end(play_impact_sound: bool = false) -> void:
 				get_node("/root/AudioManager").play_sfx("haduex")
 			7:
 				get_node("/root/AudioManager").play_sfx_near_player("iceanim", position, player.position)
+	if weapon_id == 6:
+		position += Vector2(-18, -17)
+		sprite.texture = FIRE_TEXTURES[2]
 	ending = true
 	if weapon_id != 3:
 		_emit_finished()

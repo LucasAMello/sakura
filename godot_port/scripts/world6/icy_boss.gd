@@ -53,10 +53,23 @@ var damage_form := false
 var fight_started := false
 var intro_notified := false
 var boss_health := 30.0
+var shadow_sprite: Sprite2D
+var form_texture: Texture2D
 
 
 func _ready() -> void:
 	super._ready()
+	shadow_sprite = Sprite2D.new()
+	shadow_sprite.centered = false
+	shadow_sprite.modulate.a = 50.0 / 255.0
+	add_child(shadow_sprite)
+	var normal_material := ShaderMaterial.new()
+	normal_material.shader = preload("res://shaders/boss_wall_clip.gdshader")
+	sprite.material = normal_material
+	var shadow_material := ShaderMaterial.new()
+	shadow_material.shader = normal_material.shader
+	shadow_material.set_shader_parameter("outside", true)
+	shadow_sprite.material = shadow_material
 	body_size = Vector2(154, 65)
 	hit_points = 30
 	boss_health = 30.0
@@ -129,6 +142,8 @@ func _update_enemy() -> void:
 			_update_mid_attack()
 		BossState.ATTACK_LOW_RIGHT, BossState.ATTACK_LOW_LEFT:
 			_update_low_attack()
+
+	_update_wall_visuals()
 
 
 func _update_shadow_intro() -> void:
@@ -351,21 +366,24 @@ func _choose_emergence() -> void:
 
 
 func _set_shadow(index: int, size: Vector2) -> void:
-	sprite.texture = SHADOW_FRAMES[index]
+	form_texture = SHADOW_FRAMES[index]
+	sprite.texture = form_texture
 	body_size = size
 	damage_form = false
 	_update_facing()
 
 
 func _set_side(index: int, size: Vector2) -> void:
-	sprite.texture = SIDE_FRAMES[index]
+	form_texture = SIDE_FRAMES[index]
+	sprite.texture = form_texture
 	body_size = size
 	damage_form = true
 	_update_facing()
 
 
 func _set_up(index: int, size: Vector2) -> void:
-	sprite.texture = UP_FRAMES[index]
+	form_texture = UP_FRAMES[index]
+	sprite.texture = form_texture
 	body_size = size
 	damage_form = true
 	_update_facing()
@@ -373,6 +391,27 @@ func _set_up(index: int, size: Vector2) -> void:
 
 func _update_facing() -> void:
 	sprite.flip_h = direction == 1
+	_update_wall_visuals()
+
+
+func _update_wall_visuals() -> void:
+	if not is_instance_valid(shadow_sprite) or form_texture == null:
+		return
+	var descending := state == BossState.DESCEND_LEFT or state == BossState.DESCEND_RIGHT
+	var vertical := form_texture == UP_FRAMES[0] or form_texture == SHADOW_FRAMES[3]
+	sprite.texture = form_texture
+	if SHADOW_FRAMES.has(form_texture):
+		sprite.texture = UP_FRAMES[0] if vertical else SIDE_FRAMES[0]
+	shadow_sprite.texture = SHADOW_FRAMES[3] if vertical else SHADOW_FRAMES[1]
+	if state == BossState.SHADOW_INTRO:
+		shadow_sprite.texture = form_texture
+	sprite.flip_v = descending and vertical
+	sprite.flip_h = direction == 0 if descending and vertical else direction == 1
+	shadow_sprite.flip_h = sprite.flip_h
+	shadow_sprite.flip_v = sprite.flip_v
+	shadow_sprite.position = Vector2.ZERO
+	if descending and not vertical and direction == 1 and not SHADOW_FRAMES.has(form_texture):
+		shadow_sprite.position.x = body_size.x - 154.0
 
 
 func _can_receive_damage() -> bool:

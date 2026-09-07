@@ -14,10 +14,11 @@ var rotation_units := 0.0
 
 
 func configure(facing_direction: int) -> void:
+	set_update_interval(1)
 	direction = facing_direction
 	body_size = Vector2(43.0, 27.0)
 	hit_points = 2
-	contact_damage = 3
+	contact_damage = 2
 	drops_recovery = true
 	sprite.texture = CLOSED_TEXTURE
 	sprite.flip_h = direction == 1
@@ -40,7 +41,7 @@ func _update_enemy() -> void:
 		1:
 			_update_opening()
 		2:
-			if timer >= 10:
+			if timer >= 20:
 				state = 3
 				timer = 0
 				position += Vector2(-6.0, 6.0)
@@ -49,7 +50,7 @@ func _update_enemy() -> void:
 		3:
 			_update_closing()
 		4:
-			if timer >= 40:
+			if timer >= 80:
 				state = 0
 				timer = 0
 				body_size = Vector2(43.0, 27.0)
@@ -59,16 +60,16 @@ func _update_enemy() -> void:
 
 
 func _update_opening() -> void:
-	if timer == 1:
+	if timer == 2:
 		pearl_requested.emit(position + Vector2(17.0, 4.0), direction)
-	if timer >= 4 and timer <= 6:
-		var step_index := timer - 4
+	if timer >= 7 and timer <= 12:
+		var step_index := int((timer - 7) / 2.0)
 		var x_steps := [2.0, 3.0, 4.0]
 		var y_steps := [-5.0, -4.0, -3.0]
-		position += Vector2(x_steps[step_index] * (-1.0 if direction == 1 else 1.0), y_steps[step_index])
+		position += Vector2(x_steps[step_index] * (-1.0 if direction == 1 else 1.0), y_steps[step_index]) * 0.5
 		body_size = Vector2(46.0, 38.0)
-		rotation_units += -11.0 if direction == 1 else 11.0
-	elif timer >= 7:
+		rotation_units += -5.5 if direction == 1 else 5.5
+	elif timer >= 14:
 		position += Vector2(6.0, -6.0)
 		state = 2
 		timer = 0
@@ -78,15 +79,15 @@ func _update_opening() -> void:
 
 
 func _update_closing() -> void:
-	if timer >= 2 and timer <= 4:
-		var step_index := timer - 2
+	if timer >= 3 and timer <= 8:
+		var step_index := int((timer - 3) / 2.0)
 		var x_steps := [4.0, 3.0, 2.0]
 		var y_steps := [3.0, 4.0, 5.0]
-		position += Vector2(x_steps[step_index] * (1.0 if direction == 1 else -1.0), y_steps[step_index])
-		rotation_units += 11.0 if direction == 1 else -11.0
-		if timer == 4:
+		position += Vector2(x_steps[step_index] * (1.0 if direction == 1 else -1.0), y_steps[step_index]) * 0.5
+		rotation_units += 5.5 if direction == 1 else -5.5
+		if timer == 8:
 			body_size = Vector2(43.0, 21.0)
-	elif timer >= 5:
+	elif timer >= 10:
 		state = 4
 		timer = 0
 		sprite.rotation_degrees = 0.0
