@@ -2,6 +2,7 @@ class_name SakuraHUD
 extends CanvasLayer
 
 const LIFE_BAR := preload("res://assets/hud/hud_life_bar.png")
+const PLAYER_METER_Y := 100.0
 const CARD_NAME_TEXTURES := [
 	preload("res://assets/menu/card_windy.png"), preload("res://assets/menu/card_shadow.png"), preload("res://assets/menu/card_thunder.png"),
 	preload("res://assets/menu/card_watery.png"), preload("res://assets/menu/card_firey.png"), preload("res://assets/menu/card_freeze.png"),
@@ -36,6 +37,7 @@ const CARD_WORD_POSITIONS := [
 ]
 
 var debug_label: Label
+var god_mode_label: Label
 var center_label: Label
 var ready_image: TextureRect
 var pause_panel: Control
@@ -69,13 +71,14 @@ var pause_card_word_sprites: Array[Sprite2D] = []
 
 
 func _ready() -> void:
-	var player_meter := _make_sprite(preload("res://assets/hud/hud_player_meter.png"), Vector2(10, 180))
+	var player_meter := _make_sprite(preload("res://assets/hud/hud_player_meter.png"), Vector2(10, PLAYER_METER_Y))
 	add_child(player_meter)
-	player_meter_extension = _make_sprite(preload("res://assets/hud/hud_player_meter_extended.png"), Vector2(10, 175))
+	player_meter_extension = _make_sprite(preload("res://assets/hud/hud_player_meter_extended.png"), Vector2(10, PLAYER_METER_Y - 5))
 	player_meter_extension.visible = false
 	add_child(player_meter_extension)
 	for index in range(SakuraPlayer.MAX_SUPPORTED_HP):
-		var bar := _make_sprite(LIFE_BAR, Vector2(13, 259 - index * 5))
+		var bar := _make_sprite(LIFE_BAR, Vector2(13, PLAYER_METER_Y + 79 - index * 5))
+		bar.visible = false
 		add_child(bar)
 		player_bars.append(bar)
 	maximum_hp_sparkle = _make_sprite(preload("res://assets/hud/sparkle_1.png"), Vector2.ZERO)
@@ -104,6 +107,13 @@ func _ready() -> void:
 	debug_label.add_theme_constant_override("shadow_offset_y", 1)
 	debug_label.visible = false
 	add_child(debug_label)
+	if OS.is_debug_build():
+		god_mode_label = Label.new()
+		god_mode_label.text = "GOD MODE"
+		god_mode_label.position = Vector2(510, 8)
+		god_mode_label.add_theme_color_override("font_color", Color.YELLOW)
+		god_mode_label.visible = false
+		add_child(god_mode_label)
 	ready_image = TextureRect.new()
 	ready_image.texture = preload("res://assets/hud/ready.png")
 	ready_image.position = Vector2(241, 200)
@@ -111,6 +121,7 @@ func _ready() -> void:
 	ready_image.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	ready_image.stretch_mode = TextureRect.STRETCH_KEEP
 	ready_image.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	ready_image.visible = false
 	add_child(ready_image)
 	pause_panel = Control.new()
 	pause_panel.position = Vector2.ZERO
@@ -295,9 +306,11 @@ func _update_pause_cards(progress: Node) -> void:
 
 
 func update_status(player: SakuraPlayer, _stage_state: String, enemy_count: int, map_number: int, world_size: Vector2) -> void:
+	if is_instance_valid(god_mode_label):
+		god_mode_label.visible = player.is_god_mode_active()
 	last_maximum_hp = player.maximum_hp
 	player_meter_extension.visible = player.maximum_hp > 15
-	player_meter_extension.position.y = 180.0 - float(player.maximum_hp - 15) * 5.0
+	player_meter_extension.position.y = PLAYER_METER_Y - float(player.maximum_hp - 15) * 5.0
 	for index in range(player_bars.size()):
 		player_bars[index].visible = index < player.hp
 	_update_maximum_hp_sparkle()
@@ -320,7 +333,7 @@ func _update_maximum_hp_sparkle() -> void:
 		preload("res://assets/hud/sparkle_3.png"),
 		preload("res://assets/hud/sparkle_4.png"),
 	][frame]
-	maximum_hp_sparkle.position = Vector2(0, 185 - 5 * (last_maximum_hp - 15))
+	maximum_hp_sparkle.position = Vector2(0, PLAYER_METER_Y + 5 - 5 * (last_maximum_hp - 15))
 	maximum_hp_sparkle.visible = true
 	maximum_hp_sparkle_ticks += 1
 	if maximum_hp_sparkle_ticks >= 33:

@@ -26,15 +26,22 @@ const TRANSFORM_TEXTURES := [
 	preload("res://assets/world2/boss_transform_12.png"),
 ]
 const BALL_TEXTURE := preload("res://assets/world2/boss_ball.png")
+const ROOM_CENTER_X := 5650.0
+const SPLIT_CENTER_DISTANCE := 80.0
 
 enum BossState { WAITING, TURNING, TRANSFORMING, METER_FILL, ACTIVE, SPLITTING, ACTIVE_SPLIT, DEFEATED }
 
 var state := BossState.WAITING
 var timer := 0
-var x_velocity := -8.0
-var y_velocity := -8.0
+var x_velocity := -3.75
+var y_velocity := -3.75
 var intro_meter_ticks := 0
 var boss_health := 30.0
+var clone_drift_direction := 1
+
+
+func set_update_interval(_ticks: int) -> void:
+	super.set_update_interval(1)
 
 
 func _ready() -> void:
@@ -111,14 +118,15 @@ func _update_enemy() -> void:
 
 
 func _update_waiting() -> void:
-	var cycle := timer % 8
-	_set_shadow_cycle_frame(cycle)
+	if timer % 4 == 3:
+		_set_shadow_cycle_frame(int(timer / 4.0) % 8)
 	timer += 1
 
 
 func _update_shadow_cycle() -> void:
 	timer += 1
-	_set_shadow_cycle_frame(timer % 8)
+	if timer % 4 == 0:
+		_set_shadow_cycle_frame(int(timer / 4.0) % 8)
 
 
 func _set_shadow_cycle_frame(cycle: int) -> void:
@@ -134,24 +142,24 @@ func _set_shadow_cycle_frame(cycle: int) -> void:
 
 func _update_turning() -> void:
 	_update_shadow_cycle()
-	if sprite.texture == SHADOW_TEXTURES[0] and not sprite.flip_h:
+	if timer % 4 == 0 and sprite.texture == SHADOW_TEXTURES[0] and not sprite.flip_h:
 		state = BossState.TRANSFORMING
 		timer = 0
 
 
 func _update_transforming() -> void:
-	var animation_tick := timer
-	if animation_tick == 4:
+	var animation_tick := int(timer / 4.0)
+	if timer == 19:
 		position.y -= 50.0
 	for index in range(TRANSFORM_TEXTURES.size()):
-		if animation_tick == 4 + index * 2:
+		if timer % 4 == 3 and animation_tick == 4 + index * 2:
 			sprite.texture = TRANSFORM_TEXTURES[index]
-	if animation_tick == 28:
+	if timer == 115:
 		position.x += 25.0
 		sprite.texture = BALL_TEXTURE
 	elif animation_tick > 29 and animation_tick < 39:
-		position.y -= 5.0
-	elif animation_tick == 40:
+		position.y -= 1.25
+	elif timer == 163:
 		position.y -= 3.0
 		state = BossState.METER_FILL
 		timer = 0
@@ -161,6 +169,9 @@ func _update_transforming() -> void:
 
 
 func _update_meter_fill() -> void:
+	timer += 1
+	if timer % 4 != 0:
+		return
 	intro_meter_ticks += 1
 	get_node("/root/AudioManager").play_sfx("recuperator")
 	if intro_meter_ticks >= 30:
@@ -171,18 +182,21 @@ func _update_meter_fill() -> void:
 
 func _update_active(split_active: bool) -> void:
 	_bounce_move()
-	if not split_active and hit_points <= 15 and position.y > 200.0 and position.y < 600.0 and position.x > 5560.0 and position.x < 5640.0:
+	var center_x := position.x + body_size.x * 0.5
+	if not split_active and hit_points <= 15 and absf(center_x - ROOM_CENTER_X) <= SPLIT_CENTER_DISTANCE:
+		clone_drift_direction = 1 if center_x <= ROOM_CENTER_X else -1
 		state = BossState.SPLITTING
-		x_velocity = -absf(x_velocity)
 		timer = 0
 		control_lock_requested.emit(true)
 
 
 func _update_splitting() -> void:
-	if timer == 6:
+	if timer == 27:
 		get_node("/root/AudioManager").play_sfx("tiro3")
 		clone_requested.emit(position)
-	elif timer == 36:
+	elif timer == 147:
+		x_velocity = -clone_drift_direction * absf(x_velocity)
+		y_velocity = -absf(y_velocity)
 		state = BossState.ACTIVE_SPLIT
 		control_lock_requested.emit(false)
 	timer += 1

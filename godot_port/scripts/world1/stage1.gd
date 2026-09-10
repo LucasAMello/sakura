@@ -39,10 +39,10 @@ const BACKGROUND_HEIGHT := 520.0
 const BACKGROUND_COLUMNS := 2
 const BACKGROUND_SPRITE_COUNT := 4
 const BACKGROUND_PARALLAX_FACTOR := 0.85
-const FIRST_BOSS_CAMERA_POSITION := Vector2(3200.0, 320.0)
+const FIRST_BOSS_CAMERA_POSITION := Vector2(3220.0, 320.0)
 const BOSS_BLOCK_DELAY_SCALE := 4
 const BOSS_BLOCK_SEQUENCE_TICKS := 120
-const BOSS_METER_FILL_INTERVAL := 2
+const BOSS_METER_FILL_INTERVAL := 4
 
 const MAP_CONFIGS := {
 	10: {
@@ -316,11 +316,11 @@ func _update_boss_intro() -> void:
 		player.position.y = 300.0
 		player.y_speed = 0.0
 		player.grounded = true
-	if player.position.x < 3180.0:
+	if player.position.x < 3200.0:
 		player.scripted_step_right(2.0)
 		_update_boss_intro_camera()
 		return
-	player.position.x = 3180.0
+	player.position.x = 3200.0
 	player.position.y = 300.0
 	player.grounded = true
 	player.set_scripted_animation_active(false)
@@ -355,7 +355,7 @@ func _set_boss_door_opening(index: int, amount: float) -> void:
 
 
 func _update_boss_intro_camera() -> void:
-	var travel := maxf(1.0, 3180.0 - transition_player_start_x)
+	var travel := maxf(1.0, 3200.0 - transition_player_start_x)
 	var amount := clampf((player.position.x - transition_player_start_x) / travel, 0.0, 1.0)
 	camera_lock_position = transition_camera_start.lerp(FIRST_BOSS_CAMERA_POSITION, amount)
 
@@ -389,7 +389,9 @@ func _update_victory() -> void:
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
-			if state_ticks % 7 == 3 and is_instance_valid(boss):
+			if state_ticks == 24 and is_instance_valid(boss):
+				_spawn_boss_light_flashes(boss.position + boss.body_size * 0.5)
+			if state_ticks % 28 == 16 and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, int(boss.body_size.x)), randi_range(0, int(boss.body_size.y))))
 			return
 		if state_ticks <= 285:
@@ -414,7 +416,7 @@ func _update_victory() -> void:
 
 func _spawn_boss_reward() -> void:
 	boss_reward_started = true
-	if _is_active_rematch():
+	if _is_active_rematch() or progress.has_boss_reward(0):
 		return
 	boss_reward = BossRewardScript.new()
 	boss_reward.position = boss_reward_position
@@ -469,7 +471,7 @@ func _spawn_stage_objects() -> void:
 
 func _spawn_enemy_defeat_effect(enemy: SakuraEnemy, effect_position: Vector2) -> void:
 	if enemy is GreenTurretEnemy:
-		_spawn_turret_death(effect_position)
+		_spawn_turret_death(effect_position, enemy.sprite.flip_h)
 	else:
 		_spawn_enemy_death(effect_position)
 
@@ -487,6 +489,8 @@ func _on_card_holder_opened(spawn_position: Vector2, card_id: int) -> void:
 
 
 func _spawn_card(spawn_position: Vector2, card_id: int, falls: bool) -> void:
+	if progress.has_card(card_id):
+		return
 	var card: World1CardPickup = CardPickupScript.new()
 	card.position = spawn_position
 	card.z_index = 12
@@ -494,9 +498,23 @@ func _spawn_card(spawn_position: Vector2, card_id: int, falls: bool) -> void:
 	card.setup(terrain, player, card_id, falls)
 
 
-func _spawn_turret_death(effect_position: Vector2) -> void:
+func _recovery_fall_speed() -> float:
+	return 3.75
+
+
+func _spawn_enemy_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim40")
+	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
+	effect.frame_hold_ticks = 8
+	effect.position = effect_position
+	effect.z_index = 30
+	add_child(effect)
+
+
+func _spawn_turret_death(effect_position: Vector2, flip_h: bool) -> void:
 	get_node("/root/AudioManager").play_sfx("anim60")
 	var effect: TurretDeathEffect = TurretDeathEffectScript.new()
+	effect.flip_h = flip_h
 	effect.position = effect_position
 	effect.z_index = 30
 	add_child(effect)

@@ -46,15 +46,15 @@ func _physics_process(_delta: float) -> void:
 	if state == 0:
 		return
 	elif state == 1:
-		sprite.texture = FRAMES[int(timer / 2.0) % FRAMES.size()]
+		sprite.texture = FRAMES[int(timer / 8.0) % FRAMES.size()]
 		var target := player.position + Vector2(14, 22)
-		position.x = move_toward(position.x, target.x, 5.0)
-		position.y = move_toward(position.y, target.y, 5.0)
-		if position.distance_to(target) <= 0.1 and timer % 16 == 0:
+		position.x = move_toward(position.x, target.x, 1.25)
+		position.y = move_toward(position.y, target.y, 1.25)
+		if position.distance_to(target) <= 0.1 and timer % 64 == 0:
 			state = 2
 			timer = 0
 	else:
-		sprite.modulate.a -= 30.0 / 255.0
-		if sprite.modulate.a <= 0.0:
+		sprite.modulate.a = maxf(0.0, 1.0 - float(timer) / 36.0)
+		if timer >= 36:
 			collected.emit()
 			queue_free()

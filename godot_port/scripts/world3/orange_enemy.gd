@@ -17,7 +17,6 @@ const PROPELLERS := [
 var timer := 0
 var bob_tick := 0
 var propeller_tick := 0
-var attack_update_phase := 0
 var direction := 2
 var propeller: Sprite2D
 
@@ -34,11 +33,12 @@ func _ready() -> void:
 
 
 func configure(initial_timer: int = 0) -> void:
+	set_update_interval(1)
 	body_size = Vector2(40, 51)
 	hit_points = 5
 	contact_damage = 2
 	drops_recovery = false
-	timer = initial_timer
+	timer = initial_timer * 4
 	sprite.texture = FRAMES[3]
 
 
@@ -50,27 +50,25 @@ func _update_enemy() -> void:
 	else:
 		direction = 2
 	_update_bob()
-	propeller.texture = PROPELLERS[propeller_tick % PROPELLERS.size()]
+	propeller.texture = PROPELLERS[int((propeller_tick + 1) / 4.0) % PROPELLERS.size()]
 	propeller_tick += 1
-	attack_update_phase = (attack_update_phase + 1) % 2
-	if attack_update_phase == 0:
-		return
-	_update_frame()
-	if timer == 8:
-		var shot_direction := 5 if direction == 1 else 8 if direction == 2 else 3
+	if timer % 4 == 3:
+		_update_frame(int(timer / 4.0))
+	if timer == 35:
+		var shot_direction := World3Projectile.ShotDirection.DOWN_LEFT if direction == 1 else World3Projectile.ShotDirection.DOWN if direction == 2 else World3Projectile.ShotDirection.DOWN_RIGHT
 		var offset := Vector2(-3, 46) if direction == 1 else Vector2(16, 50) if direction == 2 else Vector2(35, 46)
 		_spawn_shot(position + offset, shot_direction)
-	if timer >= 16:
-		timer = 1
+	if timer >= 67:
+		timer = 4
 	else:
 		timer += 1
-	sprite.flip_h = timer >= 9
+	sprite.flip_h = timer >= 36
 
 
-func _update_frame() -> void:
-	if timer % 2 != 0:
+func _update_frame(source_tick: int) -> void:
+	if source_tick % 2 != 0:
 		return
-	var sequence_index := mini(int(timer / 2.0), 8)
+	var sequence_index := mini(int(source_tick / 2.0), 8)
 	var sequences := {
 		1: [0, 1, 2, 1, 6, 7, 8, 7, 0],
 		2: [3, 4, 5, 4, 3, 4, 5, 4, 3],
@@ -80,23 +78,21 @@ func _update_frame() -> void:
 
 
 func _update_bob() -> void:
-	if bob_tick < 2:
-		position.y -= 1.0
-	elif bob_tick < 8:
-		position.y -= 2.0
-	elif bob_tick < 10:
-		position.y -= 1.0
-	elif bob_tick < 11:
+	if bob_tick < 8:
+		position.y -= 0.25
+	elif bob_tick < 32:
+		position.y -= 0.5
+	elif bob_tick < 40:
+		position.y -= 0.25
+	elif bob_tick < 44:
 		pass
-	elif bob_tick < 13:
-		position.y += 1.0
-	elif bob_tick < 19:
-		position.y += 2.0
-	elif bob_tick < 21:
-		position.y += 1.0
-	else:
-		bob_tick = -1
-	bob_tick += 1
+	elif bob_tick < 52:
+		position.y += 0.25
+	elif bob_tick < 76:
+		position.y += 0.5
+	elif bob_tick < 84:
+		position.y += 0.25
+	bob_tick = (bob_tick + 1) % 88
 
 
 func _spawn_shot(spawn_position: Vector2, shot_direction: int) -> void:
@@ -104,7 +100,7 @@ func _spawn_shot(spawn_position: Vector2, shot_direction: int) -> void:
 	shot.position = spawn_position
 	shot.z_index = 11
 	get_parent().add_child(shot)
-	shot.setup(World3Projectile.Kind.WALL_SHOT, terrain, player, shot_direction)
+	shot.setup(World3Projectile.Kind.ORANGE_SHOT, terrain, player, shot_direction)
 
 
 func _roll_drop() -> int:

@@ -191,7 +191,20 @@ func _build_stage_boss_area() -> void:
 
 
 func _enemy_update_interval() -> int:
-	return 2
+	return 1
+
+
+func _recovery_fall_speed() -> float:
+	return 3.75
+
+
+func _spawn_enemy_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim40")
+	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
+	effect.frame_hold_ticks = 8
+	effect.position = effect_position
+	effect.z_index = 30
+	add_child(effect)
 
 
 func _physics_process(_delta: float) -> void:
@@ -206,8 +219,6 @@ func _physics_process(_delta: float) -> void:
 			_update_exit()
 		StageState.DYING:
 			_update_death()
-		StageState.CHECKPOINT_ENTRY:
-			_update_checkpoint_entry()
 		StageState.CHECKPOINT:
 			_update_checkpoint()
 		StageState.BOSS_ENTRY:
@@ -235,42 +246,34 @@ func _update_playing() -> void:
 
 func _begin_world5_checkpoint() -> void:
 	checkpoint_active = true
-	stage_state = StageState.CHECKPOINT_ENTRY
-	state_ticks = 0
-	_set_gameplay_active(false)
-
-
-func _update_checkpoint_entry() -> void:
-	state_ticks += 1
-	if player.position.y != 1340.0:
-		player.position.y = move_toward(player.position.y, 1340.0, 10.0)
-		return
-	player.y_speed = 0.0
-	player.grounded = true
 	progress.set_fifth_boss_checkpoint(true)
 	stage_state = StageState.CHECKPOINT
-	_set_gameplay_active(true)
+	state_ticks = 0
 
 
 func _update_checkpoint() -> void:
 	if player.get_hit_rect().intersects(Rect2(5420, 1460, 360, 40)):
 		_begin_boss_entry()
 		boss_fall_speed = 0.0
+		player.grounded = false
+		player.set_scripted_frame(2)
 
 
 func _update_boss_entry() -> void:
 	state_ticks += 1
 	_update_scripted_boss_fall()
-	if state_ticks <= 64:
+	camera_lock_position.y = clampf(player.get_center().y, VIEWPORT_HALF_SIZE.y, 2160.0)
+	if state_ticks <= 128:
 		var distance := 5460.0 - player.position.x
 		if absf(distance) > 0.0:
-			player.scripted_step(1 if distance > 0.0 else -1, minf(2.0, absf(distance)))
+			if not player.grounded:
+				player.position.x = move_toward(player.position.x, 5460.0, 1.0)
 		else:
 			player.facing = 1
-	elif state_ticks <= 66:
+	elif state_ticks <= 132:
 		player.facing = 1
-	elif state_ticks <= 106:
-		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 2160), float(state_ticks - 66) / 40.0)
+	elif state_ticks <= 212:
+		camera_lock_position.x = lerpf(transition_camera_start.x, 5600.0, float(state_ticks - 132) / 80.0)
 	else:
 		camera_lock_position = Vector2(5600, 2160)
 		stage_state = StageState.BOSS_INTRO
@@ -282,9 +285,9 @@ func _update_boss_entry() -> void:
 func _update_boss_intro() -> void:
 	state_ticks += 1
 	_update_scripted_boss_fall()
-	if state_ticks >= 50 and state_ticks <= 108 and state_ticks % 2 == 0:
+	if state_ticks >= 96 and state_ticks <= 212 and state_ticks % 4 == 0:
 		get_node("/root/AudioManager").play_sfx("recuperator")
-	if state_ticks >= 108:
+	if state_ticks >= 216:
 		player.position.y = 2220.0
 		player.y_speed = 0.0
 		player.grounded = true
@@ -296,11 +299,14 @@ func _update_boss_intro() -> void:
 
 
 func _update_scripted_boss_fall() -> void:
-	if player.position.y >= 2220.0:
-		player.position.y = 2220.0
-		return
-	boss_fall_speed = minf(10.0, boss_fall_speed + 0.5)
-	player.position.y = minf(2220.0, player.position.y + boss_fall_speed)
+	if player.position.y < 2220.0:
+		boss_fall_speed = minf(10.0, boss_fall_speed + 0.5)
+		player.position.y = minf(2220.0, player.position.y + boss_fall_speed)
+	player.grounded = player.position.y >= 2220.0
+	if player.grounded:
+		player.y_speed = 0.0
+		player.facing = 1
+	player.set_scripted_frame(0 if player.grounded else 2)
 
 
 func _update_boss() -> void:
@@ -326,10 +332,11 @@ func _update_victory() -> void:
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
-			if state_ticks == 5:
+			if state_ticks == 24:
+				_spawn_boss_light_flashes(boss.position + Vector2(64, 53))
 				for burst in range(3):
 					_spawn_boss_explosion(boss.position + Vector2(64, 53))
-			if state_ticks % 7 == 3 and is_instance_valid(boss):
+			if state_ticks % 28 == 16 and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 128), randi_range(0, 60)))
 			return
 		if state_ticks <= 285:
@@ -542,7 +549,7 @@ func _update_boss_hud() -> void:
 		boss_visible = stage_state == StageState.BOSS or stage_state == StageState.BOSS_INTRO or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
 		displayed_boss_hp = boss.hit_points
 		if stage_state == StageState.BOSS_INTRO:
-			displayed_boss_hp = clampi(int(state_ticks / 2.0) - 24, 0, 30)
+			displayed_boss_hp = clampi(int((state_ticks - 92) / 4.0), 0, 30)
 	hud.set_boss_health(displayed_boss_hp, boss_visible)
 
 

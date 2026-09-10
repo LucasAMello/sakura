@@ -33,10 +33,11 @@ func _ready() -> void:
 
 
 func configure(attack_variant: int, attack_direction: int) -> void:
+	set_update_interval(1)
 	variant = clampi(attack_variant, 0, FRAMES.size() - 1)
 	direction = 0 if attack_direction <= 0 else 1
 	body_size = SIZES[variant]
-	velocity = SPEEDS[variant]
+	velocity = SPEEDS[variant] * 0.25
 	if direction == 1:
 		velocity.x *= -1.0
 	sprite.texture = FRAMES[variant]
@@ -54,8 +55,8 @@ func take_projectile_hit(_damage: int) -> void:
 func _update_enemy() -> void:
 	if charging:
 		timer += 1
-		sprite.modulate.a = minf(1.0, timer * 30.0 / 255.0)
-		if timer >= 13:
+		sprite.modulate.a = minf(1.0, timer * 7.5 / 255.0)
+		if timer >= 52:
 			charging = false
 			sprite.modulate.a = 1.0
 		return

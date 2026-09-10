@@ -4,13 +4,13 @@ extends Node2D
 const BODY_SIZE := Vector2(20, 10)
 const TEXTURE := preload("res://assets/world1/turret_shot.png")
 const ExplosionScript = preload("res://scripts/world1/turret_shot_explosion.gd")
-const SPEED_PER_TICK := 10.0
+const SPEED_PER_TICK := 5.0
 
 var terrain: SakuraTerrain
 var player: SakuraPlayer
 var sprite: Sprite2D
 var move_direction := -1
-var lifetime := 40
+var lifetime := 80
 var exploded := false
 
 
@@ -47,16 +47,21 @@ func _physics_process(_delta: float) -> void:
 			return
 	lifetime -= 1
 	if lifetime <= 0:
-		_explode()
+		_explode(true)
 
 
-func _explode() -> void:
+func _explode(from_lifetime: bool = false) -> void:
 	if exploded:
 		return
 	exploded = true
 	var explosion: TurretShotExplosion = ExplosionScript.new()
-	explosion.position = position + Vector2(10, -7)
+	var explosion_x
+	if from_lifetime:
+		explosion_x = -5.0 if move_direction > 0 else 5.0
+	else:
+		explosion_x = 5.0 if move_direction > 0 else -15.0
+	explosion.position = position + Vector2(explosion_x, -10)
 	explosion.z_index = z_index
-	explosion.setup(player)
+	explosion.setup(player, move_direction)
 	get_parent().add_child(explosion)
 	queue_free()

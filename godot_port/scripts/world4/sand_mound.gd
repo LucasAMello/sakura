@@ -15,7 +15,6 @@ var sprite: Sprite2D
 var card_id := 0
 var opened_state := false
 var timer := 0
-var update_phase := 0
 var gameplay_active := false
 
 
@@ -44,7 +43,6 @@ func take_projectile_hit(_damage: int, projectile_direction: int = 1) -> void:
 		return
 	opened_state = true
 	timer = 0
-	update_phase = 0
 	get_node("/root/AudioManager").play_sfx("sands", 1.0, 125.0 / 255.0)
 	sprite.texture = TEXTURES[1]
 	sprite.flip_h = projectile_direction < 0
@@ -54,13 +52,10 @@ func take_projectile_hit(_damage: int, projectile_direction: int = 1) -> void:
 func _physics_process(_delta: float) -> void:
 	if not opened_state or not gameplay_active:
 		return
-	update_phase = (update_phase + 1) % 2
-	if update_phase != 0:
-		return
 	timer += 1
-	if timer == 3:
+	if timer == 6:
 		sprite.texture = TEXTURES[2]
-	elif timer == 6:
+	elif timer == 12:
 		sprite.texture = TEXTURES[3]
-	elif timer >= 9:
+	elif timer >= 18:
 		queue_free()

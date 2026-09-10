@@ -9,6 +9,7 @@ const FRAMES := [
 
 var sprite: Sprite2D
 var timer := 0
+var frame_hold_ticks := 5
 
 
 func _ready() -> void:
@@ -22,6 +23,6 @@ func _ready() -> void:
 
 func _physics_process(_delta: float) -> void:
 	timer += 1
-	sprite.texture = FRAMES[mini(int(timer / 5.0), FRAMES.size() - 1)]
-	if timer >= 15:
+	sprite.texture = FRAMES[mini(int(timer / float(frame_hold_ticks)), FRAMES.size() - 1)]
+	if timer >= frame_hold_ticks * FRAMES.size():
 		queue_free()

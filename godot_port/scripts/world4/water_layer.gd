@@ -6,6 +6,8 @@ const TOP_TEXTURES := [
 	preload("res://assets/world4/water_top_2.png"),
 	preload("res://assets/world4/water_top_3.png"),
 ]
+const WATER_OPACITY := 0.5
+const WATER_COLOR := Color(0.0, 0.0, 1.0, WATER_OPACITY)
 
 var surface_y := 0.0
 var world_size := Vector2.ZERO
@@ -32,7 +34,9 @@ func _physics_process(_delta: float) -> void:
 func _draw() -> void:
 	if world_size.x <= 0.0 or world_size.y <= surface_y:
 		return
-	draw_rect(Rect2(0.0, surface_y, world_size.x, world_size.y - surface_y), Color(0.04, 0.25, 0.72, 0.5))
-	var texture: Texture2D = TOP_TEXTURES[int(animation_ticks / 20.0)]
+	var texture: Texture2D = TOP_TEXTURES[2 - int(animation_ticks / 20.0)]
+	var body_top := surface_y + texture.get_height()
+	if body_top < world_size.y:
+		draw_rect(Rect2(0.0, body_top, world_size.x, world_size.y - body_top), WATER_COLOR)
 	for x in range(0, ceili(world_size.x), 20):
-		draw_texture(texture, Vector2(x, surface_y), Color(1.0, 1.0, 1.0, 0.5))
+		draw_texture(texture, Vector2(x, surface_y), Color(1.0, 1.0, 1.0, WATER_OPACITY))

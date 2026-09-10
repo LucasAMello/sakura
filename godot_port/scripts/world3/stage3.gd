@@ -60,6 +60,8 @@ const STAGE3_SOURCE_RECTS := {
   "_": Vector2i(80, 120),
 }
 const STAGE3_NON_SOLID := ["0", "1", "+"]
+const BACKGROUND_COLUMNS := 3
+const BACKGROUND_ROWS := 2
 
 const MAP_CONFIGS := {
 	30: {
@@ -136,7 +138,20 @@ func _build_stage_boss_area() -> void:
 
 
 func _enemy_update_interval() -> int:
-	return 2
+	return 1
+
+
+func _recovery_fall_speed() -> float:
+	return 3.75
+
+
+func _spawn_enemy_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim40")
+	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
+	effect.frame_hold_ticks = 8
+	effect.position = effect_position
+	effect.z_index = 30
+	add_child(effect)
 
 
 func _physics_process(_delta: float) -> void:
@@ -187,7 +202,7 @@ func _update_checkpoint_entry() -> void:
 		_set_door_opening(0, float(state_ticks) / 40.0)
 	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
-		player.scripted_step_right(1.0)
+		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(5040, 400), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
@@ -215,7 +230,7 @@ func _update_boss_entry() -> void:
 		_set_door_opening(1, float(state_ticks) / 40.0)
 	elif state_ticks <= 120:
 		_set_door_opening(1, 1.0)
-		player.scripted_step_right(1.0)
+		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 400), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(1, 1.0 - float(state_ticks - 120) / 40.0)
@@ -233,25 +248,25 @@ func _update_boss_entry() -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
-	if state_ticks <= 80:
-		player.scripted_step_right(2.5)
-	elif state_ticks == 81:
+	if state_ticks <= 160:
+		player.scripted_step_right(1.25)
+	elif state_ticks == 161:
 		player.set_scripted_animation_active(false)
-	elif state_ticks == 97:
+	elif state_ticks == 228:
 		_spawn_boss_projectile(World3Projectile.Kind.BOSS_LIGHTNING, Vector2(5750, 160))
-	elif state_ticks == 100:
+	elif state_ticks == 240:
 		hud.set_boss_flash(0.5)
-	elif state_ticks == 101:
+	elif state_ticks == 244:
 		hud.set_boss_flash(1.0)
 		boss.visible = true
-	elif state_ticks == 102:
+	elif state_ticks == 248:
 		hud.set_boss_flash(0.5)
-	elif state_ticks == 103:
+	elif state_ticks == 252:
 		hud.set_boss_flash(0.0)
-	elif state_ticks >= 108 and state_ticks < 168:
-		if (state_ticks - 108) % 2 == 0:
+	elif state_ticks >= 272 and state_ticks < 392:
+		if (state_ticks - 272) % 4 == 0:
 			get_node("/root/AudioManager").play_sfx("recuperator")
-	elif state_ticks == 168:
+	elif state_ticks == 392:
 		stage_state = StageState.BOSS
 		state_ticks = 0
 		player.set_scripted_animation_active(false)
@@ -285,10 +300,11 @@ func _update_victory() -> void:
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
-			if state_ticks == 5:
+			if state_ticks == 24:
+				_spawn_boss_light_flashes(boss.position + Vector2(48, 30))
 				for burst in range(3):
 					_spawn_boss_explosion(boss.position + Vector2(25, 25))
-			if state_ticks % 7 == 3 and is_instance_valid(boss):
+			if state_ticks % 28 == 16 and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
 			return
 		if state_ticks <= 285:
@@ -408,7 +424,7 @@ func _build_background() -> void:
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fill.z_index = -200
 	add_child(fill)
-	for index in range(4):
+	for index in range(BACKGROUND_COLUMNS * BACKGROUND_ROWS):
 		var sprite := Sprite2D.new()
 		sprite.centered = false
 		sprite.texture = preload("res://assets/world3/background.png")
@@ -427,15 +443,11 @@ func _update_background() -> void:
 	var sampled_origin := viewport_top_left / 5.0
 	var world_offset := viewport_top_left - sampled_origin
 	var source_x := floorf(sampled_origin.x / texture_size.x) * texture_size.x
-	if map_number == 30:
-		for index in range(background_sprites.size()):
-			background_sprites[index].visible = index < 2
-			background_sprites[index].position = world_offset + Vector2(source_x + index * texture_size.x, 60)
-	else:
-		var source_y := floorf(sampled_origin.y / texture_size.y) * texture_size.y
-		for index in range(background_sprites.size()):
-			background_sprites[index].visible = true
-			background_sprites[index].position = world_offset + Vector2(source_x + index % 2 * texture_size.x, source_y + int(index / 2.0) * texture_size.y)
+	var vertical_offset := 60.0 if map_number == 30 else 0.0
+	var source_y := floorf((sampled_origin.y - vertical_offset) / texture_size.y) * texture_size.y + vertical_offset
+	for index in range(background_sprites.size()):
+		background_sprites[index].visible = true
+		background_sprites[index].position = world_offset + Vector2(source_x + index % BACKGROUND_COLUMNS * texture_size.x, source_y + floori(float(index) / BACKGROUND_COLUMNS) * texture_size.y)
 
 
 func _build_boss_area() -> void:
@@ -516,8 +528,8 @@ func _update_boss_hud() -> void:
 	var boss_visible := false
 	var displayed_boss_hp := 0
 	if is_instance_valid(boss):
-		boss_visible = stage_state == StageState.BOSS or (stage_state == StageState.BOSS_INTRO and state_ticks >= 108) or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
+		boss_visible = stage_state == StageState.BOSS or (stage_state == StageState.BOSS_INTRO and state_ticks >= 272) or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
 		displayed_boss_hp = boss.hit_points
 		if stage_state == StageState.BOSS_INTRO:
-			displayed_boss_hp = clampi(floori(float(state_ticks - 108) / 2.0) + 1, 0, 30)
+			displayed_boss_hp = clampi(floori(float(state_ticks - 272) / 4.0) + 1, 0, 30)
 	hud.set_boss_health(displayed_boss_hp, boss_visible)

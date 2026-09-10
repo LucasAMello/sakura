@@ -15,10 +15,11 @@ const ANIMATION_SEQUENCE := [
 const animation_speed := 8
 var move_direction := -1
 var animation_tick := 0
-const speed := 2
+const speed := 1.5
 const ground_probe_depth := 10
 
 func configure(initial_direction: int) -> void:
+	set_update_interval(1)
 	body_size = Vector2(40, 40)
 	hit_points = 5
 	contact_damage = 1
@@ -29,7 +30,7 @@ func configure(initial_direction: int) -> void:
 
 
 func _update_enemy() -> void:
-	animation_tick = (animation_tick + 1) % (ANIMATION_SEQUENCE.size() * animation_speed)
+	animation_tick = (animation_tick + 1) % (15 * 4)
 	var current_frame := int(animation_tick / float(animation_speed))
 	sprite.texture = ANIMATION_SEQUENCE[current_frame]
 

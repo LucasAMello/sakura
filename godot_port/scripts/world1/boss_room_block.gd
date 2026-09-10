@@ -4,7 +4,7 @@ extends Node2D
 const WIDE_TEXTURE := preload("res://assets/world1/boss_block_wide.png")
 const SMALL_TEXTURE := preload("res://assets/world1/boss_block_small.png")
 const ExplosionScript = preload("res://scripts/world1/turret_shot_explosion.gd")
-const FALL_SPEED_PER_TICK := 4.0
+const FALL_SPEED_PER_TICK := 3.0
 const EXPLOSION_INTERVAL_TICKS := 16
 
 var sprite: Sprite2D
@@ -38,11 +38,12 @@ func _physics_process(_delta: float) -> void:
 	if delay_ticks > 0:
 		delay_ticks -= 1
 		return
-	if fall_ticks % EXPLOSION_INTERVAL_TICKS == 0:
+	if fall_ticks % EXPLOSION_INTERVAL_TICKS == 4:
 		_spawn_explosion(Vector2(-5, -7))
 		_spawn_explosion(Vector2(65, -7) if wide_block else Vector2(15, -7))
 	position.y += FALL_SPEED_PER_TICK
-	if position.y >= 560.0:
+	var screen_rect := sprite.get_global_transform_with_canvas() * sprite.get_rect()
+	if screen_rect.position.y >= get_viewport_rect().end.y:
 		queue_free()
 	fall_ticks += 1
 

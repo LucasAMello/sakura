@@ -42,7 +42,7 @@ var boss_health := 30.0
 
 
 func set_update_interval(_ticks: int) -> void:
-	super.set_update_interval(4)
+	super.set_update_interval(1)
 
 
 func _ready() -> void:
@@ -78,7 +78,7 @@ func take_projectile_hit(_damage: int) -> void:
 
 
 func take_weapon_hit(_damage: int, weapon_id: int) -> void:
-	_take_boss_damage(3.0 if weapon_id == 4 else 0.5)
+	_take_boss_damage(2.0 if weapon_id == 4 else 0.5)
 
 
 func _take_boss_damage(damage: float) -> void:
@@ -116,52 +116,52 @@ func _update_enemy() -> void:
 
 
 func _update_intro() -> void:
-	if timer < 11:
+	if timer < 44:
 		timer += 1
-		if timer == 2 or timer == 10:
+		if timer == 8 or timer == 40:
 			sprite.texture = OPEN_1
-			if timer == 2:
+			if timer == 8:
 				get_node("/root/AudioManager").play_sfx("roar")
-		elif timer == 3:
+		elif timer == 12:
 			sprite.texture = OPEN_2
-		elif timer == 11:
+		elif timer == 44:
 			sprite.texture = CLOSED
-	if timer >= 11 and not intro_notified:
+	if timer >= 44 and not intro_notified:
 		intro_notified = true
 		intro_finished.emit()
 
 
 func _update_idle() -> void:
 	timer += 1
-	if timer < 30:
-		return
-	timer = 0
 	var chooses_shot := randi() % 2 == 0
-	if boss_health > 20.0:
+	if boss_health <= 20.0:
+		timer = 0
+		if direction == 0:
+			state = BossState.RAPID_SHOOT_LEFT if chooses_shot else BossState.RAPID_DASH_LEFT
+		else:
+			state = BossState.RAPID_SHOOT_RIGHT if chooses_shot else BossState.RAPID_DASH_RIGHT
+	elif timer >= 120:
+		timer = 0
 		if direction == 0:
 			state = BossState.SHOOT_LEFT if chooses_shot else BossState.DASH_LEFT
 		else:
 			state = BossState.SHOOT_RIGHT if chooses_shot else BossState.DASH_RIGHT
-	elif direction == 0:
-		state = BossState.RAPID_SHOOT_LEFT if chooses_shot else BossState.RAPID_DASH_LEFT
-	else:
-		state = BossState.RAPID_SHOOT_RIGHT if chooses_shot else BossState.RAPID_DASH_RIGHT
 
 
 func _update_shot(rapid: bool) -> void:
 	timer += 1
-	if timer == 1:
+	if timer == 4:
 		sprite.texture = OPEN_1
-	elif timer == 2:
+	elif timer == 8:
 		sprite.texture = OPEN_2
-	elif timer == 6:
+	elif timer == 24:
 		var offset_x := 31.0 if direction == 0 else 77.0
 		water_shot_requested.emit(position + Vector2(offset_x, 31), direction, false)
-	elif timer == (13 if rapid else 16):
+	elif timer == (52 if rapid else 64):
 		sprite.texture = OPEN_1
-	elif timer == (14 if rapid else 17):
+	elif timer == (56 if rapid else 68):
 		sprite.texture = CLOSED
-	elif timer >= (15 if rapid else 27):
+	elif timer >= (60 if rapid else 108):
 		timer = 0
 		if rapid:
 			state = BossState.CHAIN_LEFT if direction == 0 else BossState.CHAIN_RIGHT
@@ -171,25 +171,25 @@ func _update_shot(rapid: bool) -> void:
 
 func _update_dash() -> void:
 	timer += 1
-	if timer == 2:
+	if timer == 8:
 		sprite.texture = ENTER_1
 		position.y += 1.0
-	elif timer == 3:
+	elif timer == 12:
 		sprite.texture = ENTER_2
 		position.y += 2.0
-	elif timer == 4:
+	elif timer == 16:
 		sprite.texture = ENTER_3
 		position.y += 3.0
 		body_size.x = 96.0
 		if direction == 0:
 			position.x += 32.0
-	elif timer == 7:
+	elif timer == 28:
 		var offset_x := 40.0 if direction == 0 else 58.0
 		water_shot_requested.emit(position + Vector2(offset_x, 25), 1 - direction, true)
-	elif timer >= 8:
-		if timer == 10:
+	elif timer >= 29:
+		if timer == 40:
 			get_node("/root/AudioManager").play_sfx("turtledash")
-		var movement := -32.0 if direction == 0 else 32.0
+		var movement := -8.0 if direction == 0 else 8.0
 		if _dash_hits_obstacle(movement):
 			timer = 0
 			if state == BossState.DASH_LEFT:
@@ -205,23 +205,23 @@ func _update_dash() -> void:
 func _update_recovery(rapid: bool) -> void:
 	timer += 1
 	var recovering_on_right := state == BossState.RECOVER_RIGHT or state == BossState.RAPID_RECOVER_RIGHT
-	if timer == (2 if rapid else 6):
+	if timer == (8 if rapid else 24):
 		direction = 1 if recovering_on_right else 0
 		_update_facing()
-	if timer == (4 if rapid else 10):
+	if timer == (16 if rapid else 40):
 		sprite.texture = ENTER_2
 		position.y -= 3.0
 		if not recovering_on_right:
 			position.x -= 32.0
 			body_size.x = 128.0
-	elif timer == (5 if rapid else 11):
+	elif timer == (20 if rapid else 44):
 		sprite.texture = ENTER_1
 		position.y -= 2.0
-	elif timer == (6 if rapid else 12):
+	elif timer == (24 if rapid else 48):
 		sprite.texture = CLOSED
 		position.y -= 1.0
 		body_size.x = 128.0
-	elif timer >= (7 if rapid else 13):
+	elif timer >= (28 if rapid else 52):
 		timer = 0
 		if rapid:
 			state = BossState.CHAIN_RIGHT if direction == 1 else BossState.RAPID_SHOOT_LEFT
@@ -230,6 +230,9 @@ func _update_recovery(rapid: bool) -> void:
 
 
 func _choose_chained_attack() -> void:
+	timer += 1
+	if timer < 4:
+		return
 	var chooses_shot := randi() % 2 == 0
 	if direction == 0:
 		state = BossState.RAPID_SHOOT_LEFT if chooses_shot else BossState.RAPID_DASH_LEFT

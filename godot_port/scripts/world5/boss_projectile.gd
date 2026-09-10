@@ -33,7 +33,8 @@ var timer := 0
 var velocity := Vector2.ZERO
 
 
-func configure(projectile_kind: int, facing: int) -> void:
+func configure(projectile_kind: Kind, facing: int) -> void:
+	set_update_interval(1)
 	kind = projectile_kind
 	direction = facing
 	drops_recovery = false
@@ -44,6 +45,7 @@ func configure(projectile_kind: int, facing: int) -> void:
 			timer = randi() % 4
 			velocity = Vector2(-(16 + randi() % 12), -3 + randi() % 4)
 			sprite.texture = SPRAY_FRAMES[timer]
+			timer *= 4
 			sprite.flip_h = direction == 1
 		Kind.HADOUKEN:
 			body_size = Vector2(31, 24)
@@ -54,13 +56,13 @@ func configure(projectile_kind: int, facing: int) -> void:
 		Kind.SLASH_STRAIGHT:
 			body_size = Vector2(20, 40)
 			contact_damage = 3
-			velocity.x = -20.0
+			velocity.x = -30.0
 			sprite.texture = SLASH_FRAMES[0]
 			sprite.flip_h = direction == 1
 		Kind.SLASH_RISING:
 			body_size = Vector2(27, 37)
 			contact_damage = 3
-			velocity = Vector2(-17, -8)
+			velocity = Vector2(-25, -14)
 			sprite.texture = SLASH_FRAMES[1]
 			sprite.flip_h = direction == 1
 
@@ -77,21 +79,22 @@ func _update_enemy() -> void:
 
 func _update_spray() -> void:
 	if state == 1:
-		if timer >= 6:
+		timer += 1
+		if timer >= 28:
 			queue_free()
 			return
-		if timer % 2 == 0:
-			sprite.texture = SPRAY_FRAMES[4 + int(timer / 2.0)]
-		timer += 1
+		if timer >= 4:
+			sprite.texture = SPRAY_FRAMES[4 + int((timer - 4) / 8.0)]
 		return
-	sprite.texture = SPRAY_FRAMES[timer % 4]
-	if timer % 4 == 1 or timer % 4 == 3:
+	var source_tick := int(timer / 4.0)
+	sprite.texture = SPRAY_FRAMES[source_tick % 4]
+	if timer % 4 == 0 and source_tick % 2 == 1:
 		velocity.y += 1.0
 	timer += 1
-	if _move_axis(Vector2(0, velocity.y)):
+	if _move_axis(Vector2(0, velocity.y * 0.25)):
 		_begin_impact()
 		return
-	if _move_axis(Vector2(velocity.x, 0)):
+	if _move_axis(Vector2(velocity.x * 0.25, 0)):
 		_begin_impact()
 		return
 	if is_instance_valid(player) and get_hit_rect().intersects(player.get_hit_rect()):
@@ -101,18 +104,19 @@ func _update_spray() -> void:
 
 func _update_hadouken() -> void:
 	if state == 1:
-		if timer >= 5:
+		timer += 1
+		if timer >= 24:
 			queue_free()
 			return
-		if timer == 0:
+		if timer == 4:
 			position += Vector2(-18, -17)
 			body_size = Vector2(58, 53)
-		sprite.texture = HADOUKEN_FRAMES[2 + timer]
-		timer += 1
+		if timer >= 4:
+			sprite.texture = HADOUKEN_FRAMES[2 + int((timer - 4) / 4.0)]
 		return
-	sprite.texture = HADOUKEN_FRAMES[int(timer / 2.0) % 2]
+	sprite.texture = HADOUKEN_FRAMES[int(timer / 8.0) % 2]
 	timer += 1
-	if _move_axis(Vector2(velocity.x * 0.5, 0)) or _move_axis(Vector2(velocity.x * 0.5, 0)):
+	if _move_axis(Vector2(velocity.x * 0.125, 0)) or _move_axis(Vector2(velocity.x * 0.125, 0)):
 		_begin_impact()
 		return
 	if is_instance_valid(player) and get_hit_rect().intersects(player.get_hit_rect()):
@@ -122,10 +126,10 @@ func _update_hadouken() -> void:
 
 
 func _update_slash() -> void:
-	if _move_axis(Vector2(velocity.x, 0)):
+	if _move_axis(Vector2(velocity.x * 0.25, 0)):
 		queue_free()
 		return
-	if kind == Kind.SLASH_RISING and _move_axis(Vector2(0, velocity.y)):
+	if kind == Kind.SLASH_RISING and _move_axis(Vector2(0, velocity.y * 0.25)):
 		queue_free()
 
 

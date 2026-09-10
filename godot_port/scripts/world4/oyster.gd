@@ -41,7 +41,7 @@ func _update_enemy() -> void:
 		1:
 			_update_opening()
 		2:
-			if timer >= 20:
+			if timer >= 40:
 				state = 3
 				timer = 0
 				position += Vector2(-6.0, 6.0)
@@ -50,7 +50,7 @@ func _update_enemy() -> void:
 		3:
 			_update_closing()
 		4:
-			if timer >= 80:
+			if timer >= 160:
 				state = 0
 				timer = 0
 				body_size = Vector2(43.0, 27.0)
@@ -60,16 +60,16 @@ func _update_enemy() -> void:
 
 
 func _update_opening() -> void:
-	if timer == 2:
+	if timer == 4:
 		pearl_requested.emit(position + Vector2(17.0, 4.0), direction)
-	if timer >= 7 and timer <= 12:
-		var step_index := int((timer - 7) / 2.0)
+	if timer >= 13 and timer <= 24:
+		var step_index := int((timer - 13) / 4.0)
 		var x_steps := [2.0, 3.0, 4.0]
 		var y_steps := [-5.0, -4.0, -3.0]
-		position += Vector2(x_steps[step_index] * (-1.0 if direction == 1 else 1.0), y_steps[step_index]) * 0.5
+		position += Vector2(x_steps[step_index] * (-1.0 if direction == 1 else 1.0), y_steps[step_index]) * 0.25
 		body_size = Vector2(46.0, 38.0)
-		rotation_units += -5.5 if direction == 1 else 5.5
-	elif timer >= 14:
+		rotation_units += -2.75 if direction == 1 else 2.75
+	elif timer >= 28:
 		position += Vector2(6.0, -6.0)
 		state = 2
 		timer = 0
@@ -79,15 +79,15 @@ func _update_opening() -> void:
 
 
 func _update_closing() -> void:
-	if timer >= 3 and timer <= 8:
-		var step_index := int((timer - 3) / 2.0)
+	if timer >= 5 and timer <= 16:
+		var step_index := int((timer - 5) / 4.0)
 		var x_steps := [4.0, 3.0, 2.0]
 		var y_steps := [3.0, 4.0, 5.0]
-		position += Vector2(x_steps[step_index] * (1.0 if direction == 1 else -1.0), y_steps[step_index]) * 0.5
-		rotation_units += 5.5 if direction == 1 else -5.5
-		if timer == 8:
+		position += Vector2(x_steps[step_index] * (1.0 if direction == 1 else -1.0), y_steps[step_index]) * 0.25
+		rotation_units += 2.75 if direction == 1 else -2.75
+		if timer == 16:
 			body_size = Vector2(43.0, 21.0)
-	elif timer >= 10:
+	elif timer >= 20:
 		state = 4
 		timer = 0
 		sprite.rotation_degrees = 0.0

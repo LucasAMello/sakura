@@ -22,8 +22,8 @@ func configure(initial_timer: int = 0) -> void:
 
 func _update_enemy() -> void:
 	timer += 1
-	var source_tick := int(timer / float(TIMING_SCALE))
-	var substep := timer % TIMING_SCALE
+	var source_tick := int((timer - 1) / float(TIMING_SCALE)) + 1
+	var substep := (timer - 1) % TIMING_SCALE
 	if source_tick >= 40 and source_tick < 48:
 		_set_airborne()
 		position.y -= vertical_speed * 5.0 / float(TIMING_SCALE)
@@ -49,7 +49,7 @@ func _update_enemy() -> void:
 		position.y -= vertical_speed * 5.0 / float(TIMING_SCALE)
 
 	if source_tick == 59 and substep == TIMING_SCALE - 1:
-		timer = 80 * TIMING_SCALE - 1
+		timer = 79 * TIMING_SCALE
 		vertical_speed = 0.0
 	elif source_tick == 99 and substep == TIMING_SCALE - 1:
 		position.y = base_y

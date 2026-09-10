@@ -172,7 +172,6 @@ func _build_menu() -> void:
 	load_error_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	load_error_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	load_error_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	load_error_label.add_theme_font_size_override("font_size", 11)
 	load_error_label.add_theme_color_override("font_color", Color.BLACK)
 	load_error_window.add_child(load_error_label)
 
@@ -374,9 +373,9 @@ func _activate_selection() -> void:
 		1:
 			var result: Dictionary = get_node("/root/GameFlow").load_game(false)
 			if result.get("ok", false):
-				load_error_label.text = result.get("message", "Game Loaded.")
+				load_error_label.text = result.get("message", "Game Loaded")
 				load_error_window.visible = true
-				load_success_ticks = 12
+				load_success_ticks = 60
 			else:
 				get_node("/root/AudioManager").play_sfx("deny")
 				load_error_label.text = result.get("message", "File not found.")

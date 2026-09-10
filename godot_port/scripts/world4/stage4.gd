@@ -117,7 +117,6 @@ var boss: FourthStageBoss
 var boss_reward: FourthBossReward
 var boss_health_was_visible_on_death := false
 var bubble_ticks := 0
-var world_update_phase := 0
 var water_effects: Array[Node2D] = []
 
 
@@ -177,7 +176,20 @@ func _build_stage_boss_area() -> void:
 
 
 func _enemy_update_interval() -> int:
-	return 2
+	return 1
+
+
+func _recovery_fall_speed() -> float:
+	return 3.75
+
+
+func _spawn_enemy_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim40")
+	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
+	effect.frame_hold_ticks = 8
+	effect.position = effect_position
+	effect.z_index = 30
+	add_child(effect)
 
 
 func _build_entry_portal() -> void:
@@ -198,7 +210,6 @@ func _start_departure(direction: int = 0) -> void:
 func _physics_process(_delta: float) -> void:
 	if _handle_global_input():
 		return
-	world_update_phase = (world_update_phase + 1) % 2
 	match stage_state:
 		StageState.ENTRY:
 			_update_entry()
@@ -234,7 +245,7 @@ func _update_water_effects() -> void:
 		bubble_ticks = 0
 		return
 	bubble_ticks += 1
-	if bubble_ticks >= 320:
+	if bubble_ticks >= 160:
 		bubble_ticks = 0
 		var bubble: World4WaterBubble = WaterBubbleScript.new()
 		bubble.position = player.position + Vector2(30.0 if player.facing > 0 else 4.0, 15.0)
@@ -320,9 +331,9 @@ func _update_boss_entry() -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
-	if state_ticks >= 24 and state_ticks <= 82 and state_ticks % 2 == 0:
+	if state_ticks >= 44 and state_ticks <= 160 and state_ticks % 4 == 0:
 		get_node("/root/AudioManager").play_sfx("recuperator")
-	if state_ticks >= 82:
+	if state_ticks >= 164:
 		stage_state = StageState.BOSS
 		state_ticks = 0
 		boss.start_fight()
@@ -365,26 +376,25 @@ func _update_victory() -> void:
 	_move_player_to_boss_departure(4)
 	if departure_ticks > 0:
 		_update_departure()
-	if world_update_phase != 0:
-		return
 	state_ticks += 1
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
-			if state_ticks == 5:
+			if state_ticks == 24:
+				_spawn_boss_light_flashes(boss.position + Vector2(55, 30))
 				for _burst in range(3):
 					_spawn_boss_explosion(boss.position + Vector2(55, 30))
-			if state_ticks % 7 == 3 and is_instance_valid(boss):
+			if state_ticks % 28 == 16 and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 127) - 6, randi_range(0, 59) - 6))
 			return
-		if state_ticks <= 270:
+		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
 			return
 		if is_instance_valid(boss):
 			boss.queue_free()
 		_spawn_boss_reward()
 	if not boss_reward_homing:
-		var fade_tick := state_ticks - 270
+		var fade_tick := state_ticks - 285
 		hud.set_boss_flash(1.0 - float(fade_tick) / 255.0)
 		if fade_tick >= 255:
 			boss_reward_homing = true
@@ -401,7 +411,7 @@ func _spawn_boss_reward() -> void:
 		return
 	boss_reward = FourthBossRewardScript.new()
 	boss_reward.position = boss_reward_position
-	boss_reward.z_index = 32
+	boss_reward.z_index = water_layer.z_index - 1
 	add_child(boss_reward)
 	boss_reward.setup(player)
 	boss_reward.collected.connect(_on_boss_reward_collected)
@@ -492,7 +502,8 @@ func _damage_stage_object_in_rect(rect: Rect2, damage: int, weapon_id: int = 1) 
 		return false
 	for mound in sand_mounds:
 		if is_instance_valid(mound) and mound.projectile_mask_overlap(rect):
-			mound.take_projectile_hit(damage)
+			var hit_from_right := rect.get_center().x > mound.position.x + World4SandMound.BODY_SIZE.x * 0.5
+			mound.take_projectile_hit(damage, -1 if hit_from_right else 1)
 			return true
 	return false
 
@@ -586,8 +597,11 @@ func _update_camera() -> void:
 		_update_background()
 		return
 	var center := player.get_center()
+	var right_limit := terrain.world_size.x
+	if map_number == 42 and not checkpoint_active:
+		right_limit = 8750.0
 	camera.position = Vector2(
-		clampf(center.x, VIEWPORT_HALF_SIZE.x, terrain.world_size.x - VIEWPORT_HALF_SIZE.x),
+		clampf(center.x, VIEWPORT_HALF_SIZE.x, right_limit - VIEWPORT_HALF_SIZE.x),
 		clampf(center.y, VIEWPORT_HALF_SIZE.y, terrain.world_size.y - VIEWPORT_HALF_SIZE.y)
 	)
 	_update_background()
@@ -600,7 +614,7 @@ func _update_boss_hud() -> void:
 		boss_visible = stage_state == StageState.BOSS or stage_state == StageState.BOSS_INTRO or (stage_state == StageState.DYING and boss_health_was_visible_on_death)
 		displayed_boss_hp = boss.hit_points
 		if stage_state == StageState.BOSS_INTRO:
-			displayed_boss_hp = clampi(int((state_ticks - 22) / 2.0), 0, 30)
+			displayed_boss_hp = clampi(int((state_ticks - 40) / 4.0), 0, 30)
 	hud.set_boss_health(displayed_boss_hp, boss_visible)
 
 

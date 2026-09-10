@@ -46,48 +46,48 @@ func _update_enemy() -> void:
 			if state_ticks == 1:
 				position.x += 180.0
 			_update_air_frame()
-			position.y += 5.0 / 3.0
-			if state_ticks >= 150:
+			position.y += 5.0 / 4.0
+			if state_ticks >= 200:
 				position.y = 157.0
 				_set_state(BossState.HOVERING)
 		BossState.HOVERING:
-			_update_air_frame()
-			if state_ticks >= 120:
+			_update_air_frame(8)
+			if state_ticks >= 160:
 				vulnerable = true
 				_begin_rising()
 		BossState.RISING:
-			_update_air_frame()
-			position.y -= 4.0
-			if state_ticks >= 75:
+			_update_air_frame(12)
+			position.y -= 3.0
+			if state_ticks >= 100:
 				position.y -= 7.0
 				_begin_dash_sequence()
 		BossState.DASH_DELAY:
-			if state_ticks >= 30:
+			if state_ticks >= 40:
 				_start_dash_pass()
 		BossState.DASHING:
 			sprite.texture = FLY_TEXTURE
-			position.x += dash_direction * 10.0
+			position.x += dash_direction * 9.75
 			if position.x < 2600.0 or position.x > 4080.0:
 				position.x = clampf(position.x, 2615.0, 4020.0)
 				_finish_dash_pass()
 		BossState.LANDING:
-			_update_air_frame()
-			position.y += 10.0 / 3.0
-			if state_ticks >= 75:
+			_update_air_frame(12 if landing_side < 0 else 0)
+			position.y += 10.0 / 4.0
+			if state_ticks >= 100:
 				position.y = 157.0
 				_set_state(BossState.ATTACKING)
 		BossState.ATTACKING:
 			if state_ticks < 48:
 				sprite.texture = STAND_FRAME
 			else:
-				sprite.texture = ATTACK_FRAMES[int(state_ticks / 6.0) % ATTACK_FRAMES.size()]
+				sprite.texture = ATTACK_FRAMES[int(state_ticks / 8.0) % ATTACK_FRAMES.size()]
 			_update_feather_attack()
-			if state_ticks >= 156:
+			if state_ticks >= 200:
 				_begin_rising()
 
 
-func _update_air_frame() -> void:
-	sprite.texture = AIR_FRAMES[int(state_ticks / 6.0) % AIR_FRAMES.size()]
+func _update_air_frame(phase_offset: int = 0) -> void:
+	sprite.texture = AIR_FRAMES[int((state_ticks + phase_offset) / 8.0) % AIR_FRAMES.size()]
 
 
 func _set_state(next_state: BossState) -> void:
@@ -131,7 +131,7 @@ func _finish_dash_pass() -> void:
 
 func _begin_landing() -> void:
 	body_size = Vector2(83, 110)
-	position.x = 3520.0 if landing_side > 0 else 3160.0
+	position.x = 3500.0 if landing_side > 0 else 3180.0
 	position.y = -100.0
 	sprite.flip_h = landing_side < 0
 	_set_state(BossState.LANDING)
@@ -139,15 +139,15 @@ func _begin_landing() -> void:
 
 func _update_feather_attack() -> void:
 	if landing_side > 0:
-		if state_ticks == 72 or state_ticks == 120:
+		if state_ticks == 80 or state_ticks == 144:
 			_fire_feather(40.0)
 			_fire_feather(80.0)
-		elif state_ticks == 96 or state_ticks == 144:
+		elif state_ticks == 112 or state_ticks == 176:
 			_fire_feather(60.0)
 	else:
-		if state_ticks == 72 or state_ticks == 120:
+		if state_ticks == 80 or state_ticks == 144:
 			_fire_feather(60.0)
-		elif state_ticks == 96 or state_ticks == 144:
+		elif state_ticks == 112 or state_ticks == 176:
 			_fire_feather(40.0)
 			_fire_feather(80.0)
 

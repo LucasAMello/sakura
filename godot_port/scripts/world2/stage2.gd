@@ -112,7 +112,6 @@ var mask_spawners: Array[Dictionary] = []
 var boss: SecondStageBoss
 var boss_reward: SecondBossReward
 var defeated_clone_positions: Array[Vector2] = []
-var world2_tick_phase := 0
 
 
 func _first_map_number() -> int:
@@ -150,14 +149,25 @@ func _build_stage_boss_area() -> void:
 
 
 func _enemy_update_interval() -> int:
-	return 2
+	return 1
+
+
+func _recovery_fall_speed() -> float:
+	return 3.75
+
+
+func _spawn_enemy_death(effect_position: Vector2) -> void:
+	get_node("/root/AudioManager").play_sfx("anim40")
+	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
+	effect.frame_hold_ticks = 8
+	effect.position = effect_position
+	effect.z_index = 30
+	add_child(effect)
 
 
 func _physics_process(_delta: float) -> void:
 	if _handle_global_input():
 		return
-	world2_tick_phase = (world2_tick_phase + 1) % 2
-	var world2_logic_tick := world2_tick_phase == 0
 	match stage_state:
 		StageState.ENTRY:
 			_update_entry()
@@ -180,9 +190,9 @@ func _physics_process(_delta: float) -> void:
 		StageState.VICTORY:
 			if departure_ticks > 0:
 				_update_departure()
-			elif world2_logic_tick:
+			else:
 				_update_victory()
-	if world2_logic_tick and (stage_state == StageState.PLAYING or stage_state == StageState.CHECKPOINT):
+	if stage_state == StageState.PLAYING or stage_state == StageState.CHECKPOINT:
 		_update_mask_spawners()
 	_finish_physics_tick()
 
@@ -304,14 +314,17 @@ func _update_victory() -> void:
 	if not boss_reward_started:
 		if state_ticks <= 255:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
-			if state_ticks == 5:
+			if state_ticks == 24:
+				_spawn_boss_light_flashes(boss.position + Vector2(25, 25))
+				for clone_position in defeated_clone_positions:
+					_spawn_boss_light_flashes(clone_position + Vector2(25, 25))
 				for burst in range(3):
 					_spawn_boss_explosion(boss.position + Vector2(25, 25))
 					for clone_position in defeated_clone_positions:
 						_spawn_boss_explosion(clone_position + Vector2(25, 25))
-			if state_ticks % 7 == 3 and is_instance_valid(boss):
+			if state_ticks % 28 == 16 and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
-			if state_ticks % 7 == 6:
+			if state_ticks % 28 == 0:
 				for clone_position in defeated_clone_positions:
 					_spawn_boss_explosion(clone_position + Vector2(randi_range(0, 46), randi_range(0, 46)))
 			return
@@ -389,7 +402,7 @@ func _spawn_stage_objects() -> void:
 			"direction": source_data[1],
 			"span": source_data[2],
 			"stop_x": source_data[3],
-			"timer": 40,
+			"timer": 0,
 		})
 	for data in map_config["cards"]:
 		if not progress.has_card(data[2]):
@@ -407,7 +420,7 @@ func _update_mask_spawners() -> void:
 		if not should_spawn:
 			continue
 		data["timer"] += 1
-		if data["timer"] >= 80:
+		if data["timer"] % 4 == 0 and data["timer"] >= randi_range(41, 50) * 4:
 			var mask: GhostMaskEnemy = GhostMaskScript.new()
 			var spawn_position: Vector2 = data["position"] + Vector2(0, randi_range(0, int(data["span"]) - 1))
 			_spawn_enemy(mask, spawn_position)

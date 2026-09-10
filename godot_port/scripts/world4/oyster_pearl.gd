@@ -9,7 +9,6 @@ var player: SakuraPlayer
 var gameplay_active := false
 var timer := 0
 var velocity := Vector2.ZERO
-var lifetime := 0
 var shot_direction := 0
 
 
@@ -35,24 +34,23 @@ func _physics_process(_delta: float) -> void:
 	if not gameplay_active or not is_instance_valid(player):
 		return
 	timer += 1
-	lifetime += 1
-	if timer <= 10:
+	if timer <= 20:
 		return
-	if timer == 11:
+	if timer == 21:
 		var offset := player.position - position
 		var horizontal_gap := offset.x - 20.0 if shot_direction == 1 else -offset.x - 40.0
-		var horizontal_speed := 10.0 if horizontal_gap >= 180.0 else 7.5 if horizontal_gap >= 125.0 else 5.0
+		var horizontal_speed := 5.0 if horizontal_gap >= 180.0 else 3.75 if horizontal_gap >= 125.0 else 2.5
 		velocity.x = horizontal_speed if shot_direction == 1 else -horizontal_speed
-		velocity.y = (-7.0 if offset.y < -20.0 else -5.0 if offset.y < 0.0 else -3.0) - 0.25
+		velocity.y = (-3.5 if offset.y < -20.0 else -2.5 if offset.y < 0.0 else -1.5) - 0.1875
 	else:
-		velocity.y += 0.5
+		velocity.y += 0.125
 	if not _move_axis(Vector2(velocity.x, 0.0)) or not _move_axis(Vector2(0.0, velocity.y)):
 		queue_free()
 		return
 	if Rect2(position, BODY_SIZE).intersects(player.get_hit_rect()):
 		player.take_damage(2)
 		queue_free()
-	elif lifetime > 360 or position.x < -40.0 or position.x > terrain.world_size.x + 40.0 or position.y > terrain.world_size.y + 40.0:
+	elif position.x < -40.0 or position.x > terrain.world_size.x + 40.0 or position.y > terrain.world_size.y + 40.0:
 		queue_free()
 
 

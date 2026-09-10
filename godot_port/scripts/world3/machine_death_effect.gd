@@ -9,7 +9,6 @@ const FRAMES := [
 
 var sprite: Sprite2D
 var timer := 0
-var update_phase := 0
 
 
 func _ready() -> void:
@@ -23,13 +22,10 @@ func _ready() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	update_phase = (update_phase + 1) % 2
-	if update_phase != 0:
-		return
 	timer += 1
-	if timer == 1:
+	if timer == 8:
 		sprite.texture = FRAMES[1]
-	elif timer == 3:
+	elif timer == 16:
 		sprite.texture = FRAMES[2]
-	elif timer >= 5:
+	elif timer >= 24:
 		queue_free()

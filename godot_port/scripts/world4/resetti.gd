@@ -11,6 +11,7 @@ var configured := false
 
 
 func configure() -> void:
+	set_update_interval(1)
 	body_size = Vector2(37.0, 0.0)
 	hit_points = 1
 	contact_damage = 2
@@ -35,13 +36,12 @@ func _update_enemy() -> void:
 		timer = 1
 	else:
 		timer += 1
-	if timer >= 1 and timer <= 10:
-		_set_emerged_height(minf(FULL_HEIGHT, emerged_height + (6.0 if timer == 1 else 7.0)))
-	elif timer >= 26 and timer <= 30:
-		_set_emerged_height(maxf(0.0, emerged_height - (6.0 if timer == 26 else 7.0)))
-	elif timer >= 34:
-		var horizontal_distance := absf(player.position.x - position.x)
-		if horizontal_distance > 110.0:
+	if timer <= 20:
+		_set_emerged_height(emerged_height + (1.5 if timer <= 4 else 1.75))
+	elif timer >= 61 and timer <= 80:
+		_set_emerged_height(emerged_height - (1.5 if timer >= 77 else 1.75))
+	elif timer >= 96:
+		if player.position.x - position.x - 37.0 > 70.0 or position.x - player.position.x - 40.0 > 70.0:
 			timer = 0
 
 

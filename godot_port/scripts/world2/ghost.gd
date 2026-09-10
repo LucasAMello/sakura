@@ -12,7 +12,11 @@ var action_state := 0
 var timer := 0
 var x_velocity := 0.0
 var y_velocity := 0.0
-var alpha_level := 20
+var alpha_level := 20.0
+
+
+func set_update_interval(_ticks: int) -> void:
+	super.set_update_interval(1)
 
 
 func _ready() -> void:
@@ -49,7 +53,7 @@ func _update_enemy() -> void:
 			_slow_to_rest()
 		else:
 			timer += 1
-			if timer % 5 == 0:
+			if timer % 20 == 0:
 				var frame_index := TEXTURES.find(sprite.texture)
 				if frame_index == 0 or frame_index == 2:
 					sprite.texture = TEXTURES[1]
@@ -57,36 +61,36 @@ func _update_enemy() -> void:
 					sprite.texture = TEXTURES[0]
 			if player.position.x < position.x:
 				if x_velocity > 0.0:
-					x_velocity -= 0.4
+					x_velocity -= 0.1
 					alpha_level = int(150.0 - (x_distance + 20.0) * 0.5)
 				else:
-					x_velocity -= 0.3
+					x_velocity -= 0.075
 					alpha_level = int(170.0 - (x_distance + 20.0) * 0.5)
 				sprite.flip_h = false
 			elif player.position.x > position.x:
 				if x_velocity < 0.0:
-					x_velocity += 0.4
+					x_velocity += 0.1
 					alpha_level = int(150.0 - (x_distance + 20.0) * 0.5)
 				else:
-					x_velocity += 0.3
+					x_velocity += 0.075
 					alpha_level = int(170.0 - (x_distance + 20.0) * 0.5)
 				sprite.flip_h = true
 			if player.position.y < position.y:
-				y_velocity -= 0.3
+				y_velocity -= 0.075
 			elif player.position.y > position.y:
-				y_velocity += 0.3
+				y_velocity += 0.075
 			x_velocity = clampf(x_velocity, -5.0, 5.0)
 			y_velocity = clampf(y_velocity, -5.0, 5.0)
-			alpha_level = clampi(alpha_level, 20, 128)
-		position += Vector2(x_velocity, y_velocity)
+			alpha_level = clampf(alpha_level, 20.0, 128.0)
+		position += Vector2(x_velocity, y_velocity) / 2.0
 	sprite.modulate.a = float(alpha_level) / 255.0
 
 
 func _slow_to_rest() -> void:
 	sprite.texture = TEXTURES[2] if absf(x_velocity) > 1.0 else TEXTURES[3]
-	alpha_level = maxi(20, alpha_level - 10)
-	x_velocity = move_toward(x_velocity, 0.0, 0.2)
-	y_velocity = move_toward(y_velocity, 0.0, 0.2)
+	alpha_level = maxf(20.0, alpha_level - 2.5)
+	x_velocity = move_toward(x_velocity, 0.0, 0.05)
+	y_velocity = move_toward(y_velocity, 0.0, 0.05)
 	if absf(x_velocity) <= 0.4 and absf(y_velocity) <= 0.4:
 		x_velocity = 0.0
 		y_velocity = 0.0

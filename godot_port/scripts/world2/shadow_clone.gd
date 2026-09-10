@@ -4,10 +4,10 @@ extends SakuraEnemy
 const TEXTURE := preload("res://assets/world2/boss_ball.png")
 
 var boss: SecondStageBoss
-var x_velocity := 8.0
-var y_velocity := 8.0
+var x_velocity := 3.75
+var y_velocity := 3.75
 var timer := 0
-var drift := 3.0
+var drift := 0.75
 var active_motion := false
 
 
@@ -22,7 +22,11 @@ func _ready() -> void:
 
 
 func configure(owner_boss: SecondStageBoss) -> void:
+	set_update_interval(1)
 	boss = owner_boss
+	drift = boss.clone_drift_direction * 0.75
+	x_velocity = boss.clone_drift_direction * 3.75
+	y_velocity = boss.clone_drift_direction * 3.75
 
 
 func take_projectile_hit(damage: int) -> void:
@@ -42,9 +46,9 @@ func _update_enemy() -> void:
 		queue_free()
 		return
 	if not active_motion:
-		if timer > 0 and timer < 25:
+		if timer >= 4 and timer < 100:
 			position.x += drift
-		elif timer == 30:
+		elif timer == 123:
 			active_motion = true
 		timer += 1
 		return

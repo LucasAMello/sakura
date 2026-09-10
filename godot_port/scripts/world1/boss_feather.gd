@@ -3,7 +3,7 @@ extends Node2D
 
 const BODY_SIZE := Vector2(20, 9)
 const TEXTURE := preload("res://assets/world1/boss_feather.png")
-const SUBSTEP_SPEED := 20.0 / 3.0
+const SUBSTEP_SPEED := 5.0
 
 var terrain: SakuraTerrain
 var player: SakuraPlayer

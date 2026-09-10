@@ -8,6 +8,7 @@ const TEXTURES := [
 const SIZES := [Vector2(12, 30), Vector2(16, 32)]
 
 var falling := false
+var landed := false
 var timer := 0
 var vertical_speed := 2.0
 
@@ -19,12 +20,18 @@ func _ready() -> void:
 
 
 func configure(variant: int) -> void:
+	set_update_interval(1)
 	var index := clampi(variant, 0, 1)
 	body_size = SIZES[index]
 	sprite.texture = TEXTURES[index]
 
 
 func _update_enemy() -> void:
+	if landed:
+		timer += 1
+		if timer >= 8:
+			queue_free()
+		return
 	if not falling:
 		var horizontal_distance := player.position.x - position.x
 		var vertical_distance := player.position.y - position.y
@@ -32,13 +39,15 @@ func _update_enemy() -> void:
 			falling = true
 			get_node("/root/AudioManager").play_sfx("icefall")
 		return
+	if timer % 4 == 0 and vertical_speed < 39.0:
+		vertical_speed += 4.0
 	timer += 1
-	vertical_speed = minf(39.0, vertical_speed + 4.0)
-	if timer <= 5:
-		position.y += vertical_speed
+	if timer <= 20:
+		position.y += vertical_speed * 0.25
 		return
-	if not _move_down(vertical_speed):
-		queue_free()
+	if not _move_down(vertical_speed * 0.25):
+		landed = true
+		timer = 0
 
 
 func _move_down(amount: float) -> bool:
@@ -46,6 +55,7 @@ func _move_down(amount: float) -> bool:
 	while remaining > 0.0:
 		var step := minf(1.0, remaining)
 		if terrain.rect_hits_solid(Rect2(position + Vector2(0, step), body_size)):
+			position.y = floorf((position.y + step + body_size.y) / SakuraTerrain.TILE_SIZE) * SakuraTerrain.TILE_SIZE - body_size.y
 			return false
 		position.y += step
 		remaining -= step

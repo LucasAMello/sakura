@@ -17,6 +17,7 @@ var vertical_speed := 0.0
 
 
 func configure() -> void:
+	set_update_interval(1)
 	home_y = position.y
 	body_size = Vector2(25, 59)
 	hit_points = 3
@@ -42,11 +43,11 @@ func _update_enemy() -> void:
 			_update_falling()
 		4:
 			timer += 1
-			if timer == 10:
+			if timer == 40:
 				state = 0
 				timer = 0
 	if state != 2:
-		sprite.texture = FRAMES[timer % 4]
+		sprite.texture = FRAMES[int(timer / 4.0) % 4]
 	_update_surface_clip()
 
 
@@ -65,10 +66,11 @@ func _update_waiting() -> void:
 
 
 func _update_rising() -> void:
-	vertical_speed += 1.0 if timer < 7 else 2.0 if timer < 16 else 4.0
-	position.y += vertical_speed
+	if timer % 4 == 0:
+		vertical_speed += 1.0 if timer < 28 else 2.0 if timer < 64 else 4.0
+	position.y += vertical_speed * 0.25
 	timer += 1
-	if vertical_speed == -4.0:
+	if timer % 4 == 0 and vertical_speed == -4.0:
 		timer = 0
 		state = 2
 		vertical_speed = 0.0
@@ -76,33 +78,35 @@ func _update_rising() -> void:
 
 func _update_turnaround() -> void:
 	timer += 1
-	if timer == 1:
+	if timer == 4:
 		sprite.texture = FRAMES[4]
 		body_size = Vector2(27, 33)
 		position += Vector2(-2, 6)
-	elif timer == 2:
+	elif timer == 8:
 		sprite.texture = FRAMES[5]
-	elif timer == 3:
+	elif timer == 12:
 		sprite.texture = FRAMES[5]
 		sprite.flip_v = true
 		position.y += 4.0
-	elif timer == 4:
+	elif timer == 16:
 		sprite.texture = FRAMES[4]
 		sprite.flip_v = true
 		position.y += 6.0
-	elif timer == 5:
-		timer = 0
+	elif timer == 20:
+		timer = 4
 		body_size = Vector2(25, 59)
 		position += Vector2(2, -20)
 		state = 3
-		_update_falling()
+		vertical_speed = 1.0
+		position.y += 1.0
 
 
 func _update_falling() -> void:
-	vertical_speed += 1.0 if timer < 8 else 2.0 if timer < 16 else 4.0
-	position.y += vertical_speed
+	if timer % 4 == 0:
+		vertical_speed += 1.0 if timer < 32 else 2.0 if timer < 64 else 4.0
+	position.y += vertical_speed * 0.25
 	timer += 1
-	if vertical_speed == 44.0:
+	if timer % 4 == 0 and vertical_speed == 44.0:
 		timer = 0
 		state = 4
 		position.y = home_y

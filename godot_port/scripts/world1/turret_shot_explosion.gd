@@ -10,10 +10,12 @@ const FRAMES := [
 var sprite: Sprite2D
 var player: SakuraPlayer
 var timer := 0
+var move_direction := -1
 
 
-func setup(target_player: SakuraPlayer) -> void:
+func setup(target_player: SakuraPlayer, direction: int) -> void:
 	player = target_player
+	move_direction = direction
 
 
 func _ready() -> void:
@@ -23,15 +25,16 @@ func _ready() -> void:
 	sprite = Sprite2D.new()
 	sprite.centered = false
 	sprite.texture = FRAMES[0]
+	sprite.flip_h = move_direction > 0
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(sprite)
 
 
 func _physics_process(_delta: float) -> void:
 	timer += 1
-	if timer == 2:
+	if timer == 8:
 		sprite.texture = FRAMES[1]
-	elif timer == 6:
+	elif timer == 16:
 		sprite.texture = FRAMES[2]
-	elif timer >= 10:
+	elif timer >= 24:
 		queue_free()

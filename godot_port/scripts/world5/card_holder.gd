@@ -33,11 +33,11 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	timer += 1
 	if opened_state:
-		sprite.visible = timer % 2 == 0
-		if timer >= 20:
+		sprite.visible = int(timer / 4.0) % 2 == 0
+		if timer >= 80:
 			queue_free()
 		return
-	var frame_tick := int(timer / 2.0) % 40
+	var frame_tick := int(timer / 4.0) % 40
 	if frame_tick <= 16 and frame_tick % 2 == 0:
 		card_sprite.texture = CARD_TEXTURES[mini(int(frame_tick / 2.0), CARD_TEXTURES.size() - 1)]
 	card_sprite.flip_h = frame_tick >= 10

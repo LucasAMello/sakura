@@ -7,7 +7,8 @@ const CLOSED_TEXTURE := preload("res://assets/world1/card_holder.png")
 const OPEN_TEXTURE := preload("res://assets/world1/card_holder_broken.png")
 const CARD_TEXTURES := World1CardPickup.TEXTURES
 const BODY_SIZE := Vector2(40, 60)
-const ANIMATION_TICK_SCALE := 2
+var animation_tick_scale := 4
+var break_tick_scale := 4
 
 var sprite: Sprite2D
 var card_sprite: Sprite2D
@@ -34,11 +35,11 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	timer += 1
 	if opened_state:
-		sprite.visible = timer % 2 == 0
-		if timer >= 20:
+		sprite.visible = int(timer / float(break_tick_scale)) % 2 == 0
+		if timer >= 20 * break_tick_scale:
 			queue_free()
 		return
-	var frame_tick := int(timer / float(ANIMATION_TICK_SCALE)) % 40
+	var frame_tick := int(timer / float(animation_tick_scale)) % 40
 	if frame_tick <= 16 and frame_tick % 2 == 0:
 		card_sprite.texture = CARD_TEXTURES[mini(int(frame_tick / 2.0), CARD_TEXTURES.size() - 1)]
 	card_sprite.flip_h = frame_tick >= 10

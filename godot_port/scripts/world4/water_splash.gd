@@ -8,7 +8,6 @@ const FRAMES := [
 ]
 
 var sprite: Sprite2D
-var physics_ticks := 0
 var animation_ticks := 0
 var gameplay_active := true
 
@@ -28,14 +27,10 @@ func set_gameplay_active(value: bool) -> void:
 func _physics_process(_delta: float) -> void:
 	if not gameplay_active:
 		return
-	physics_ticks += 1
-	if physics_ticks < 2:
-		return
-	physics_ticks = 0
 	animation_ticks += 1
-	if animation_ticks == 3:
+	if animation_ticks == 12:
 		sprite.texture = FRAMES[1]
-	elif animation_ticks == 5:
+	elif animation_ticks == 20:
 		sprite.texture = FRAMES[2]
-	elif animation_ticks >= 7:
+	elif animation_ticks >= 28:
 		queue_free()

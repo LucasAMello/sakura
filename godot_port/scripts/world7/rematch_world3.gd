@@ -44,7 +44,6 @@ func _entry_complete_state() -> int:
 func _update_boss_intro() -> void:
 	if not rematch_intro_started:
 		rematch_intro_started = true
-		state_ticks = 40
+		state_ticks = 80
 		boss.set_gameplay_active(false)
 	super._update_boss_intro()
-

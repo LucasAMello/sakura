@@ -110,6 +110,7 @@ func _update_victory() -> void:
 	victory_ticks += 1
 	_settle_player_for_victory()
 	if victory_ticks == 5:
+		_spawn_boss_light_flashes(boss.position + Vector2(40, 60), 250)
 		for _burst in range(3):
 			_spawn_boss_explosion(boss.position + Vector2(40, 60))
 	if victory_ticks % 7 == 3 and victory_ticks < 210:

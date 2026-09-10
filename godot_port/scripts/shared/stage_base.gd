@@ -9,6 +9,8 @@ const RecoveryScript = preload("res://scripts/shared/recovery.gd")
 const HUDScript = preload("res://scripts/hud/hud.gd")
 const PlayerDeathEffectScript = preload("res://scripts/player/death_effect.gd")
 const EnemyDeathEffectScript = preload("res://scripts/shared/enemy_death_effect.gd")
+const BossExplosionScript = preload("res://scripts/world1/turret_shot_explosion.gd")
+const BossLightFlashesScript = preload("res://scripts/shared/boss_light_flashes.gd")
 
 const VIEWPORT_HALF_SIZE := Vector2(320.0, 240.0)
 
@@ -114,12 +116,15 @@ func _ready() -> void:
 	_build_camera()
 	hud = HUDScript.new()
 	add_child(hud)
-	hud.set_ready_visible(_entry_should_show_ready())
+	hud.update_status(player, _stage_state_label(), enemies.size(), map_number, terrain.world_size)
+	hud.set_ready_visible(false)
 	_set_gameplay_active(false)
 	get_node("/root/AudioManager").play_music("world%d" % _world_number())
 
 
 func _handle_global_input() -> bool:
+	if get_node("/root/GameFlow").transitioning:
+		return true
 	if Input.is_action_just_pressed("quit") and stage_state != StageState.DYING and not get_tree().paused:
 		if _world_number() == 7:
 			get_node("/root/GameFlow").leave_final_stage()
@@ -142,6 +147,8 @@ func _handle_global_input() -> bool:
 		return true
 	if Input.is_action_just_pressed("toggle_debug"):
 		hud.toggle_debug()
+	if OS.is_debug_build() and Input.is_action_just_pressed("toggle_god_mode") and is_instance_valid(progress) and is_instance_valid(player) and not player.dead:
+		progress.debug_god_mode = not progress.debug_god_mode
 	return false
 
 
@@ -347,10 +354,10 @@ func _move_player_to_boss_departure(world_number: int) -> void:
 		victory_target_set = true
 		match world_number:
 			1:
-				if player.position.x >= 3100.0 and player.position.x < 3260.0:
-					victory_target = Vector2(3180, 180)
-				elif player.position.x >= 3460.0 and player.position.x < 3620.0:
-					victory_target = Vector2(3540, 180)
+				if player.position.x >= 3120.0 and player.position.x < 3280.0:
+					victory_target = Vector2(3200, 180)
+				elif player.position.x >= 3440.0 and player.position.x < 3600.0:
+					victory_target = Vector2(3520, 180)
 				else:
 					victory_target = Vector2(3360, 300)
 			2:
@@ -506,6 +513,7 @@ func _on_enemy_defeated(enemy: SakuraEnemy, effect_position: Vector2, _drop_posi
 	_spawn_enemy_defeat_effect(enemy, effect_position)
 	if drop_type != SakuraEnemy.DropType.NONE:
 		var recovery: RecoveryPickup = RecoveryScript.new()
+		recovery.vertical_speed = _recovery_fall_speed()
 		recovery.z_index = 12
 		add_child(recovery)
 		recovery.setup(terrain, player, drop_type)
@@ -514,10 +522,15 @@ func _on_enemy_defeated(enemy: SakuraEnemy, effect_position: Vector2, _drop_posi
 
 func _spawn_recovery(spawn_position: Vector2, drop_type: int) -> void:
 	var recovery: RecoveryPickup = RecoveryScript.new()
+	recovery.vertical_speed = _recovery_fall_speed()
 	recovery.position = spawn_position
 	recovery.z_index = 12
 	add_child(recovery)
 	recovery.setup(terrain, player, drop_type)
+
+
+func _recovery_fall_speed() -> float:
+	return RecoveryPickup.FALL_SPEED
 
 
 func _on_shot_requested(origin: Vector2, direction: int, weapon_id: int) -> void:
@@ -569,6 +582,19 @@ func damage_enemy_in_rect(rect: Rect2, damage: int, weapon_id: int = 1, water_sp
 	return false
 
 
+func damage_enemies_in_rect_once(rect: Rect2, damage: int, weapon_id: int, hit_enemy_ids: Dictionary) -> void:
+	_damage_stage_object_in_rect(rect, damage, weapon_id)
+	for enemy in enemies.duplicate():
+		if not is_instance_valid(enemy) or enemy.defeated_state:
+			continue
+		var enemy_id: int = enemy.get_instance_id()
+		if hit_enemy_ids.has(enemy_id) or not enemy.accepts_weapon_hit(weapon_id):
+			continue
+		if enemy.projectile_mask_overlap(rect):
+			hit_enemy_ids[enemy_id] = true
+			enemy.take_weapon_hit(damage, weapon_id)
+
+
 func _on_player_died() -> void:
 	get_node("/root/AudioManager").play_sfx("die")
 	_before_player_death()
@@ -590,10 +616,18 @@ func _spawn_enemy_death(effect_position: Vector2) -> void:
 	add_child(effect)
 
 
+func _spawn_boss_light_flashes(effect_position: Vector2, lifetime_ticks: int = 262) -> void:
+	var effect := BossLightFlashesScript.new()
+	effect.position = effect_position
+	effect.lifetime_ticks = lifetime_ticks
+	effect.z_index = 29
+	add_child(effect)
+
+
 func _spawn_boss_explosion(effect_position: Vector2) -> void:
 	get_node("/root/AudioManager").play_sfx("anim13")
-	var effect: EnemyDeathEffect = EnemyDeathEffectScript.new()
-	effect.position = effect_position
+	var effect: TurretShotExplosion = BossExplosionScript.new()
+	effect.position = effect_position - Vector2(TurretShotExplosion.FRAMES[0].get_size()) * 0.5
 	effect.z_index = 30
 	add_child(effect)
 
@@ -775,6 +809,8 @@ func _install_input_actions() -> void:
 	_bind_key("pause", KEY_ENTER)
 	_bind_key("restart", KEY_R)
 	_bind_key("toggle_debug", KEY_F3)
+	if OS.is_debug_build():
+		_bind_key("toggle_god_mode", KEY_G)
 	_bind_key("quit", KEY_ESCAPE)
 
 

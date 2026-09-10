@@ -10,9 +10,10 @@ const STUN_FRAMES := [
 	preload("res://assets/world1/pumpkin_4.png"),
 	preload("res://assets/world1/pumpkin_5.png"),
 ]
-const PATROL_SPEED := 3.0
-const CHASE_SPEED := 10.0
-const STUN_DURATION_TICKS := 180
+const PATROL_SPEED := 2.5
+const CHASE_SPEED := 5.0
+const STUN_DURATION_TICKS := 120
+const ANIMATION_HOLD_TICKS := 8
 
 var move_direction := -1
 var timer := 0
@@ -34,7 +35,7 @@ func _update_enemy() -> void:
 		stun_ticks -= 1
 		return
 	timer += 1
-	sprite.texture = FRAMES[int(((timer - 1) % 6) / 2.0)]
+	sprite.texture = FRAMES[int((timer - 1) / float(ANIMATION_HOLD_TICKS)) % FRAMES.size()]
 	var speed := PATROL_SPEED
 	if is_instance_valid(player) and player.grounded:
 		var aligned := is_equal_approx(player.position.y + 60.0, position.y)
@@ -55,4 +56,5 @@ func take_projectile_hit(_damage: int) -> void:
 	if defeated_state:
 		return
 	stun_ticks = STUN_DURATION_TICKS
-	sprite.texture = STUN_FRAMES[1] if timer % 6 < 4 else STUN_FRAMES[0]
+	var source_tick := int((timer + 3) / 4.0)
+	sprite.texture = STUN_FRAMES[1] if source_tick % 6 < 4 else STUN_FRAMES[0]

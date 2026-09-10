@@ -30,6 +30,7 @@ var timer := 0
 
 
 func configure(is_vertical: bool, facing: int) -> void:
+	set_update_interval(1)
 	vertical = is_vertical
 	direction = facing
 	body_size = Vector2(58, 90) if vertical else Vector2(90, 58)
@@ -44,17 +45,18 @@ func configure(is_vertical: bool, facing: int) -> void:
 func _update_enemy() -> void:
 	timer += 1
 	var frames := VERTICAL_FRAMES if vertical else HORIZONTAL_FRAMES
-	if timer >= 29:
+	if timer >= 116:
 		queue_free()
 		return
-	if timer < 27 and timer % 7 == 1:
+	var source_tick := int(timer / 4.0)
+	if timer < 108 and timer % 28 == 4:
 		get_node("/root/AudioManager").play_sfx_near_player("flamethrower", position, player.position, 1.0, 100.0 / 255.0)
-	if timer == 27:
+	if timer >= 108 and timer < 112:
 		sprite.texture = frames[7]
-	elif timer == 28:
+	elif timer >= 112:
 		sprite.texture = frames[8]
 	else:
-		sprite.texture = frames[posmod(timer - 1, 7)]
+		sprite.texture = frames[posmod(maxi(1, source_tick) - 1, 7)]
 
 
 func projectile_mask_overlap(_projectile_rect: Rect2) -> bool:

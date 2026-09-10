@@ -24,14 +24,15 @@ func _ready() -> void:
 
 
 func configure(direction: int = 0) -> void:
+	set_update_interval(1)
 	move_direction = 1 if direction > 0 else -1
 	sprite.flip_h = move_direction > 0
 
 
 func _update_enemy() -> void:
+	sprite.texture = FRAMES[int(timer / 8.0) % FRAMES.size()]
 	timer += 1
-	sprite.texture = FRAMES[int((timer % 8) / 2.0)]
-	var movement := Vector2(move_direction * 2.0, 0)
+	var movement := Vector2(move_direction * 1.0, 0)
 	var candidate := Rect2(position + movement, body_size)
 	var floor_left := terrain.is_solid_at(Vector2(candidate.position.x + 1, candidate.end.y + 7))
 	var floor_right := terrain.is_solid_at(Vector2(candidate.end.x - 1, candidate.end.y + 7))
@@ -47,4 +48,3 @@ func take_projectile_hit(damage: int) -> void:
 	super.take_projectile_hit(damage)
 	if defeated_now:
 		needles_requested.emit(position)
-

@@ -14,8 +14,9 @@ var timer := 0
 
 
 func configure(shocker_direction: int, initial_timer: int = 0) -> void:
+	set_update_interval(1)
 	direction = shocker_direction
-	timer = initial_timer
+	timer = initial_timer * 4
 	hit_points = 6
 	contact_damage = 2
 	drops_recovery = false
@@ -30,18 +31,20 @@ func take_weapon_hit(damage: int, weapon_id: int) -> void:
 
 func _update_enemy() -> void:
 	timer += 1
-	if timer > 9 and timer < 14:
-		sprite.texture = FRAMES[timer - 9]
-	if timer == 16:
+	var source_tick := int(timer / 4.0)
+	if source_tick > 9 and source_tick < 14:
+		sprite.texture = FRAMES[source_tick - 9]
+	if timer == 64:
 		_spawn_charge()
-	elif timer > 30 and timer < 35:
-		sprite.texture = FRAMES[34 - timer]
-	elif timer == 60:
+	elif source_tick > 30 and source_tick < 35:
+		sprite.texture = FRAMES[34 - source_tick]
+	elif timer == 200:
 		timer = 0
 
 
 func _spawn_charge() -> void:
 	var charge := World3Projectile.new()
+	charge.charge_source = self
 	charge.position = position + [Vector2(7, 21), Vector2(9, 7), Vector2(7, 9), Vector2(21, 8)][direction]
 	charge.z_index = 11
 	get_parent().add_child(charge)

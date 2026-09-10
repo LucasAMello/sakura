@@ -4,7 +4,6 @@ extends Node2D
 const BUBBLE_TEXTURE := preload("res://assets/world4/bubble.png")
 
 var surface_y := 0.0
-var update_ticks := 0
 var gameplay_active := true
 var sprite: Sprite2D
 
@@ -29,10 +28,6 @@ func set_gameplay_active(value: bool) -> void:
 func _physics_process(_delta: float) -> void:
 	if not gameplay_active:
 		return
-	update_ticks += 1
-	if update_ticks < 2:
-		return
-	update_ticks = 0
-	position.y -= 6.0
+	position.y -= 1.5
 	if position.y < surface_y:
 		queue_free()

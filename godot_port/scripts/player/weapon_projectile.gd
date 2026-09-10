@@ -52,7 +52,10 @@ var ending := false
 var ending_ticks := 0
 var finish_emitted := false
 var water_impact_kind := 3
+var water_hit_terrain := false
+var water_impact_anchor := Vector2.ZERO
 var impact_particles_spawned := false
+var hit_enemy_ids: Dictionary = {}
 
 
 func _ready() -> void:
@@ -188,7 +191,12 @@ func _move_and_collide(amount: Vector2) -> void:
 	for _index in range(steps):
 		position += step
 		var rect := Rect2(position, body_size)
-		if stage.projectile_hits_solid(rect) or stage.damage_enemy_in_rect(rect, _damage(), weapon_id):
+		if stage.projectile_hits_solid(rect):
+			_end(true)
+			return
+		if weapon_id == 2:
+			stage.damage_enemies_in_rect_once(rect, _damage(), weapon_id, hit_enemy_ids)
+		elif stage.damage_enemy_in_rect(rect, _damage(), weapon_id):
 			_end(true)
 			return
 
@@ -204,10 +212,32 @@ func _move_water_axis(amount: Vector2, impact_kind: int) -> bool:
 	var steps := maxi(1, ceili(distance / 2.0))
 	var step := amount / float(steps)
 	for _index in range(steps):
+		var previous_position := position
 		position += step
 		var rect := Rect2(position, body_size)
-		if stage.projectile_hits_solid(rect) or stage.damage_enemy_in_rect(rect, _damage(), weapon_id):
-			water_impact_kind = impact_kind
+		if stage.projectile_hits_solid(rect):
+			var clear_fraction := 0.0
+			var blocked_fraction := 1.0
+			for _probe in range(10):
+				var fraction := (clear_fraction + blocked_fraction) * 0.5
+				if stage.projectile_hits_solid(Rect2(previous_position + step * fraction, body_size)):
+					blocked_fraction = fraction
+				else:
+					clear_fraction = fraction
+			position = previous_position + step * clear_fraction
+			water_hit_terrain = true
+			water_impact_kind = 3 if impact_kind == 2 and amount.y < 0.0 else impact_kind
+			water_impact_anchor = position + body_size * 0.5
+			if water_impact_kind == 1:
+				water_impact_anchor.x = position.x + (body_size.x if move_direction > 0 else 0.0)
+			elif water_impact_kind == 2:
+				water_impact_anchor.y = position.y + body_size.y
+			else:
+				water_impact_anchor.y = position.y
+			_end(true)
+			return true
+		if stage.damage_enemy_in_rect(rect, _damage(), weapon_id):
+			water_impact_kind = 3 if impact_kind == 2 and amount.y < 0.0 else impact_kind
 			_end(true)
 			return true
 	return false
@@ -269,23 +299,32 @@ func _update_ending() -> void:
 func _update_water_impact() -> void:
 	var first_frame := (water_impact_kind - 1) * 3
 	if ending_ticks == 1:
-		sprite.texture = WATER_HIT_TEXTURES[first_frame]
-		if water_impact_kind == 1:
-			if move_direction > 0:
-				position.x += 7.0
-			body_size = Vector2(22, 29)
-		elif water_impact_kind == 2:
-			position.y += 7.0
-			body_size = Vector2(29, 22)
-		else:
-			body_size = Vector2(29, 22)
+		_set_water_impact_frame(first_frame)
 	elif ending_ticks == 4:
-		sprite.texture = WATER_HIT_TEXTURES[first_frame + 1]
+		if water_hit_terrain:
+			_set_water_impact_frame(first_frame + 1)
+		else:
+			sprite.visible = false
 	elif ending_ticks == 8:
-		sprite.texture = WATER_HIT_TEXTURES[first_frame + 2]
+		if water_hit_terrain:
+			_set_water_impact_frame(first_frame + 2)
 		_spawn_water_particles()
 	elif ending_ticks >= 12:
 		queue_free()
+
+
+func _set_water_impact_frame(frame: int) -> void:
+	var previous_center := position + body_size * 0.5
+	sprite.texture = WATER_HIT_TEXTURES[frame]
+	body_size = sprite.texture.get_size()
+	if not water_hit_terrain:
+		position = previous_center - body_size * 0.5
+	elif water_impact_kind == 1:
+		position = water_impact_anchor - Vector2(body_size.x if move_direction > 0 else 0.0, body_size.y * 0.5)
+	elif water_impact_kind == 2:
+		position = water_impact_anchor - Vector2(body_size.x * 0.5, body_size.y)
+	else:
+		position = water_impact_anchor - Vector2(body_size.x * 0.5, 0.0)
 
 
 func _spawn_water_particles() -> void:
@@ -294,8 +333,8 @@ func _spawn_water_particles() -> void:
 		_spawn_impact_particle(ImpactParticleScript.Kind.WATER_DOWN, position + Vector2(0, 15), -move_direction * 8.0)
 	else:
 		var y_offset := 16.0 if water_impact_kind == 3 else 0.0
-		_spawn_impact_particle(ImpactParticleScript.Kind.WATER_UP, position + Vector2(0, y_offset), 8.0)
-		_spawn_impact_particle(ImpactParticleScript.Kind.WATER_UP, position + Vector2(15, y_offset), -8.0)
+		_spawn_impact_particle(ImpactParticleScript.Kind.WATER_UP, position + Vector2(0, y_offset), -8.0)
+		_spawn_impact_particle(ImpactParticleScript.Kind.WATER_UP, position + Vector2(15, y_offset), 8.0)
 
 
 func _spawn_ice_particles() -> void:

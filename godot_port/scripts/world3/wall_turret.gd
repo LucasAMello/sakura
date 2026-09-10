@@ -9,8 +9,9 @@ var timer := 0
 
 
 func configure(turret_direction: int, initial_timer: int = 0) -> void:
+	set_update_interval(1)
 	direction = turret_direction
-	timer = initial_timer
+	timer = initial_timer * 4
 	hit_points = 5
 	contact_damage = 2
 	drops_recovery = false
@@ -24,17 +25,17 @@ func configure(turret_direction: int, initial_timer: int = 0) -> void:
 
 
 func _update_enemy() -> void:
-	if timer == 50:
+	if timer == 150:
 		timer = 0
 		if direction == 0:
-			_spawn_shot(position + Vector2(-4, 16), 0)
-			_spawn_shot(position + Vector2(36, 16), 3)
+			_spawn_shot(position + Vector2(-4, 16), World3Projectile.ShotDirection.DOWN_LEFT)
+			_spawn_shot(position + Vector2(36, 16), World3Projectile.ShotDirection.DOWN_RIGHT)
 		elif direction == 1:
-			_spawn_shot(position + Vector2(16, -4), 1)
-			_spawn_shot(position + Vector2(16, 36), 4)
+			_spawn_shot(position + Vector2(16, -4), World3Projectile.ShotDirection.UP_RIGHT)
+			_spawn_shot(position + Vector2(16, 36), World3Projectile.ShotDirection.DOWN_RIGHT)
 		else:
-			_spawn_shot(position + Vector2(-4, -4), 2)
-			_spawn_shot(position + Vector2(-4, 36), 5)
+			_spawn_shot(position + Vector2(-4, -4), World3Projectile.ShotDirection.UP_LEFT)
+			_spawn_shot(position + Vector2(-4, 36), World3Projectile.ShotDirection.DOWN_LEFT)
 	timer += 1
 
 

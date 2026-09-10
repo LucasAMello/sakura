@@ -26,6 +26,7 @@ func _ready() -> void:
 
 
 func configure(direction: int = 0) -> void:
+	set_update_interval(1)
 	move_direction = 1 if direction > 0 else -1
 	sprite.flip_h = move_direction > 0
 
@@ -35,10 +36,13 @@ func _update_enemy() -> void:
 		stun_ticks -= 1
 		return
 	timer += 1
-	sprite.texture = FRAMES[int(((timer - 1) % 6) / 2.0)]
-	var speed := PumpkinEnemy.PATROL_SPEED * 2.0
-	if player.grounded and is_equal_approx(player.position.y + 60.0, position.y) and absf(player.position.x - position.x) < 240.0:
-		speed = PumpkinEnemy.CHASE_SPEED * 2.0
+	var source_tick := maxi(1, int(timer / 4.0))
+	sprite.texture = FRAMES[int(((source_tick - 1) % 6) / 2.0)]
+	var speed := 2.5
+	var offset_x := player.position.x - position.x
+	var in_chase_range := (offset_x > 0.0 and offset_x - 24.0 < 200.0) or (offset_x < 0.0 and -offset_x - 40.0 < 200.0)
+	if player.grounded and int(player.position.y) + 60 == int(position.y) and in_chase_range:
+		speed = 5.0
 	var candidate := Rect2(position + Vector2(move_direction * speed, 0), body_size)
 	var floor_left := terrain.is_solid_at(Vector2(candidate.position.x + 1, candidate.end.y))
 	var floor_right := terrain.is_solid_at(Vector2(candidate.end.x - 1, candidate.end.y))
@@ -52,6 +56,6 @@ func _update_enemy() -> void:
 func take_projectile_hit(_damage: int) -> void:
 	if defeated_state:
 		return
-	stun_ticks = 30
-	sprite.texture = STUN_FRAMES[1] if timer % 6 < 4 else STUN_FRAMES[0]
+	stun_ticks = 120
+	sprite.texture = STUN_FRAMES[1] if int(timer / 4.0) % 6 < 4 else STUN_FRAMES[0]
 

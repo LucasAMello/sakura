@@ -17,7 +17,7 @@ const END_FRAMES := [
 var direction := 0
 var trailing := false
 var timer := 0
-var segment_count := 0
+var segment_count := 0.0
 var expanding := true
 var blocking_edge := NAN
 var front_sprite: Sprite2D
@@ -40,6 +40,7 @@ func _ready() -> void:
 
 
 func configure(shot_direction: int, is_trailing: bool) -> void:
+	set_update_interval(1)
 	direction = 0 if shot_direction <= 0 else 1
 	trailing = is_trailing
 	_refresh_visuals()
@@ -58,22 +59,23 @@ func _update_enemy() -> void:
 	blocking_edge = NAN
 	var should_move := not expanding or direction == 0 or trailing
 	if should_move:
-		_move_or_hit(-32.0 if direction == 0 else 32.0)
+		_move_or_hit(-8.0 if direction == 0 else 8.0)
 	if expanding:
-		segment_count += 2
-		body_size.x += 32.0
-		if segment_count >= 10:
-			segment_count += 1
-			body_size.x += 16.0
+		segment_count += 0.5
+		body_size.x += 8.0
+		if timer >= 17:
+			segment_count += 0.25
+			body_size.x += 4.0
 			if is_nan(blocking_edge):
-				_move_or_hit(-16.0 if direction == 0 else 16.0)
-			expanding = false
+				_move_or_hit(-4.0 if direction == 0 else 4.0)
+			if timer >= 20:
+				expanding = false
 	if is_nan(blocking_edge):
 		blocking_edge = _find_blocking_edge(get_hit_rect())
 	if not is_nan(blocking_edge):
 		if not trailing or not expanding:
-			segment_count -= 2
-			body_size.x -= 32.0
+			segment_count -= 0.5
+			body_size.x -= 8.0
 			if segment_count <= 0:
 				queue_free()
 				return
@@ -125,8 +127,9 @@ func _make_piece(texture: Texture2D) -> Sprite2D:
 func _refresh_visuals() -> void:
 	if not is_instance_valid(front_sprite):
 		return
-	var frame_index := 0 if timer % 4 < 2 else 1
-	var middle_index := timer % 2
+	var source_tick := int(timer / 4.0)
+	var frame_index := 0 if source_tick % 4 < 2 else 1
+	var middle_index := source_tick % 2
 	front_sprite.texture = FRONT_FRAMES[frame_index]
 	end_sprite.texture = END_FRAMES[frame_index]
 	front_sprite.flip_h = direction == 1
@@ -136,6 +139,8 @@ func _refresh_visuals() -> void:
 		middle.texture = MIDDLE_FRAMES[middle_index]
 		middle.flip_h = direction == 1
 		middle.visible = index < segment_count
+		middle.region_enabled = true
+		middle.region_rect = Rect2(0.0, 0.0, 16.0 * clampf(segment_count - index, 0.0, 1.0), middle.texture.get_height())
 		middle.position = Vector2((19.0 if direction == 0 else 14.0) + index * 16.0, 6.0)
 	if direction == 0:
 		front_sprite.position = Vector2.ZERO

@@ -1,7 +1,8 @@
 class_name World3Projectile
 extends Node2D
 
-enum Kind { WALL_SHOT, MISSILE, SHOCK_CHARGE, SHOCK_BALL, BOSS_LIGHTNING, BOSS_BEAM }
+enum Kind { WALL_SHOT, MISSILE, SHOCK_CHARGE, SHOCK_BALL, BOSS_LIGHTNING, BOSS_BEAM, MACHINE_SHOT, ORANGE_SHOT }
+enum ShotDirection { LEFT, RIGHT, DOWN, UP_LEFT, UP_RIGHT, DOWN_LEFT, DOWN_RIGHT }
 
 const WALL_TEXTURES := [
 	preload("res://assets/world3/wall_shot_1.png"),
@@ -36,6 +37,7 @@ const BEAM_TEXTURES := [
 
 var terrain: SakuraTerrain
 var player: SakuraPlayer
+var charge_source: SakuraEnemy
 var kind := Kind.WALL_SHOT
 var direction := 0
 var velocity := Vector2.ZERO
@@ -45,7 +47,6 @@ var timer := 0
 var ending := false
 var sprite: Sprite2D
 var beam_segments: Array[Sprite2D] = []
-var update_phase := 0
 
 
 func _ready() -> void:
@@ -62,10 +63,10 @@ func setup(projectile_kind: Kind, map_terrain: SakuraTerrain, target_player: Sak
 	player = target_player
 	direction = projectile_direction
 	match kind:
-		Kind.WALL_SHOT:
+		Kind.WALL_SHOT, Kind.MACHINE_SHOT, Kind.ORANGE_SHOT:
 			get_node("/root/AudioManager").play_sfx_near_player("wts", position, player.position, 1.0, 100.0 / 255.0)
 			sprite.texture = WALL_TEXTURES[0]
-			velocity = _wall_velocity(direction)
+			velocity = _wall_velocity(direction, kind)
 			damage = 2
 		Kind.MISSILE:
 			get_node("/root/AudioManager").play_sfx_near_player("ewulmissile", position, player.position)
@@ -99,13 +100,9 @@ func setup(projectile_kind: Kind, map_terrain: SakuraTerrain, target_player: Sak
 
 
 func _physics_process(_delta: float) -> void:
-	var update_interval := 1 if kind == Kind.BOSS_BEAM else 2
-	update_phase = (update_phase + 1) % update_interval
-	if update_phase != 0:
-		return
 	timer += 1
 	match kind:
-		Kind.WALL_SHOT:
+		Kind.WALL_SHOT, Kind.MACHINE_SHOT, Kind.ORANGE_SHOT:
 			_update_wall_shot()
 		Kind.MISSILE:
 			_update_missile()
@@ -121,69 +118,82 @@ func _physics_process(_delta: float) -> void:
 
 func _update_wall_shot() -> void:
 	if ending:
-		if timer == 2:
+		if timer == 8:
 			sprite.texture = WALL_TEXTURES[2]
-		elif timer >= 4:
+		elif timer >= 16:
 			queue_free()
 		return
-	if _move_and_hit(velocity):
+	if _move_and_hit(velocity / 4.0):
 		_end_wall_shot()
-	elif timer >= 30:
+	elif timer >= 120:
 		_end_wall_shot()
 
 
 func _update_missile() -> void:
-	if timer < 2:
+	if timer < 8:
 		sprite.region_rect.size.x = 8.0
-	elif timer < 4:
+	elif timer < 16:
 		sprite.region_rect.size.x = 16.0
 	else:
 		sprite.region_enabled = false
-	if timer == 10:
+	if timer == 41:
 		velocity.x = -22.0
-	if timer > 1 and _move_and_hit(velocity):
-		queue_free()
-	elif timer >= 30:
-		queue_free()
+	if timer > 4 and _move_and_hit(velocity / 4.0):
+		_end_missile()
+	elif timer >= 120:
+		_end_missile()
+
+
+func _end_missile() -> void:
+	var explosion := TurretShotExplosion.new()
+	explosion.position = position + Vector2(10, -7)
+	explosion.z_index = z_index
+	explosion.setup(player, -1)
+	get_parent().add_child(explosion)
+	queue_free()
 
 
 func _update_charge() -> void:
-	sprite.texture = CHARGE_TEXTURES[(timer - 1) % CHARGE_TEXTURES.size()]
-	if timer >= 16:
+	if not is_instance_valid(charge_source) or charge_source.defeated_state or charge_source.is_queued_for_deletion():
+		queue_free()
+		return
+	sprite.texture = CHARGE_TEXTURES[int(timer / 4.0) % CHARGE_TEXTURES.size()]
+	if timer >= 64:
 		var ball := World3Projectile.new()
 		ball.position = position + _charge_ball_offset(direction)
 		ball.z_index = z_index
 		get_parent().add_child(ball)
 		ball.setup(Kind.SHOCK_BALL, terrain, player, direction)
+		ball.velocity = ball.velocity.normalized() * 20.0
 		queue_free()
 
 
 func _update_ball() -> void:
 	sprite.texture = BALL_TEXTURES[timer % BALL_TEXTURES.size()]
-	if _move_and_hit(velocity) or timer >= 60:
+	if _move_and_hit(velocity / 4.0) or timer >= 240:
 		queue_free()
 
 
 func _update_lightning() -> void:
-	if timer == 1:
+	if timer == 4:
 		position.x -= 4.0
 		sprite.texture = LIGHTNING_TEXTURES[1]
-	elif timer == 2:
+	elif timer == 8:
 		position.x -= 14.0
 		sprite.texture = LIGHTNING_TEXTURES[2]
-	elif timer == 3:
+	elif timer == 12:
 		position.x -= 2.0
 		sprite.texture = LIGHTNING_TEXTURES[3]
-	elif timer >= 4:
+	elif timer >= 16:
 		queue_free()
 
 
 func _update_beam() -> void:
-	if timer == 3:
+	if timer == 5:
 		_set_beam_texture(BEAM_TEXTURES[1])
-	elif timer == 6:
+	elif timer == 9:
 		_set_beam_texture(BEAM_TEXTURES[2])
-	elif timer >= 9:
+	elif timer >= 13:
 		queue_free()
 
 
@@ -224,13 +234,27 @@ func _end_wall_shot() -> void:
 	sprite.texture = WALL_TEXTURES[1]
 
 
-func _wall_velocity(projectile_direction: int) -> Vector2:
-	var velocities := {
-		0: Vector2(-10, 10), 1: Vector2(10, -10), 2: Vector2(-10, -10),
-		3: Vector2(10, 10), 4: Vector2(10, 10), 5: Vector2(-10, 10),
-		6: Vector2(-16, 0), 7: Vector2(16, 0), 8: Vector2(0, 12),
-	}
-	return velocities.get(projectile_direction, Vector2.ZERO)
+func _wall_velocity(projectile_direction: int, projectile_kind: Kind) -> Vector2:
+	match projectile_kind:
+		Kind.WALL_SHOT:
+			return {
+				ShotDirection.UP_LEFT: Vector2(-15, -15),
+				ShotDirection.UP_RIGHT: Vector2(15, -15),
+				ShotDirection.DOWN_LEFT: Vector2(-15, 15),
+				ShotDirection.DOWN_RIGHT: Vector2(15, 15),
+			}.get(projectile_direction, Vector2.ZERO)
+		Kind.MACHINE_SHOT:
+			return {
+				ShotDirection.LEFT: Vector2(-24, 0),
+				ShotDirection.RIGHT: Vector2(24, 0),
+			}.get(projectile_direction, Vector2.ZERO)
+		Kind.ORANGE_SHOT:
+			return {
+				ShotDirection.DOWN_LEFT: Vector2(-15, 15),
+				ShotDirection.DOWN: Vector2(0, 18),
+				ShotDirection.DOWN_RIGHT: Vector2(15, 15),
+			}.get(projectile_direction, Vector2.ZERO)
+	return Vector2.ZERO
 
 
 func _apply_direction_transform(target: Sprite2D, projectile_direction: int) -> void:

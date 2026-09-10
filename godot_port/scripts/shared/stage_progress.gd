@@ -11,6 +11,7 @@ const CARD_COUNT := 52
 const BOSS_CARD_COUNT := 6
 
 var carried_hp := -1
+var debug_god_mode := false
 var selected_weapon := 1
 var lives := 5
 var cards: Dictionary = {}
@@ -311,7 +312,7 @@ func save_game() -> Dictionary:
 		return {"ok": false, "message": "Unable to create save.sav."}
 	legacy_file.store_string(_encode_legacy_save())
 	legacy_file.close()
-	return {"ok": true, "message": "Game Saved."}
+	return {"ok": true, "message": "Game Saved"}
 
 
 func load_game() -> Dictionary:
@@ -339,7 +340,7 @@ func load_game() -> Dictionary:
 	cards = loaded_cards
 	final_stage_reveal_seen = bool(data.get("final_stage_reveal_seen", false))
 	final_stage_reveal_pending = is_final_stage_unlocked() and not final_stage_reveal_seen
-	return {"ok": true, "message": "Game Loaded."}
+	return {"ok": true, "message": "Game Loaded"}
 
 
 func _encode_legacy_save() -> String:
@@ -393,7 +394,7 @@ func _load_legacy_game() -> Dictionary:
 	cards = decoded_cards
 	final_stage_reveal_seen = bool(final_mask & 2)
 	final_stage_reveal_pending = is_final_stage_unlocked() and not final_stage_reveal_seen
-	return {"ok": true, "message": "Game Loaded."}
+	return {"ok": true, "message": "Game Loaded"}
 
 
 func _legacy_mask_for_character(value: String) -> int:

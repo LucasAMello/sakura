@@ -345,6 +345,7 @@ func _spawn_enemy_defeat_effect(enemy: SakuraEnemy, effect_position: Vector2) ->
 	if enemy is GreenTurretEnemy:
 		get_node("/root/AudioManager").play_sfx("anim60")
 		var turret_effect: TurretDeathEffect = TurretDeathEffectScript.new()
+		turret_effect.flip_h = enemy.sprite.flip_h
 		turret_effect.position = effect_position
 		turret_effect.z_index = 30
 		add_child(turret_effect)

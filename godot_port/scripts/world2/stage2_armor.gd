@@ -35,15 +35,16 @@ func _ready() -> void:
 
 
 func configure(drop_card_id: int) -> void:
+	set_update_interval(1)
 	card_id = drop_card_id
 
 
 func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
-	return action_state < 3 and super.projectile_mask_overlap(projectile_rect)
+	return action_state < 3 and eye_sprite.visible and super.projectile_mask_overlap(projectile_rect)
 
 
 func take_projectile_hit(_damage: int) -> void:
-	if action_state == 3 or action_state == 4:
+	if action_state >= 3 or not eye_sprite.visible:
 		return
 	action_state = 3
 	timer = 0
@@ -53,12 +54,12 @@ func take_projectile_hit(_damage: int) -> void:
 func _update_enemy() -> void:
 	if action_state == 3:
 		timer += 1
-		sprite.texture = OPEN_TEXTURE if timer % 8 <= 4 else CLOSED_TEXTURE
+		sprite.texture = OPEN_TEXTURE if (timer - 1) % 8 < 4 else CLOSED_TEXTURE
 		sprite.position = Vector2(-7, 0) if sprite.texture == OPEN_TEXTURE else Vector2.ZERO
-		if timer == 12:
+		if timer == 48:
 			var drop_pos := Vector2(20, 20) if card_id > 5 else Vector2(28, 50)
 			opened.emit(position + drop_pos, card_id)
-		elif timer >= 18:
+		elif timer >= 72:
 			action_state = 4
 			sprite.texture = CLOSED_TEXTURE
 			sprite.position = Vector2.ZERO

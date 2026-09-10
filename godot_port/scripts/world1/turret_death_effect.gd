@@ -9,6 +9,7 @@ const FRAMES := [
 
 var sprite: Sprite2D
 var timer := 0
+var flip_h := false
 
 
 func _ready() -> void:
@@ -16,12 +17,13 @@ func _ready() -> void:
 	sprite = Sprite2D.new()
 	sprite.centered = true
 	sprite.texture = FRAMES[0]
+	sprite.flip_h = flip_h
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_child(sprite)
 
 
 func _physics_process(_delta: float) -> void:
 	timer += 1
-	sprite.texture = FRAMES[mini(int(timer / 5.0), FRAMES.size() - 1)]
-	if timer >= 15:
+	sprite.texture = FRAMES[mini(int(timer / 8.0), FRAMES.size() - 1)]
+	if timer >= 24:
 		queue_free()

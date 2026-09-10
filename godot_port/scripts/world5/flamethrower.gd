@@ -12,9 +12,10 @@ var timer := 0
 
 
 func configure(is_vertical: bool, facing: int, initial_timer: int) -> void:
+	set_update_interval(1)
 	vertical = is_vertical
 	direction = facing
-	timer = initial_timer
+	timer = initial_timer * 4
 	body_size = Vector2(40, 80) if vertical else Vector2(80, 40)
 	hit_points = 1
 	contact_damage = 0
@@ -25,7 +26,7 @@ func configure(is_vertical: bool, facing: int, initial_timer: int) -> void:
 
 
 func _update_enemy() -> void:
-	if timer == 45:
+	if timer == 183:
 		var spawn_position: Vector2
 		var flame_direction: int
 		if vertical:
@@ -37,8 +38,8 @@ func _update_enemy() -> void:
 			spawn_position = position + offset
 			flame_direction = 0 if direction == 1 else 1
 		flame_requested.emit(vertical, spawn_position, flame_direction)
-	if timer == 76:
-		timer = 0
+	if timer == 307:
+		timer = 3
 	timer += 1
 
 

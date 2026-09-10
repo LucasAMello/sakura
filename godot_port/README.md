@@ -36,9 +36,9 @@ Saving also writes the original 18-character Allegro slot as `user://save.sav`. 
 
 The game renders into a fixed 640×480 viewport with integer scaling and 2D transform pixel snapping. Window sizes that do not fit an exact scale use borders. Gameplay positions retain their fractional precision; snapping affects rendering only.
 
-The logical viewport is 640×480 with nearest-neighbor filtering. Godot physics remains at 60 Hz. The original game updated at 30 Hz, so World 2 and all world-local gameplay from World 3 onward—including maps 70–80—advance movement, acceleration, animation, state timers, enemy projectiles, hazards, and firing once every two physics ticks. Player control and the seven weapons stay on the 60 Hz path; original weapon timers were converted to equivalent real time and fast projectiles retain collision substeps.
+The logical viewport is 640×480 with nearest-neighbor filtering. Godot physics remains at 60 Hz. The archived main loop has a 60 Hz timer but calls gameplay scripts every fourth tick, nominally 15 Hz. Earlier port work incorrectly assumed 30 Hz; many later-world controllers still use interval two and remain pending review. Stages 1–6 have received timing passes with updates every physics tick and source-paced movement, animation, attacks, projectiles, and objects. Draw-driven source visuals use documented presentation assumptions pending playtesting. Player control and the seven weapons retain their existing 60 Hz tuning. See [TIMING_ADJUSTMENTS.md](TIMING_ADJUSTMENTS.md) for source evidence, per-entity conversion details, exceptions, and pending user playtests; interval two alone does not establish source timing parity.
 
-Existing manual tuning is deliberate, including the slower first boss, 25-tick default autofire, 9-pixel default projectile movement, 80-tick player immunity, card animation speed, door timings, portal timing, recovery fall speed, and the map14 introduction.
+Existing manual tuning is deliberate, including 25-tick default autofire, 9-pixel default projectile movement, 80-tick player immunity, card animation speed, door timings, portal timing, recovery fall speed, and the map14 introduction.
 
 World 4 shoreline slope tokens use source-image alpha for pixel-accurate collision instead of full 20×20 collision cells.
 

@@ -8,6 +8,7 @@ var direction := 0
 
 
 func configure(machine_direction: int = 0) -> void:
+	set_update_interval(1)
 	direction = machine_direction
 	body_size = Vector2(64, 70)
 	hit_points = 12
@@ -22,16 +23,16 @@ func take_weapon_hit(damage: int, weapon_id: int) -> void:
 
 
 func _update_enemy() -> void:
-	if timer == 50:
+	if timer == 150:
 		var attack := randi() % 3
 		if attack == 0:
 			_spawn_projectile(World3Projectile.Kind.MISSILE, position + Vector2(22, 27), 0)
 		elif attack == 1:
 			_spawn_projectile(World3Projectile.Kind.MISSILE, position + Vector2(-2, 26), 0)
 		else:
-			var shot_direction := 6 if direction == 0 else 7
-			_spawn_projectile(World3Projectile.Kind.WALL_SHOT, position + Vector2(23, 17), shot_direction)
-			_spawn_projectile(World3Projectile.Kind.WALL_SHOT, position + Vector2(0, 16), shot_direction)
+			var shot_direction := World3Projectile.ShotDirection.LEFT if direction == 0 else World3Projectile.ShotDirection.RIGHT
+			_spawn_projectile(World3Projectile.Kind.MACHINE_SHOT, position + Vector2(23, 17), shot_direction)
+			_spawn_projectile(World3Projectile.Kind.MACHINE_SHOT, position + Vector2(0, 16), shot_direction)
 		timer = 0
 	timer += 1
 

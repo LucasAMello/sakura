@@ -11,6 +11,7 @@ const BODY_SIZE := Vector2(40, 80)
 const MAX_HP := 15
 const MAX_SUPPORTED_HP := 20
 const MAX_X_SPEED := 4.0
+const GOD_MODE_SPEED_MULTIPLIER := 3.0
 
 const NORMAL_TEXTURES := [
 	preload("res://assets/player/player_idle.png"),
@@ -73,6 +74,7 @@ var immunity_ticks := 0
 var dead := false
 var water_surface_y := -1.0
 var in_water := false
+var last_safe_position := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -109,6 +111,7 @@ func _load_weapon_sprite_sets() -> void:
 
 func setup(map_terrain: SakuraTerrain, initial_maximum_hp: int = MAX_HP) -> void:
 	terrain = map_terrain
+	last_safe_position = position
 	maximum_hp = clampi(initial_maximum_hp, MAX_HP, MAX_SUPPORTED_HP)
 	hp = maximum_hp
 	select_weapon(get_node("/root/SakuraProgress").selected_weapon)
@@ -136,6 +139,11 @@ func block_jump_until_release() -> void:
 
 func set_scripted_animation_active(value: bool) -> void:
 	scripted_animation_active = value
+
+
+func set_scripted_frame(frame_index: int) -> void:
+	scripted_animation_active = true
+	_update_sprite(frame_index)
 
 
 func set_presentation_hidden(value: bool) -> void:
@@ -172,6 +180,8 @@ func _physics_process(_delta: float) -> void:
 		return
 
 	_update_water_state()
+	if grounded and not terrain.rect_touches_lethal_floor(get_hit_rect()):
+		last_safe_position = position
 	var left := Input.is_action_pressed("move_left")
 	var right := Input.is_action_pressed("move_right")
 	var direction := int(right) - int(left)
@@ -188,11 +198,12 @@ func _update_horizontal(direction: int) -> void:
 		return
 	if signf(x_speed) != 0.0 and signf(x_speed) != float(direction):
 		x_speed = 0.0
+	var speed_multiplier := GOD_MODE_SPEED_MULTIPLIER if is_god_mode_active() else 1.0
 	if absf(x_speed) < 1.0:
-		x_speed += 0.2 * direction
+		x_speed += 0.2 * direction * speed_multiplier
 	else:
-		x_speed += 1.0 * direction
-	x_speed = clampf(x_speed, -MAX_X_SPEED, MAX_X_SPEED)
+		x_speed += 1.0 * direction * speed_multiplier
+	x_speed = clampf(x_speed, -MAX_X_SPEED * speed_multiplier, MAX_X_SPEED * speed_multiplier)
 	facing = direction
 	var target_x := int(position.x + x_speed)
 	_move_horizontal(target_x - int(position.x))
@@ -317,11 +328,18 @@ func _move_vertical(amount: float) -> void:
 			break
 		position.y += step
 		remaining -= absf(step)
-		if direction > 0.0 and terrain.rect_touches_lethal_floor(get_hit_rect()):
+		if direction > 0.0 and not is_god_mode_active() and terrain.rect_touches_lethal_floor(get_hit_rect()):
 			_die()
 			return
 	if position.y > terrain.world_size.y + 80.0:
-		_die()
+		if is_god_mode_active():
+			position = last_safe_position
+			x_speed = 0.0
+			y_speed = 0.0
+			grounded = false
+			fall_ticks = 0
+		else:
+			_die()
 
 
 func _update_fire() -> void:
@@ -461,8 +479,15 @@ func _update_immunity() -> void:
 		immunity_ticks -= 1
 
 
+func is_god_mode_active() -> bool:
+	if not OS.is_debug_build() or not is_inside_tree():
+		return false
+	var progress := get_node_or_null("/root/SakuraProgress")
+	return is_instance_valid(progress) and progress.debug_god_mode
+
+
 func take_damage(amount: int) -> void:
-	if dead or immunity_ticks > 0 or amount <= 0:
+	if dead or is_god_mode_active() or immunity_ticks > 0 or amount <= 0:
 		return
 	hp -= amount
 	immunity_ticks = 80
@@ -498,7 +523,7 @@ func scripted_step(direction: int, amount: float) -> void:
 
 
 func _die() -> void:
-	if dead:
+	if dead or is_god_mode_active():
 		return
 	dead = true
 	var progress: Variant = get_node("/root/SakuraProgress")

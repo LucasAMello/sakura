@@ -20,10 +20,11 @@ func _ready() -> void:
 
 
 func configure(variant: int, direction: int) -> void:
+	set_update_interval(1)
 	var index := clampi(variant, 0, TEXTURES.size() - 1)
 	body_size = SIZES[index]
 	sprite.texture = TEXTURES[index]
-	velocity = SPEEDS[index]
+	velocity = SPEEDS[index] * 0.25
 	if direction == 0:
 		velocity.x *= -1.0
 	else:
@@ -46,4 +47,3 @@ func _move_and_hit(amount: Vector2) -> bool:
 			return false
 		position += step
 	return true
-

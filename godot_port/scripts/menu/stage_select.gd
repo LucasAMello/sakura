@@ -2,6 +2,20 @@ extends Node2D
 
 const FINAL_STAGE_BOULDER_POSITION := Vector2(244, 211)
 const FINAL_STAGE_REVEAL_TICKS := 20
+const MAP_MARKER_FRAMES := [
+	preload("res://assets/menu/pisk.png"),
+	preload("res://assets/menu/pisk2.png"),
+]
+const MAP_MARKER_FRAME_TICKS := 5
+const MAP_MARKER_POSITIONS := {
+	1: Vector2(274, 230),
+	4: Vector2(256, 265),
+	5: Vector2(220, 217),
+	7: Vector2(249, 212),
+	3: Vector2(318, 246),
+	6: Vector2(314, 205),
+	2: Vector2(362, 217),
+}
 
 const ITEMS := [
 	{"label": "WIND", "world": 1, "position": Vector2(121, 88), "texture": preload("res://assets/menu/stage_wind.png"), "complete_texture": preload("res://assets/menu/stage_wind_complete.png")},
@@ -19,6 +33,8 @@ var selection_x := 0
 var selection_y := 0
 var selector: Sprite2D
 var selector_right: Sprite2D
+var map_marker: Sprite2D
+var map_marker_ticks := 0
 var message_window: Control
 var message_label: Label
 var message_ticks := 0
@@ -51,6 +67,11 @@ func _ready() -> void:
 			if reveal_final_stage:
 				final_stage_reveal_ticks = 0
 		add_child(sprite)
+	map_marker = Sprite2D.new()
+	map_marker.centered = false
+	map_marker.texture = MAP_MARKER_FRAMES[0]
+	map_marker.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	add_child(map_marker)
 	selector = Sprite2D.new()
 	selector.centered = false
 	selector.texture = preload("res://assets/menu/selector.png")
@@ -63,11 +84,14 @@ func _ready() -> void:
 	selector_right.flip_h = true
 	add_child(selector_right)
 	_build_message_window()
+	get_node("/root/GameFlow").stage_start_failed.connect(_show_message.bind(true))
 	_update_selection()
 
 
 func _physics_process(_delta: float) -> void:
 	_update_final_stage_reveal()
+	map_marker_ticks = (map_marker_ticks + 1) % (MAP_MARKER_FRAME_TICKS * MAP_MARKER_FRAMES.size())
+	map_marker.texture = MAP_MARKER_FRAMES[int(map_marker_ticks / float(MAP_MARKER_FRAME_TICKS))]
 	if message_ticks <= 0:
 		return
 	message_ticks -= 1
@@ -90,6 +114,8 @@ func _update_final_stage_reveal() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if get_node("/root/GameFlow").transitioning:
+		return
 	if not event.pressed or event.echo:
 		return
 	if final_stage_reveal_ticks >= 0:
@@ -115,6 +141,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 func _update_selection() -> void:
+	var selection := 4 if selection_y == 1 else selection_x + (5 if selection_y == 2 else 0)
+	var world_number: int = ITEMS[selection]["world"]
+	map_marker.visible = MAP_MARKER_POSITIONS.has(world_number)
+	if world_number == 7:
+		map_marker.visible = get_node("/root/SakuraProgress").is_final_stage_unlocked()
+	if map_marker.visible:
+		map_marker.position = MAP_MARKER_POSITIONS[world_number]
 	if selection_y == 1:
 		selector.texture = preload("res://assets/menu/selector_small.png")
 		selector.position = Vector2(120, 178)
@@ -133,7 +166,7 @@ func _activate_selection() -> void:
 		get_node("/root/GameFlow").open_title()
 	elif world_number == -1:
 		var result: Dictionary = get_node("/root/SakuraProgress").save_game()
-		_show_message(result.get("message", "Game Saved."), not result.get("ok", false))
+		_show_message(result.get("message", "Game Saved"), not result.get("ok", false))
 	elif world_number == 7 and not get_node("/root/SakuraProgress").is_final_stage_unlocked():
 		get_node("/root/AudioManager").play_sfx("deny")
 	else:
@@ -163,5 +196,5 @@ func _build_message_window() -> void:
 func _show_message(text: String, denied: bool) -> void:
 	message_label.text = text
 	message_window.visible = true
-	message_ticks = 12
+	message_ticks = 60
 	get_node("/root/AudioManager").play_sfx("deny" if denied else "accept")

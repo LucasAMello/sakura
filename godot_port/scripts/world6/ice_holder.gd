@@ -17,9 +17,8 @@ var card_sprite: Sprite2D
 var card_id := 0
 var breaking := false
 var frame_index := 0
-var current_alpha := 200
-var next_alpha := 0
-var update_phase := 0
+var current_alpha := 200.0
+var next_alpha := 0.0
 
 
 func _ready() -> void:
@@ -47,11 +46,8 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if not breaking:
 		return
-	update_phase = (update_phase + 1) % 2
-	if update_phase != 0:
-		return
-	current_alpha -= 18
-	next_alpha += 20
+	current_alpha -= 4.5
+	next_alpha += 5.0
 	sprite.modulate.a = maxf(0.0, float(current_alpha) / 255.0)
 	next_sprite.modulate.a = minf(1.0, float(next_alpha) / 255.0)
 	if current_alpha > 2:
@@ -79,5 +75,4 @@ func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 
 func take_projectile_hit(_damage: int) -> void:
 	breaking = true
-	update_phase = 0
 

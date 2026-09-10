@@ -69,6 +69,18 @@ Weapons 2–7 also remain on the player's 60 Hz path. Translate original 30 Hz w
 
 ## Current tuning that must be preserved
 
+Stage 6 update (2026-09-08): the user's continuation supersedes older Stage 6 interval-two and tuned timing guidance. Enemies, needles, the icy boss and attacks now update every physics tick with source-paced timers and movement; holders, rewards, recovery and death effects are converted too. Icicles retain source acceleration overshoot to 42, 20-tick terrain grace, and eight-tick landing linger. Keep the boss wall clipping and pose alignment. See the Stage 6 record in `godot_port/TIMING_ADJUSTMENTS.md`.
+
+Stage 5 update (2026-09-08): the user's continuation supersedes older interval-two timing for Stage 5. Enemy and boss logic now runs every 60 Hz physics tick with fourfold source-script timers and quarter-step motion. The squid retains its source velocity milestones and surface clipping. See the latest Stage 5 work record in `godot_port/TIMING_ADJUSTMENTS.md`; do not restore the old fast flame cycle or projectile speeds.
+
+Stage 4 update (2026-09-08): the user's continuation of the source-fidelity timing pass supersedes the older interval-two guidance for Stage 4. Enemies, the turtle, jets, and water effects now update every physics tick with converted source-script timing. The turtle's prior interval-four pace is preserved with smooth movement. Consult the latest Stage 4 record in `godot_port/TIMING_ADJUSTMENTS.md` for values, reuse, and draw-clock assumptions. Preserve the portal and foreground layering fixes.
+
+Stages 2/3 update (2026-09-08): the user's source-fidelity request supersedes their older interval-two and tuned timing guidance below. Both stages and converted reusable enemies/projectiles update every 60 Hz physics tick with 15 Hz-source-equivalent durations and movement. Consult the latest Stages 2/3 work record in `godot_port/TIMING_ADJUSTMENTS.md`, including Thunder phase/frame corrections and declared draw-rate assumptions. Do not restore the older 30 Hz gates or tuned speeds from this historical list.
+
+Stage 1 object timing update (2026-09-07): the user's object pass also supersedes the older card, recovery, block, reward, and boss-meter exceptions below. Stage 1 card/holder spin cycles are 160 ticks, holder breaking is 80 ticks, card/reward fades are 36 ticks, recovery falls at 3.75 px/tick, blocks fall at 3 px/tick, and the boss meter fills every four ticks. See the latest object record in `godot_port/TIMING_ADJUSTMENTS.md` for scope and original clock evidence.
+
+Stage 1 timing update (2026-09-07): the user's latest instruction supersedes the older Stage 1 movement exceptions below. Red balls now move 1 px per 60 Hz tick; pumpkin patrol/chase are 2.5/5; Pirikito uses full source excursion with a fourfold clock; bird dash is 9.75 and feathers use two 5-pixel substeps. Source scripts run at 15 Hz, not the previously assumed 30 Hz. Consult `godot_port/TIMING_ADJUSTMENTS.md` for the current timing record; do not restore superseded values from this historical list.
+
 Unless the user requests otherwise:
 
 - Player and red-ball walk frames are held for eight physics ticks.

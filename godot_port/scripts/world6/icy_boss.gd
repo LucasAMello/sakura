@@ -57,6 +57,10 @@ var shadow_sprite: Sprite2D
 var form_texture: Texture2D
 
 
+func set_update_interval(_ticks: int) -> void:
+	super.set_update_interval(1)
+
+
 func _ready() -> void:
 	super._ready()
 	shadow_sprite = Sprite2D.new()
@@ -149,96 +153,96 @@ func _update_enemy() -> void:
 func _update_shadow_intro() -> void:
 	timer += 1
 	var sequence := [0, 1, 2, 1]
-	_set_shadow(sequence[(timer - 1) % sequence.size()], Vector2(154, 65))
-	position.x -= 20.0
-	if timer >= 45:
+	_set_shadow(sequence[maxi(0, int(timer / 4.0) - 1) % sequence.size()], Vector2(154, 65))
+	position.x -= 5.0
+	if timer >= 180:
 		state = BossState.RISE_INTRO
 		timer = 0
 
 
 func _update_rise_intro() -> void:
 	timer += 1
-	if timer == 6:
+	if timer == 24:
 		position += Vector2(690, 0)
 		position.y = 1220.0
 		_set_shadow(3, Vector2(65, 154))
-	elif timer > 6 and timer < 18:
-		position.y -= 30.0
-	elif timer == 18:
+	elif timer > 24 and timer <= 68:
+		position.y -= 7.5
+	elif timer == 72:
 		position.x -= 5.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 20:
+	elif timer == 80:
 		position.x -= 5.0
 		_set_up(2, Vector2(120, 138))
-	elif timer >= 22 and not intro_notified:
+	elif timer >= 88 and not intro_notified:
 		intro_notified = true
 		intro_finished.emit()
 
 
 func _update_center_attack() -> void:
 	timer += 1
-	if timer == 20:
+	if timer == 80:
 		attack_requested.emit(position + Vector2(-50, 60), 3, direction)
-	elif timer == 35:
+	elif timer == 140:
 		attack_requested.emit(position + Vector2(-30, 130), 3, direction)
-	elif timer == 50:
+	elif timer == 200:
 		position.x += 5.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 52:
+	elif timer == 208:
 		position.x += 5.0
 		_set_up(0, Vector2(65, 154))
-	elif timer > 53:
+	elif timer > 212:
 		_rise_out_and_choose()
 
 
 func _update_bottom_dash() -> void:
 	timer += 1
-	if timer == 1:
+	if timer == 4:
 		position = Vector2(3140, 1110)
 		direction = 0
 		_set_shadow(1, Vector2(154, 65))
-	elif timer > 10 and timer < 16:
-		position.x += 30.0
-	elif timer > 15 and timer < 19:
-		position += Vector2(30, -10)
-	elif timer > 18 and timer < 40:
-		position.x += 30.0
-	elif timer >= 40:
+	elif timer > 40 and timer <= 60:
+		position.x += 7.5
+	elif timer > 60 and timer <= 72:
+		position += Vector2(7.5, -2.5)
+	elif timer > 72 and timer <= 156:
+		position.x += 7.5
+	elif timer >= 160:
 		_choose_emergence()
 
 
 func _update_descent() -> void:
 	timer += 1
 	var from_left := state == BossState.DESCEND_LEFT
-	if timer == 1:
+	if timer == 4:
 		position = Vector2(3140, 880) if from_left else Vector2(3966, 880)
 		direction = 0 if from_left else 1
 		_set_shadow(1, Vector2(154, 65))
-	elif timer > 5 and timer < 18:
-		var horizontal_step := 12.0 if from_left else -12.0
+	elif timer > 20 and timer <= 68:
+		var horizontal_step := 3.0 if from_left else -3.0
 		position.x += horizontal_step
-	elif timer == 18:
+	elif timer == 72:
 		_set_side(1, Vector2(140, 106))
 		position += Vector2(20 if from_left else -6, 2)
-	elif timer == 19:
-		position += Vector2(15 if from_left else -15, 4)
-	elif timer == 20:
+	elif timer > 72 and timer <= 76:
+		position += Vector2(15 if from_left else -15, 4) * 0.25
+	elif timer == 80:
 		_set_side(2, Vector2(138, 120))
 		position += Vector2(15 if from_left else -13, 7)
-	elif timer == 21:
-		position += Vector2(15 if from_left else -15, 8)
-	elif timer == 22:
+	elif timer > 80 and timer <= 84:
+		position += Vector2(15 if from_left else -15, 8) * 0.25
+	elif timer == 88:
 		_set_side(3, Vector2(90, 148))
 		position += Vector2(50 if from_left else -2, 12)
-	elif timer == 23:
-		position += Vector2(12 if from_left else -12, 14)
-	elif timer == 24:
+	elif timer > 88 and timer <= 92:
+		position += Vector2(12 if from_left else -12, 14) * 0.25
+	elif timer == 96:
 		_set_up(0, Vector2(65, 154))
 		position += Vector2(26 if from_left else -1, 18)
-	elif timer == 25:
-		position += Vector2(10 if from_left else -10, 20)
-	elif timer > 25:
-		position.y += 20.0
+	elif timer > 96 and timer <= 100:
+		position += Vector2(10 if from_left else -10, 20) * 0.25
+	elif timer > 100:
+		position.y += 5.0
 		if position.y > 1260.0:
 			_choose_emergence()
 
@@ -246,23 +250,23 @@ func _update_descent() -> void:
 func _update_emergence() -> void:
 	timer += 1
 	var on_right := state == BossState.EMERGE_HIGH_RIGHT or state == BossState.EMERGE_MID_RIGHT or state == BossState.EMERGE_LOW_RIGHT
-	if timer == 6:
+	if timer == 24:
 		position = Vector2(3770, 1220) if on_right else Vector2(3430, 1220)
 		direction = 1 if on_right else 0
 		_set_shadow(3, Vector2(65, 154))
-	elif timer > 6 and timer < 18:
-		position.y -= 30.0
-	elif timer == 18:
+	elif timer > 24 and timer <= 68:
+		position.y -= 7.5
+	elif timer == 72:
 		if on_right:
 			position.x -= 5.0
 		else:
 			position.x -= 38.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 20:
+	elif timer == 80:
 		var horizontal_offset := 5.0 if on_right else 12.0
 		position.x -= horizontal_offset
 		_set_up(2, Vector2(120, 138))
-	elif timer >= 30:
+	elif timer >= 120:
 		state = int(state) + 2
 		timer = 0
 
@@ -270,53 +274,53 @@ func _update_emergence() -> void:
 func _update_high_attack() -> void:
 	timer += 1
 	var on_right := state == BossState.ATTACK_HIGH_RIGHT
-	if timer == 20:
+	if timer == 80:
 		var first_origin := position + (Vector2(-50, 60) if on_right else Vector2(123, 60))
 		attack_requested.emit(first_origin, 3, direction)
-	elif timer == 35:
+	elif timer == 140:
 		var second_origin := position + (Vector2(-30, 130) if on_right else Vector2(103, 130))
 		attack_requested.emit(second_origin, 3, direction)
-	elif timer == 50:
+	elif timer == 200:
 		var first_offset := 5.0 if on_right else 12.0
 		position.x += first_offset
 		_set_up(1, Vector2(106, 140))
-	elif timer == 52:
+	elif timer == 208:
 		var second_offset := 5.0 if on_right else 38.0
 		position.x += second_offset
 		_set_up(0, Vector2(65, 154))
-	elif timer > 53:
+	elif timer > 212:
 		_rise_out_and_choose()
 
 
 func _update_mid_attack() -> void:
 	timer += 1
 	var on_right := state == BossState.ATTACK_MID_RIGHT
-	if timer == 25:
+	if timer == 100:
 		_emit_fan(on_right)
-	elif timer == 40:
+	elif timer == 160:
 		position.x += 5.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 42:
+	elif timer == 168:
 		position.x += 5.0
 		_set_up(0, Vector2(65, 154))
-	elif timer > 43:
+	elif timer > 172:
 		_rise_out_and_choose()
 
 
 func _update_low_attack() -> void:
 	timer += 1
 	var on_right := state == BossState.ATTACK_LOW_RIGHT
-	if timer == 20:
+	if timer == 80:
 		_emit_fan(on_right)
-	if timer == 35:
+	if timer == 140:
 		_emit_cross(on_right)
-	elif timer == 60:
+	elif timer == 240:
 		position.x += 5.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 62:
+	elif timer == 248:
 		position.x += 5.0
 		_set_up(0, Vector2(65, 154))
-	elif timer > 63:
+	elif timer > 252:
 		_rise_out_and_choose()
 
 
@@ -341,7 +345,7 @@ func _emit_cross(on_right: bool) -> void:
 
 
 func _rise_out_and_choose() -> void:
-	position.y -= 30.0
+	position.y -= 7.5
 	if position.y <= 820.0:
 		_set_shadow(3, Vector2(65, 154))
 	if position.y < 580.0:
