@@ -32,13 +32,13 @@ func configure(owner_boss: SecondStageBoss) -> void:
 func take_projectile_hit(damage: int) -> void:
 	if is_instance_valid(boss):
 		boss.receive_clone_hit(damage)
-		hit_flash_ticks = 5
+		hit_flash_ticks = 16
 
 
 func take_weapon_hit(damage: int, weapon_id: int) -> void:
 	if is_instance_valid(boss):
 		boss.receive_clone_weapon_hit(damage, weapon_id)
-		hit_flash_ticks = 5
+		hit_flash_ticks = 16
 
 
 func _update_enemy() -> void:

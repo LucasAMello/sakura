@@ -46,15 +46,27 @@ func _update_boss_intro() -> void:
 		boss.configure()
 		boss.boss_defeated.connect(_on_boss_defeated)
 		boss.set_gameplay_active(true)
-	if boss_spawn_started and is_instance_valid(boss) and boss.state != FirstStageBoss.BossState.ENTERING:
+	if boss_spawn_started and is_instance_valid(boss) and boss.state != FirstStageBoss.BossState.ENTERING and boss_meter_ticks < boss.hit_points:
 		boss_meter_fill_phase += 1
 		if boss_meter_fill_phase >= BOSS_METER_FILL_INTERVAL:
 			boss_meter_fill_phase = 0
 			boss_meter_ticks += 1
 			get_node("/root/AudioManager").play_sfx("recuperator")
-	if is_instance_valid(boss) and boss.vulnerable:
+	if is_instance_valid(boss) and boss.vulnerable and boss_meter_ticks >= boss.hit_points:
 		stage_state = StageState.BOSS
 		state_ticks = 0
 		camera_locked = false
 		_set_gameplay_active(true)
 
+
+
+func _entry_has_portal() -> bool:
+	return true
+
+
+func _update_camera() -> void:
+	if not is_instance_valid(camera) or not is_instance_valid(player):
+		return
+	var center := player.get_center()
+	camera.position = Vector2(clampf(center.x, 3060.0, 3680.0), clampf(center.y, 240.0, 320.0))
+	_update_background()

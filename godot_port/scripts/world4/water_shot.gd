@@ -26,6 +26,7 @@ var middle_sprites: Array[Sprite2D] = []
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	super._ready()
 	body_size = Vector2(33, 30)
 	hit_points = 1
@@ -148,3 +149,7 @@ func _refresh_visuals() -> void:
 	else:
 		end_sprite.position = Vector2(0, 6)
 		front_sprite.position = Vector2(14.0 + segment_count * 16.0, 0)
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, _water_splash: bool = false) -> bool:
+	return preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, body_size, weapon_id)

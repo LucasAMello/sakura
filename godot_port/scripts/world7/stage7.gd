@@ -40,11 +40,11 @@ const SOURCE_RECTS := {
 	"Z": Vector2i(0, 160), "X": Vector2i(20, 160), "C": Vector2i(40, 160), "V": Vector2i(60, 160), "B": Vector2i(80, 160), "&": Vector2i(100, 160), "|": Vector2i(120, 160), "`": Vector2i(140, 160),
 	"[": Vector2i(0, 180), "^": Vector2i(20, 180), "?": Vector2i(40, 180), "/": Vector2i(60, 180), "]": Vector2i(80, 180), "~": Vector2i(100, 180), "m": Vector2i(120, 180), "M": Vector2i(140, 180),
 }
-const SOLID_TOKENS := ["2", "3", "4", "5", "6", "7", "8", "9", "\"", "-", "s", "d", "f", "x", "c", "v", "!", "@", "#", "$", "%", "S", "D", "F", "X", "C", "V", "j", "k", "l", "J", "K", "L", "(", ")", "_", ";", "*", "=", "&", "|", "`"]
+const NON_SOLID_TOKENS := ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "\"", "-", "!", "@", "#", "$", "%", "(", ")", "_"]
 const MAP_CONFIGS := {
-	70: {"width": 500, "height": 36, "start": Vector2(100, 460), "exit": Rect2(9920, 120, 80, 480), "next": 71},
-	71: {"width": 500, "height": 40, "start": Vector2(0, 280), "exit": Rect2(9920, 160, 80, 480), "next": 72},
-	72: {"width": 750, "height": 40, "start": Vector2(0, 480), "exit": Rect2(14920, 80, 80, 520), "next": 73},
+	70: {"width": 500, "height": 36, "start": Vector2(100, 460), "exit": Rect2(9960, 160, 80, 200), "next": 71},
+	71: {"width": 500, "height": 40, "start": Vector2(0, 280), "exit": Rect2(9960, 240, 80, 200), "next": 72},
+	72: {"width": 750, "height": 40, "start": Vector2(0, 480), "exit": Rect2(14960, 120, 80, 200), "next": 73},
 	73: {"width": 150, "height": 80, "start": Vector2(0, 240), "exit": Rect2(), "next": 0},
 }
 const SPAWNS := {
@@ -74,6 +74,8 @@ var logic_phase := 0
 var active_rematch_portal: Sprite2D
 var rematch_portal_world := 0
 var rematch_return_position := Vector2.ZERO
+var returning_from_rematch := false
+var rematch_portal_grounding := false
 
 
 func _first_map_number() -> int:
@@ -85,13 +87,7 @@ func _map_configs() -> Dictionary:
 
 
 func _setup_terrain() -> void:
-	var non_solid := PackedStringArray(["0", "1"])
-	for token in SOURCE_RECTS.keys():
-		if not SOLID_TOKENS.has(token):
-			non_solid.append(token)
-	if map_number == 80:
-		non_solid.append("2")
-		non_solid.append("3")
+	var non_solid := PackedStringArray(NON_SOLID_TOKENS)
 	terrain.setup("res://maps/map%d.map" % map_number, map_config["width"], map_config["height"], STAGE7_ATLAS, SOURCE_RECTS, non_solid, PackedStringArray(["0"]), {})
 	match map_number:
 		71:
@@ -106,12 +102,14 @@ func _setup_terrain() -> void:
 
 func _configure_checkpoint() -> void:
 	if map_number == 73 and progress.final_stage_return_position != Vector2.ZERO:
-		player.position = progress.final_stage_return_position
+		returning_from_rematch = true
+		player.position = _get_rematch_return_position(progress.final_stage_return_position)
+		player.facing = -1 if player.position.x > terrain.world_size.x * 0.5 else 1
 		progress.final_stage_return_position = Vector2.ZERO
 
 
 func _enemy_update_interval() -> int:
-	return 2
+	return 1
 
 
 func _spawn_stage_objects() -> void:
@@ -129,7 +127,7 @@ func _spawn_stage_objects() -> void:
 			"position": source_data["position"],
 			"destination": source_data["destination"],
 			"span": source_data["span"],
-			"timer": 40,
+			"timer": 160,
 		})
 	if map_number == 73:
 		_build_portals()
@@ -192,10 +190,12 @@ func _spawn_reused_enemy(data: Array) -> void:
 			enemy = FlamemetScript.new()
 			_spawn_enemy(enemy, Vector2(data[1], data[2]))
 			enemy.configure(data[3], false)
+			enemy.SOURCE_EMPTY_TOKENS = PackedStringArray(NON_SOLID_TOKENS)
 		42:
 			enemy = FlamemetScript.new()
 			_spawn_enemy(enemy, Vector2(data[1], data[2]))
 			enemy.configure(data[3], true)
+			enemy.SOURCE_EMPTY_TOKENS = PackedStringArray(NON_SOLID_TOKENS)
 			enemy.falling_fire_requested.connect(_on_falling_fire_requested)
 		50:
 			enemy = IceMetScript.new()
@@ -222,15 +222,23 @@ func _build_portals() -> void:
 		sprite.set_meta("world", data[1])
 		sprite.set_meta("map", data[2])
 		sprite.set_meta("walk_direction", -1 if portal_index < 3 else 1)
-		sprite.z_index = 8
+		sprite.z_index = 22
 		add_child(sprite)
 		portal_sprites.append(sprite)
+		var back := Sprite2D.new()
+		back.centered = false
+		back.texture = preload("res://assets/player/portal_1.png")
+		back.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		back.position = sprite.position
+		back.flip_h = sprite.flip_h
+		back.z_index = 18
+		add_child(back)
 		var label := Sprite2D.new()
 		label.centered = false
 		label.texture = PORTAL_LABELS[portal_index]
 		label.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		label.position = data[0] + (Vector2(-29, 0) if portal_index < 3 else Vector2(32, 0))
-		label.z_index = 9
+		label.z_index = 23
 		add_child(label)
 
 
@@ -251,10 +259,10 @@ func _physics_process(_delta: float) -> void:
 
 
 func _update_playing() -> void:
-	if logic_phase != 0:
-		return
 	if is_instance_valid(active_rematch_portal):
 		_update_rematch_portal_entry()
+		return
+	if logic_phase != 0:
 		return
 	_update_ghost_mask_spawners()
 	if map_number == 73:
@@ -280,8 +288,8 @@ func _update_ghost_mask_spawners() -> void:
 		var data: Dictionary = ghost_mask_spawners[index]
 		if player.position.x >= data["position"].x - 350.0:
 			continue
-		data["timer"] += 1
-		if data["timer"] >= randi_range(41, 50):
+		data["timer"] += 2
+		if data["timer"] % 4 == 0 and data["timer"] >= randi_range(41, 50) * 4:
 			var mask: GhostMaskEnemy = GhostMaskScript.new()
 			var spawn_position: Vector2 = data["position"] + Vector2(0, randi_range(0, int(data["span"]) - 1))
 			_spawn_enemy(mask, spawn_position)
@@ -291,25 +299,67 @@ func _update_ghost_mask_spawners() -> void:
 		ghost_mask_spawners[index] = data
 
 
+func _get_rematch_return_position(origin: Vector2) -> Vector2:
+	var nearest_index := 0
+	var nearest_distance := INF
+	for index in range(PORTALS.size()):
+		var portal_position: Vector2 = PORTALS[index][0]
+		var distance := portal_position.distance_squared_to(origin)
+		if distance < nearest_distance:
+			nearest_distance = distance
+			nearest_index = index
+	var position_in_hub: Vector2 = PORTALS[nearest_index][0]
+	return position_in_hub + Vector2(40 if nearest_index < 3 else 5, 20)
+
+
 func _begin_rematch_portal_entry(portal: Sprite2D) -> void:
 	active_rematch_portal = portal
 	rematch_portal_world = int(portal.get_meta("world"))
-	rematch_return_position = portal.position + Vector2(0, 20)
+	rematch_return_position = _get_rematch_return_position(portal.position)
 	_set_gameplay_active(false)
-	player.set_scripted_animation_active(true)
+	camera_locked = true
+	camera_lock_position = camera.position
+	player.x_speed = 0.0
+	player.y_speed = 0.0
+	player.facing = int(portal.get_meta("walk_direction"))
+	rematch_portal_grounding = player.position.y < portal.position.y + 20.0
+	if rematch_portal_grounding:
+		player.grounded = false
+		player.set_scripted_frame(2)
+		return
+	_start_rematch_portal_walk()
+
+
+func _start_rematch_portal_walk() -> void:
+	var portal := active_rematch_portal
+	_start_departure(int(portal.get_meta("walk_direction")))
+	departure_portal_center = portal.position + portal.texture.get_size() * 0.5
+	var sprite_offset_x := -10.0 if departure_walk_direction < 0 else 0.0
+	var target_x := departure_portal_center.x - sprite_offset_x
+	if departure_walk_direction < 0:
+		target_x -= player.get_normal_frame_texture(0).get_width()
+	departure_target_player_position = Vector2(target_x, player.position.y)
 
 
 func _update_rematch_portal_entry() -> void:
-	var walk_direction := int(active_rematch_portal.get_meta("walk_direction"))
-	var target_x := active_rematch_portal.position.x - 10.0 if walk_direction < 0 else active_rematch_portal.position.x + 35.0
-	var difference := target_x - player.position.x
-	if absf(difference) > 2.0:
-		player.scripted_step(-1 if difference < 0.0 else 1, minf(2.0, absf(difference)))
+	if rematch_portal_grounding:
+		var landing_y := active_rematch_portal.position.y + 20.0
+		player.position.y = move_toward(player.position.y, landing_y, 5.0)
+		player.set_scripted_frame(2)
+		if player.position.y < landing_y:
+			return
+		player.grounded = true
+		player.y_speed = 0.0
+		player.set_scripted_frame(0)
+		rematch_portal_grounding = false
+		_start_rematch_portal_walk()
 		return
-	player.position.x = target_x
+	_update_departure_player()
+	if departure_player.visible:
+		return
 	player.set_scripted_animation_active(false)
+	progress.store_hp(player.hp)
 	get_node("/root/GameFlow").launch_rematch(rematch_portal_world, rematch_return_position)
-
 
 func _on_falling_fire_requested(spawn_position: Vector2) -> void:
 	var fire: World5FallingFire = FallingFireScript.new()
@@ -391,3 +441,21 @@ func _update_camera() -> void:
 	var center := player.get_center()
 	camera.position = Vector2(clampf(center.x, 320.0, maxf(320.0, terrain.world_size.x - 320.0)), clampf(center.y, 240.0, maxf(240.0, terrain.world_size.y - 240.0)))
 	_update_background()
+
+
+func _entry_has_portal() -> bool:
+	return returning_from_rematch or super._entry_has_portal()
+
+
+func _update_entry_visual() -> void:
+	for piece in [portal_back, portal_front, entry_effect, entry_player]:
+		piece.scale.x = 1.0
+	super._update_entry_visual()
+	if not returning_from_rematch or player.facing >= 0:
+		return
+	for piece in [portal_back, portal_front, entry_effect, entry_player]:
+		if piece.visible:
+			piece.position.x = player.position.x * 2.0 + SakuraPlayer.BODY_SIZE.x - piece.position.x
+			piece.scale.x = -1.0
+	if entry_player.visible:
+		entry_player.position.x += entry_player.texture.get_width() - SakuraPlayer.BODY_SIZE.x - 10.0

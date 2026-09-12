@@ -384,7 +384,7 @@ func _update_victory() -> void:
 				_spawn_boss_light_flashes(boss.position + Vector2(55, 30))
 				for _burst in range(3):
 					_spawn_boss_explosion(boss.position + Vector2(55, 30))
-			if state_ticks % 28 == 16 and is_instance_valid(boss):
+			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 127) - 6, randi_range(0, 59) - 6))
 			return
 		if state_ticks <= 285:

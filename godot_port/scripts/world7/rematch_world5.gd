@@ -57,3 +57,15 @@ func _update_boss_intro() -> void:
 		boss.set_gameplay_active(true)
 	super._update_boss_intro()
 
+
+
+func _entry_has_portal() -> bool:
+	return true
+
+
+func _update_camera() -> void:
+	if not is_instance_valid(camera):
+		return
+	camera_lock_position = Vector2(5600, 2160)
+	camera.position = camera_lock_position
+	_update_background()

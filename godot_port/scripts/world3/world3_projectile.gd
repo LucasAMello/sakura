@@ -50,6 +50,7 @@ var beam_segments: Array[Sprite2D] = []
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite = Sprite2D.new()
 	sprite.centered = false
@@ -293,3 +294,16 @@ func _build_beam() -> void:
 func _set_beam_texture(texture: Texture2D) -> void:
 	for segment in beam_segments:
 		segment.texture = texture
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, _water_splash: bool = false) -> bool:
+	var interception_size := body_size
+	if kind == Kind.SHOCK_CHARGE:
+		if not is_instance_valid(charge_source) or charge_source.defeated_state or charge_source.is_queued_for_deletion():
+			return false
+		interception_size = Vector2(17, 22) if direction in [1, 3] else Vector2(22, 17)
+	elif kind == Kind.BOSS_LIGHTNING:
+		interception_size = Vector2(64, 320)
+	elif kind not in [Kind.MISSILE, Kind.BOSS_BEAM]:
+		return false
+	return preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, interception_size, weapon_id)

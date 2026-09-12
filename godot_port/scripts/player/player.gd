@@ -41,7 +41,7 @@ const FLASH_SHADER := preload("res://shaders/white_flash.gdshader")
 const ATTACK_OVERLAY_TEXTURE := preload("res://assets/player/attack_overlay.png")
 const WALK_SEQUENCE := [0, 1, 2, 1, 0, 3, 4, 3]
 const ANIMATION_SPEED := 8
-const WEAPON_INTERVALS := {1: 25, 2: 100, 3: 1, 4: 100, 5: 80, 6: 140, 7: 100}
+const WEAPON_INTERVALS := {1: 25, 2: 50, 3: 0, 4: 50, 5: 40, 6: 70, 7: 50}
 
 var terrain: SakuraTerrain
 var sprite: Sprite2D
@@ -61,8 +61,7 @@ var jump_latched := false
 var jump_blocked_until_release := false
 var walk_tick := 0
 var firing_ticks := 0
-var fire_interval := 25
-var fire_counter := fire_interval
+var fire_cycle_ticks := 0
 var active_shots := 0
 var current_weapon := 1
 var normal_textures_by_weapon: Dictionary = {1: NORMAL_TEXTURES}
@@ -207,7 +206,7 @@ func _update_horizontal(direction: int) -> void:
 	facing = direction
 	var target_x := int(position.x + x_speed)
 	_move_horizontal(target_x - int(position.x))
-	if grounded and not terrain.rect_hits_solid(_hit_rect_offset(Vector2(0, 1))):
+	if grounded and not terrain.rect_hits_solid(_hit_rect_offset(Vector2(0, 1))) and is_inf(terrain.one_way_landing_y(get_hit_rect(), _hit_rect_offset(Vector2(0, 1)))):
 		grounded = false
 		fall_ticks = 0
 		y_speed = 0.0
@@ -314,6 +313,14 @@ func _move_vertical(amount: float) -> void:
 	while remaining > 0.0001:
 		var step := minf(1.0, remaining) * direction
 		var candidate := _hit_rect_offset(Vector2(0, step))
+		var platform_y := terrain.one_way_landing_y(get_hit_rect(), candidate)
+		if direction > 0.0 and not is_inf(platform_y):
+			position.y = platform_y - BODY_SIZE.y
+			grounded = true
+			fall_ticks = 0
+			landed_this_tick = true
+			y_speed = 0.0
+			break
 		if terrain.rect_hits_solid(candidate):
 			if direction > 0.0:
 				position.y = floorf(candidate.end.y - 0.001) - BODY_SIZE.y
@@ -346,27 +353,29 @@ func _update_fire() -> void:
 	if firing_ticks > 0:
 		firing_ticks -= 1
 	var pressed := Input.is_action_pressed("fire")
-	var just_pressed := Input.is_action_just_pressed("fire")
-	if pressed:
-		fire_counter += 1
-		var shot_limit := 4 if current_weapon == 1 or current_weapon == 4 else 1
-		var shot_available := current_weapon == 2 or active_shots < shot_limit
-		var cooldown_ready := fire_counter >= fire_interval or (just_pressed and current_weapon != 2)
-		if shot_available and cooldown_ready:
-			_fire()
+	if fire_cycle_ticks > 0 or (pressed and active_shots < 4):
+		fire_cycle_ticks += 1
 	else:
-		fire_counter = mini(fire_counter + 1, fire_interval)
+		return
+	if fire_cycle_ticks == 1:
+		_fire()
+	match current_weapon:
+		1, 4:
+			var release_ticks := 10 if current_weapon == 1 else 35
+			if (not pressed and fire_cycle_ticks >= release_ticks) or (fire_cycle_ticks >= WEAPON_INTERVALS[current_weapon] and active_shots == 0):
+				fire_cycle_ticks = 0
+		2, 5, 6, 7:
+			if fire_cycle_ticks >= WEAPON_INTERVALS[current_weapon]:
+				fire_cycle_ticks = 0
 
 
 func _fire() -> void:
 	var origin := _weapon_origin()
-	if current_weapon != 2:
+	if current_weapon in [1, 4]:
 		active_shots += 1
-	fire_counter = 0
 	firing_ticks = 5
 	shot_count_changed.emit(active_shots)
 	shot_requested.emit(origin, facing, current_weapon)
-
 
 func _weapon_origin() -> Vector2:
 	match current_weapon:
@@ -417,16 +426,19 @@ func select_weapon(weapon_id: int) -> void:
 
 
 func _select_weapon(weapon_id: int) -> void:
+	if fire_cycle_ticks > 0:
+		return
 	if not get_node("/root/SakuraProgress").is_weapon_unlocked(weapon_id):
 		return
 	current_weapon = weapon_id
 	get_node("/root/SakuraProgress").selected_weapon = weapon_id
-	fire_interval = WEAPON_INTERVALS[current_weapon]
-	fire_counter = fire_interval
 
 
-func projectile_ended() -> void:
-	active_shots = maxi(0, active_shots - 1)
+func projectile_ended(weapon_id: int = 1) -> void:
+	if weapon_id in [1, 4]:
+		active_shots = maxi(0, active_shots - 1)
+	elif weapon_id == 3:
+		fire_cycle_ticks = 0
 	shot_count_changed.emit(active_shots)
 
 

@@ -11,6 +11,7 @@ var move_direction := -1
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_to_group("boss_projectiles")
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -42,3 +43,7 @@ func _physics_process(_delta: float) -> void:
 		if position.x < 2660.0 or position.x > 4080.0:
 			queue_free()
 			return
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, _water_splash: bool = false) -> bool:
+	return true and preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, BODY_SIZE, weapon_id)

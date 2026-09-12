@@ -33,6 +33,11 @@ func _map_configs() -> Dictionary:
 
 func _build_stage_boss_area() -> void:
 	_build_boss_area()
+	for door in boss_doors:
+		terrain.solid_sprites.erase(door)
+		door.hide()
+		door.queue_free()
+	boss_doors.clear()
 
 
 func _entry_complete_state() -> int:
@@ -44,6 +49,18 @@ func _entry_complete_state() -> int:
 func _update_boss_intro() -> void:
 	if not rematch_intro_started:
 		rematch_intro_started = true
-		state_ticks = 80
+		state_ticks = 160
 		boss.set_gameplay_active(false)
 	super._update_boss_intro()
+
+
+func _entry_has_portal() -> bool:
+	return true
+
+
+func _update_camera() -> void:
+	if not is_instance_valid(camera):
+		return
+	camera_lock_position = Vector2(5600, 400)
+	camera.position = camera_lock_position
+	_update_background()

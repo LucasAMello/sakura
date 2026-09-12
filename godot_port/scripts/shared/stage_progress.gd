@@ -244,7 +244,6 @@ func reset_final_stage() -> void:
 func begin_rematch(world_number: int, return_position: Vector2) -> void:
 	active_rematch_world = world_number
 	final_stage_return_position = return_position
-	carried_hp = maximum_hp()
 	clear_checkpoints()
 	set_checkpoint(world_number - 1, true)
 
@@ -254,7 +253,6 @@ func finish_rematch() -> int:
 	if completed_world >= 1 and completed_world <= 6:
 		mark_rematch_complete(completed_world - 1)
 	active_rematch_world = 0
-	carried_hp = maximum_hp()
 	clear_checkpoints()
 	return completed_world
 

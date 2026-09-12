@@ -76,8 +76,8 @@ func _physics_process(_delta: float) -> void:
 		return
 	var current_alpha := sprite.modulate.a
 	if hit_flash_ticks > 0:
+		sprite.modulate = Color(1.0, 0.45, 0.45, current_alpha) if hit_flash_ticks % 4 < 2 else Color(1.0, 1.0, 1.0, current_alpha)
 		hit_flash_ticks -= 1
-		sprite.modulate = Color(1.0, 0.45, 0.45, current_alpha) if hit_flash_ticks % 2 == 0 else Color(1.0, 1.0, 1.0, current_alpha)
 	else:
 		sprite.modulate = Color(1.0, 1.0, 1.0, current_alpha)
 	if gameplay_active:
@@ -97,7 +97,7 @@ func take_projectile_hit(damage: int) -> void:
 	if defeated_state:
 		return
 	hit_points -= damage
-	hit_flash_ticks = 5
+	hit_flash_ticks = 8
 	if hit_points <= 0:
 		defeated_state = true
 		var drop_type := _roll_drop()

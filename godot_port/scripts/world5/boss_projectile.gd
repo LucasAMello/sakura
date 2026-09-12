@@ -158,3 +158,7 @@ func _begin_impact() -> void:
 func take_projectile_hit(_damage: int) -> void:
 	if kind == Kind.SPRAY:
 		queue_free()
+
+
+func accepts_weapon_hit(_weapon_id: int) -> bool:
+	return state == 0 and not is_queued_for_deletion()

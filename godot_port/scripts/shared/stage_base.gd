@@ -119,7 +119,11 @@ func _ready() -> void:
 	hud.update_status(player, _stage_state_label(), enemies.size(), map_number, terrain.world_size)
 	hud.set_ready_visible(false)
 	_set_gameplay_active(false)
-	get_node("/root/AudioManager").play_music("world%d" % _world_number())
+	if (map_number == 80):
+		get_node("/root/AudioManager").play_music("memory", true)
+	else:
+		var music_world := 7 if map_number >= 74 and map_number <= 79 else _world_number()
+		get_node("/root/AudioManager").play_music("world%d" % music_world)
 
 
 func _handle_global_input() -> bool:
@@ -285,13 +289,15 @@ func _update_entry() -> void:
 		hud.set_ready_visible(false)
 		stage_state = _entry_complete_state()
 		state_ticks = 0
-		_set_gameplay_active(true)
+		_set_gameplay_active(stage_state != StageState.BOSS_INTRO)
 
 
 func _update_exit() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		player.scripted_step_right(2.0)
+		if not player.grounded:
+			player.set_scripted_frame(2)
 		return
 	var next_map: int = map_config["next"]
 	stage_state = StageState.COMPLETE
@@ -542,7 +548,7 @@ func _on_shot_requested(origin: Vector2, direction: int, weapon_id: int) -> void
 		projectile.z_index = 15
 		add_child(projectile)
 		projectile.setup(terrain, player, self, direction)
-		projectile.finished.connect(player.projectile_ended, CONNECT_ONE_SHOT)
+		projectile.finished.connect(player.projectile_ended.bind(weapon_id), CONNECT_ONE_SHOT)
 	else:
 		var projectile: WeaponProjectileScript = WeaponProjectileScript.new()
 		projectile.position = origin
@@ -550,7 +556,7 @@ func _on_shot_requested(origin: Vector2, direction: int, weapon_id: int) -> void
 		add_child(projectile)
 		projectile.setup(terrain, player, self, direction, weapon_id)
 		if weapon_id != 2:
-			projectile.finished.connect(player.projectile_ended, CONNECT_ONE_SHOT)
+			projectile.finished.connect(player.projectile_ended.bind(weapon_id), CONNECT_ONE_SHOT)
 
 
 func _on_maximum_hp_changed(value: int) -> void:
@@ -570,6 +576,10 @@ func projectile_hits_solid(rect: Rect2) -> bool:
 
 
 func damage_enemy_in_rect(rect: Rect2, damage: int, weapon_id: int = 1, water_splash: bool = false) -> bool:
+	if weapon_id != 2:
+		for projectile in get_tree().get_nodes_in_group("enemy_projectile_blockers"):
+			if projectile.get_parent() == self and projectile.blocks_player_projectile(rect, weapon_id, water_splash):
+				return true
 	if _damage_stage_object_in_rect(rect, damage, weapon_id):
 		return true
 	for enemy in enemies:
@@ -833,6 +843,7 @@ func _is_active_rematch() -> bool:
 
 func _finish_elemental_or_rematch(world_number: int) -> void:
 	if progress.active_rematch_world == world_number:
+		progress.store_hp(player.hp)
 		get_node("/root/GameFlow").finish_active_rematch()
 	else:
 		get_node("/root/GameFlow").complete_elemental_stage(world_number)

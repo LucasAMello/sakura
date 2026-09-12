@@ -30,8 +30,8 @@ const LIGHTNING_LANES := {
 
 var state := BossState.WAITING
 var timer := 0
-var attack_kind := Attack.TARGET
-var last_attack := -1
+var attack_kind: Attack = Attack.TARGET
+var last_attack: Attack = Attack.TARGET
 var vulnerable := false
 var hit_this_appearance := false
 
@@ -53,7 +53,7 @@ func begin_intro() -> void:
 	attack_kind = Attack.TARGET
 	vulnerable = false
 	hit_this_appearance = false
-	sprite.modulate.a = 1.0
+	sprite.modulate.a = 0.0
 
 
 func begin_fight() -> void:
@@ -61,7 +61,7 @@ func begin_fight() -> void:
 	state = BossState.ATTACK
 	timer = 20
 	attack_kind = Attack.TARGET
-	last_attack = -1
+	last_attack = Attack.TARGET
 	vulnerable = true
 	hit_this_appearance = false
 	sprite.modulate.a = 1.0
@@ -86,7 +86,7 @@ func take_weapon_hit(_damage: int, weapon_id: int) -> void:
 		return
 	hit_this_appearance = true
 	hit_points -= 1
-	hit_flash_ticks = 5
+	hit_flash_ticks = 16
 	if hit_points <= 0:
 		hit_points = 0
 		defeated_state = true
@@ -117,7 +117,7 @@ func _update_facing() -> void:
 
 func _update_fade_in() -> void:
 	timer += 1
-	sprite.modulate.a = clampf(float(timer) * 16.0 / 255.0, 0.0, 1.0)
+	sprite.modulate.a = clampf(float(timer - 1) * 16.0 / 255.0, 0.0, 1.0)
 	if timer >= 20:
 		state = BossState.ATTACK
 		timer = 20
@@ -218,9 +218,9 @@ func _update_fade_out() -> void:
 	elif timer == 11:
 		position = Vector2(10, 10)
 	elif timer >= 50:
-		var next_attack := randi_range(Attack.TARGET, Attack.ICE_RIGHT)
+		var next_attack: Attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT) as Attack
 		while next_attack == last_attack:
-			next_attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT)
+			next_attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT) as Attack
 		attack_kind = next_attack
 		position = ATTACK_POSITIONS[attack_kind]
 		state = BossState.FADE_IN

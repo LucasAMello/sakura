@@ -15,7 +15,7 @@ const STAGE_STARTS := {
 	4: "res://scenes/map40.tscn",
 	5: "res://scenes/map50.tscn",
 	6: "res://scenes/map60.tscn",
-	7: "res://scenes/map70.tscn",
+	7: "res://scenes/map80.tscn",
 }
 
 var transitioning := false

@@ -73,6 +73,7 @@ func projectile_mask_overlap(projectile_rect: Rect2) -> bool:
 	return not breaking and Rect2(position, BODY_SIZE).intersects(projectile_rect)
 
 
-func take_projectile_hit(_damage: int) -> void:
-	breaking = true
+func take_projectile_hit(_damage: int, weapon_id: int = 1) -> void:
+	if weapon_id == 6:
+		breaking = true
 

@@ -322,9 +322,9 @@ func _update_victory() -> void:
 					_spawn_boss_explosion(boss.position + Vector2(25, 25))
 					for clone_position in defeated_clone_positions:
 						_spawn_boss_explosion(clone_position + Vector2(25, 25))
-			if state_ticks % 28 == 16 and is_instance_valid(boss):
+			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
-			if state_ticks % 28 == 0:
+			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks, "clones", 28):
 				for clone_position in defeated_clone_positions:
 					_spawn_boss_explosion(clone_position + Vector2(randi_range(0, 46), randi_range(0, 46)))
 			return

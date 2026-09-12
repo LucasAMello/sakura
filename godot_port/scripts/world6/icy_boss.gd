@@ -117,7 +117,7 @@ func _take_boss_damage(damage: float) -> void:
 		return
 	boss_health -= damage
 	hit_points = ceili(boss_health)
-	hit_flash_ticks = 5
+	hit_flash_ticks = 16
 	if boss_health <= 0.0:
 		boss_health = 0.0
 		hit_points = 0
@@ -267,60 +267,60 @@ func _update_emergence() -> void:
 		position.x -= horizontal_offset
 		_set_up(2, Vector2(120, 138))
 	elif timer >= 120:
-		state = int(state) + 2
+		state = (int(state) + 2) as BossState
 		timer = 0
 
 
 func _update_high_attack() -> void:
 	timer += 1
 	var on_right := state == BossState.ATTACK_HIGH_RIGHT
-	if timer == 80:
+	if timer == 60:
 		var first_origin := position + (Vector2(-50, 60) if on_right else Vector2(123, 60))
 		attack_requested.emit(first_origin, 3, direction)
-	elif timer == 140:
+	elif timer == 120:
 		var second_origin := position + (Vector2(-30, 130) if on_right else Vector2(103, 130))
 		attack_requested.emit(second_origin, 3, direction)
-	elif timer == 200:
+	elif timer == 180:
 		var first_offset := 5.0 if on_right else 12.0
 		position.x += first_offset
 		_set_up(1, Vector2(106, 140))
-	elif timer == 208:
+	elif timer == 188:
 		var second_offset := 5.0 if on_right else 38.0
 		position.x += second_offset
 		_set_up(0, Vector2(65, 154))
-	elif timer > 212:
+	elif timer > 192:
 		_rise_out_and_choose()
 
 
 func _update_mid_attack() -> void:
 	timer += 1
 	var on_right := state == BossState.ATTACK_MID_RIGHT
-	if timer == 100:
+	if timer == 60:
 		_emit_fan(on_right)
-	elif timer == 160:
+	elif timer == 120:
 		position.x += 5.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 168:
+	elif timer == 128:
 		position.x += 5.0
 		_set_up(0, Vector2(65, 154))
-	elif timer > 172:
+	elif timer > 132:
 		_rise_out_and_choose()
 
 
 func _update_low_attack() -> void:
 	timer += 1
 	var on_right := state == BossState.ATTACK_LOW_RIGHT
-	if timer == 80:
+	if timer == 60:
 		_emit_fan(on_right)
-	if timer == 140:
+	if timer == 120:
 		_emit_cross(on_right)
-	elif timer == 240:
+	elif timer == 220:
 		position.x += 5.0
 		_set_up(1, Vector2(106, 140))
-	elif timer == 248:
+	elif timer == 228:
 		position.x += 5.0
 		_set_up(0, Vector2(65, 154))
-	elif timer > 252:
+	elif timer > 232:
 		_rise_out_and_choose()
 
 
@@ -403,6 +403,7 @@ func _update_wall_visuals() -> void:
 		return
 	var descending := state == BossState.DESCEND_LEFT or state == BossState.DESCEND_RIGHT
 	var vertical := form_texture == UP_FRAMES[0] or form_texture == SHADOW_FRAMES[3]
+	shadow_sprite.visible = not (damage_form and Rect2(3380, 820, 500, 280).encloses(Rect2(position, body_size)))
 	sprite.texture = form_texture
 	if SHADOW_FRAMES.has(form_texture):
 		sprite.texture = UP_FRAMES[0] if vertical else SIDE_FRAMES[0]

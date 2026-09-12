@@ -15,6 +15,7 @@ var exploded := false
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	sprite = Sprite2D.new()
 	sprite.centered = false
@@ -65,3 +66,7 @@ func _explode(from_lifetime: bool = false) -> void:
 	explosion.setup(player, move_direction)
 	get_parent().add_child(explosion)
 	queue_free()
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, _water_splash: bool = false) -> bool:
+	return not exploded and preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, BODY_SIZE, weapon_id)

@@ -86,7 +86,7 @@ func _take_boss_damage(damage: float) -> void:
 		return
 	boss_health -= damage
 	hit_points = ceili(boss_health)
-	hit_flash_ticks = 5
+	hit_flash_ticks = 16
 	if boss_health <= 0.0:
 		boss_health = 0.0
 		hit_points = 0

@@ -39,14 +39,19 @@ var direction := 0
 var variant := 0
 var timer := 0
 var physics_phase := 0
+var animation_ticks := 0
+var animation_frame := 0
 var damage := 3
 var action_state := 0
 var rotation_count := 0
+var fire_orbit_index := 0
+var fire_orbit_ticks := 0
 var body_size := Vector2.ZERO
 var beam_segments: Array[Sprite2D] = []
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	add_to_group("final_boss_projectiles")
@@ -84,32 +89,48 @@ func configure(target: SakuraPlayer, map_terrain: SakuraTerrain, projectile_kind
 
 
 func _physics_process(_delta: float) -> void:
-	physics_phase = (physics_phase + 1) % 2
+	if kind == 76:
+		_update_thunder()
+		return
+	_update_animation()
+	if kind in [77, 78]:
+		_update_fire()
+		return
+	physics_phase = (physics_phase + 1) % 4
 	if physics_phase != 0:
 		return
 	match kind:
 		75:
 			_update_target_ball()
-		76:
-			_update_thunder()
-		77, 78:
-			_update_fire()
 		79:
 			_update_ice()
+
+
+func _update_animation() -> void:
+	if kind not in [75, 77, 78]:
+		return
+	animation_ticks += 1
+	var frame_delay := 6 if kind == 75 else (8 if kind == 77 else 12)
+	if animation_ticks >= frame_delay:
+		animation_ticks = 0
+		animation_frame = (animation_frame + 1) % 4
+	if kind == 75:
+		sprite.texture = SMALL_FRAMES[animation_frame] if action_state == 0 else BALL_FRAMES[animation_frame]
+	else:
+		sprite.texture = FIRE_FRAMES[animation_frame]
 
 
 func _update_target_ball() -> void:
 	timer += 1
 	if action_state == 0:
-		sprite.texture = SMALL_FRAMES[int(timer / 6.0) % SMALL_FRAMES.size()]
 		sprite.modulate.a = minf(1.0, float(timer) * 42.0 / 255.0)
 		if timer >= 6:
 			action_state = 1
 			timer = 0
 			sprite.texture = BALL_FRAMES[0]
+			animation_frame = 0
 			sprite.modulate.a = 1.0
 	else:
-		sprite.texture = BALL_FRAMES[int(timer / 6.0) % BALL_FRAMES.size()]
 		if timer >= 8:
 			sprite.modulate.a -= 42.0 / 255.0
 			if sprite.modulate.a <= 0.0:
@@ -133,11 +154,9 @@ func _update_thunder() -> void:
 
 func _update_fire() -> void:
 	timer += 1
-	var frame_delay := 8 if kind == 77 else 12
-	sprite.texture = FIRE_FRAMES[int(timer / float(frame_delay)) % FIRE_FRAMES.size()]
 	if action_state == 0:
-		sprite.modulate.a = minf(1.0, float(timer) * 32.0 / 255.0)
-		if timer >= 8:
+		sprite.modulate.a = minf(1.0, float(timer) / 32.0)
+		if timer >= 32:
 			action_state = 1
 			timer = 0
 			sprite.modulate.a = 1.0
@@ -151,21 +170,24 @@ func _update_fire() -> void:
 
 
 func _update_fire_orbit() -> void:
-	if timer % 2 == 0:
-		return
-	var delta_index := (timer - 1) / 2
-	var amount: Vector2 = FIRE_DELTAS[delta_index]
+	var segment_ticks := 4 if rotation_count == 0 and fire_orbit_index == 0 else 8
+	var amount: Vector2 = FIRE_DELTAS[fire_orbit_index] / float(segment_ticks)
 	if kind == 78:
 		amount.x *= -1.0
 	position += amount
+	fire_orbit_ticks += 1
+	if fire_orbit_ticks < segment_ticks:
+		return
+	fire_orbit_ticks = 0
 	var checkpoint_indices := [15, 13, 11, 8, 5, 2]
-	if rotation_count == 2 and delta_index == checkpoint_indices[variant - 1]:
+	if rotation_count == 2 and fire_orbit_index == checkpoint_indices[variant - 1]:
 		action_state = 10 + variant
 		timer = 0
 		return
-	if delta_index >= FIRE_DELTAS.size() - 1:
+	fire_orbit_index += 1
+	if fire_orbit_index >= FIRE_DELTAS.size():
 		rotation_count += 1
-		timer = -1
+		fire_orbit_index = 0
 
 
 func _update_fire_settle() -> void:
@@ -175,11 +197,11 @@ func _update_fire_settle() -> void:
 	var speeds_right := [Vector2.ZERO, Vector2(2, 6), Vector2(-2, 4), Vector2(-6, 6), Vector2(-10, 4), Vector2(-6, 2), Vector2(6, 4)]
 	var target: Vector2 = targets_left[variant] if kind == 77 else targets_right[variant]
 	var speed: Vector2 = speeds_left[variant] if kind == 77 else speeds_right[variant]
-	position.x = _approach(position.x, target.x, absf(speed.x))
-	position.y = _approach(position.y, target.y, absf(speed.y))
-	if timer > 85:
-		sprite.modulate.a -= 42.0 / 255.0
-		if sprite.modulate.a <= 0.0:
+	position.x = _approach(position.x, target.x, absf(speed.x) / 4.0)
+	position.y = _approach(position.y, target.y, absf(speed.y) / 4.0)
+	if timer > 340:
+		sprite.modulate.a = maxf(0.0, 1.0 - float(timer - 340) / 28.0)
+		if timer >= 368:
 			queue_free()
 
 
@@ -198,9 +220,6 @@ func _update_ice() -> void:
 		velocity.x *= -1.0
 	for _step_index in range(2):
 		var step := velocity * 0.5
-		if terrain.rect_hits_solid(Rect2(position + step, body_size)):
-			queue_free()
-			return
 		position += step
 		_damage_player_if_touching()
 	if position.x < 840.0 or position.x > 1740.0 or position.y < -80.0 or position.y > 680.0:
@@ -213,12 +232,18 @@ func _damage_player_if_touching() -> void:
 
 
 func _build_beam() -> void:
-	for index in range(4):
+	for offset in range(int(body_size.y)):
+		if terrain.rect_hits_solid(Rect2(position + Vector2(0, offset), Vector2(body_size.x, 1))):
+			body_size.y = float(offset)
+			break
+	for offset in range(0, int(body_size.y), 128):
 		var segment := Sprite2D.new()
 		segment.centered = false
 		segment.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		segment.texture = THUNDER_FRAMES[0]
-		segment.position = Vector2(0, index * 128)
+		segment.position = Vector2(0, offset)
+		segment.region_enabled = true
+		segment.region_rect = Rect2(0, 0, body_size.x, minf(128.0, body_size.y - offset))
 		add_child(segment)
 		beam_segments.append(segment)
 
@@ -234,3 +259,7 @@ func _approach(value: float, target: float, amount: float) -> float:
 	if value > target:
 		return maxf(value - amount, target)
 	return value
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, water_splash: bool = false) -> bool:
+	return (kind >= 77 or weapon_id in [6, 7] or water_splash) and preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, body_size, weapon_id)

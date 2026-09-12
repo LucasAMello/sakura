@@ -13,6 +13,7 @@ var shot_direction := 0
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	var sprite := Sprite2D.new()
 	sprite.centered = false
 	sprite.texture = TEXTURE
@@ -66,3 +67,7 @@ func _move_axis(amount: Vector2) -> bool:
 		position += step
 		distance -= step.length()
 	return true
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, _water_splash: bool = false) -> bool:
+	return true and preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, BODY_SIZE, weapon_id)

@@ -3,6 +3,10 @@ extends "res://scripts/world7/stage7.gd"
 const FinalBossScript = preload("res://scripts/world7/final_boss.gd")
 const FinalProjectileScript = preload("res://scripts/world7/final_boss_projectile.gd")
 const FINAL_CONFIGS := {80: {"width": 125, "height": 30, "start": Vector2(930, 260), "exit": Rect2(), "next": 0}}
+const INTRO_FADE_TICKS := 64 * 4
+const INTRO_BOSS_FADE_END := INTRO_FADE_TICKS * 2
+const INTRO_METER_START := INTRO_BOSS_FADE_END + 3
+const INTRO_END := INTRO_METER_START + 31 * 4
 
 var boss: SakuraFinalBoss
 var intro_started := false
@@ -15,6 +19,10 @@ func _first_map_number() -> int:
 
 func _map_configs() -> Dictionary:
 	return FINAL_CONFIGS
+
+
+func _enemy_update_interval() -> int:
+	return 4
 
 
 func _entry_complete_state() -> int:
@@ -54,20 +62,17 @@ func _physics_process(_delta: float) -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
-	camera_locked = true
-	camera_lock_position = Vector2(1250, 300)
 	if not intro_started:
 		intro_started = true
-		get_node("/root/AudioManager").play_music("memory", true)
 		boss.set_gameplay_active(true)
 		boss.begin_intro()
-	if state_ticks <= 64:
-		hud.set_completion_fade(1.0 - float(state_ticks) / 64.0)
-	elif state_ticks <= 128:
-		boss.sprite.modulate.a = 1.0 - float(state_ticks - 64) / 64.0
-	elif state_ticks <= 158:
+	if state_ticks <= INTRO_FADE_TICKS:
+		hud.set_completion_fade(1.0 - float(state_ticks) / INTRO_FADE_TICKS)
+	elif state_ticks <= INTRO_BOSS_FADE_END:
+		boss.sprite.modulate.a = float(state_ticks - INTRO_FADE_TICKS) / INTRO_FADE_TICKS
+	elif state_ticks > INTRO_METER_START and state_ticks <= INTRO_METER_START + 30 * 4 and (state_ticks - INTRO_METER_START) % 4 == 0:
 		get_node("/root/AudioManager").play_sfx("recuperator")
-	if state_ticks >= 158:
+	if state_ticks >= INTRO_END:
 		hud.set_completion_fade(0.0)
 		boss.begin_fight()
 		stage_state = StageState.BOSS
@@ -109,15 +114,15 @@ func _on_boss_defeated() -> void:
 func _update_victory() -> void:
 	victory_ticks += 1
 	_settle_player_for_victory()
-	if victory_ticks == 5:
+	if victory_ticks == 20:
 		_spawn_boss_light_flashes(boss.position + Vector2(40, 60), 250)
 		for _burst in range(3):
 			_spawn_boss_explosion(boss.position + Vector2(40, 60))
-	if victory_ticks % 7 == 3 and victory_ticks < 210:
+	if victory_ticks < 255 and preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, victory_ticks, "boss", 12):
 		_spawn_boss_explosion(boss.position + Vector2(randi_range(-20, 90), randi_range(-10, 120)))
 	if victory_ticks < 255:
 		hud.set_boss_flash(float(victory_ticks) / 255.0)
-	elif victory_ticks < 315:
+	elif victory_ticks < 285:
 		hud.set_boss_flash(1.0)
 		if is_instance_valid(boss):
 			boss.queue_free()
@@ -153,19 +158,20 @@ func _build_background() -> void:
 
 
 func _update_background() -> void:
-	pass
+	if is_instance_valid(background_sprite) and is_instance_valid(camera):
+		background_sprite.position.y = (camera.position.y - 240.0) * 0.8
 
 
 func _update_camera() -> void:
-	if camera_locked:
-		camera.position = camera_lock_position
-	else:
-		camera.position = Vector2(1250, 300)
+	if not is_instance_valid(camera) or not is_instance_valid(player):
+		return
+	camera.position = Vector2(clampf(player.position.x + 20.0, 1160.0, 1340.0), clampf(player.position.y, 240.0, 360.0))
+	_update_background()
 
 
 func _update_boss_hud() -> void:
 	if is_instance_valid(boss):
 		var displayed_hp := boss.hit_points
 		if stage_state == StageState.BOSS_INTRO:
-			displayed_hp = clampi(state_ticks - 128, 0, 30)
-		hud.set_boss_health(displayed_hp, stage_state == StageState.BOSS or (stage_state == StageState.BOSS_INTRO and state_ticks >= 129))
+			displayed_hp = clampi(int((state_ticks - INTRO_METER_START) / 4.0), 0, 30)
+		hud.set_boss_health(displayed_hp, stage_state == StageState.BOSS or (stage_state == StageState.BOSS_INTRO and state_ticks >= INTRO_METER_START + 4))

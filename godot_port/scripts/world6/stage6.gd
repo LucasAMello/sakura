@@ -103,14 +103,17 @@ func _map_configs() -> Dictionary:
 
 
 func _setup_terrain() -> void:
+	var terrain_source_rects := STAGE6_SOURCE_RECTS.duplicate()
+	if map_number != 60:
+		terrain_source_rects["0"] = Vector2i(120, 40)
 	terrain.setup(
 		"res://maps/map%d.map" % map_number,
 		map_config["width"],
 		map_config["height"],
 		STAGE6_ATLAS,
-		STAGE6_SOURCE_RECTS,
+		terrain_source_rects,
 		PackedStringArray(STAGE6_NON_SOLID),
-		PackedStringArray(),
+		PackedStringArray(["0"]),
 		{}
 	)
 
@@ -145,6 +148,7 @@ func _build_stage_boss_area() -> void:
 		block.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		block.z_index = 2
 		add_child(block)
+		terrain.one_way_sprites.append(block)
 	if map_number == 62:
 		_build_boss_area()
 
@@ -282,7 +286,7 @@ func _update_boss_intro() -> void:
 
 
 func _update_boss() -> void:
-	player.position.x = clampf(player.position.x, 3310.0, 3960.0)
+	player.position.x = clampf(player.position.x, 3380.0, 3960.0)
 
 
 func _on_boss_attack_requested(spawn_position: Vector2, variant: int, direction: int) -> void:
@@ -296,6 +300,13 @@ func _on_boss_attack_requested(spawn_position: Vector2, variant: int, direction:
 func _on_boss_defeated() -> void:
 	boss_reward_position = boss.position + boss.body_size * 0.5 - Vector2(11, 18)
 	enemies.erase(boss)
+	for index in range(enemies.size() - 1, -1, -1):
+		var enemy := enemies[index]
+		if is_instance_valid(enemy) and enemy is World6IcyAttack:
+			enemies.remove_at(index)
+			enemy.set_gameplay_active(false)
+			enemy.hide()
+			enemy.queue_free()
 	stage_state = StageState.VICTORY
 	state_ticks = 0
 	_set_gameplay_active(false)
@@ -316,7 +327,7 @@ func _update_victory() -> void:
 				_spawn_boss_light_flashes(boss.position + Vector2(60, 70))
 				for _burst in range(3):
 					_spawn_boss_explosion(boss.position + Vector2(60, 70))
-			if state_ticks % 28 == 16 and is_instance_valid(boss):
+			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 120), randi_range(0, 140)))
 			return
 		if state_ticks <= 285:
@@ -429,14 +440,14 @@ func _on_holder_opened(spawn_position: Vector2, card_id: int) -> void:
 		_spawn_card(spawn_position, card_id, true)
 
 
-func _damage_stage_object_in_rect(rect: Rect2, damage: int, _weapon_id: int = 1) -> bool:
+func _damage_stage_object_in_rect(rect: Rect2, damage: int, weapon_id: int = 1) -> bool:
 	for holder in card_holders:
 		if is_instance_valid(holder) and holder.projectile_mask_overlap(rect):
 			holder.take_projectile_hit(damage)
 			return true
 	for holder in ice_holders:
-		if is_instance_valid(holder) and holder.projectile_mask_overlap(rect):
-			holder.take_projectile_hit(damage)
+		if weapon_id == 6 and is_instance_valid(holder) and holder.projectile_mask_overlap(rect):
+			holder.take_projectile_hit(damage, weapon_id)
 			return true
 	return false
 
@@ -464,6 +475,7 @@ func _build_boss_area() -> void:
 		door.z_index = 9
 		add_child(door)
 		boss_doors.append(door)
+		terrain.solid_sprites.append(door)
 	boss = IcyBossScript.new()
 	_spawn_enemy(boss, Vector2(3980, 1120))
 	boss.visible = false
@@ -482,7 +494,7 @@ func _build_background() -> void:
 	var fill := ColorRect.new()
 	fill.position = Vector2.ZERO
 	fill.size = Vector2(map_config["width"] * 20, map_config["height"] * 20)
-	fill.color = Color8(0, 16, 63) if map_number == 62 or map_number == 74 else Color8(111, 200, 239)
+	fill.color = Color8(0, 16, 63) if map_number in [62, 74] else Color8(111, 200, 239)
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fill.z_index = -200
 	add_child(fill)

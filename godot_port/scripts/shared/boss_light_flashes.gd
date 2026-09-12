@@ -1,6 +1,6 @@
 extends Node2D
 
-const FRAME_HOLD_TICKS := 14
+const FRAME_HOLD_TICKS := 8
 const RAY_COLOR := Color(1.0, 1.0, 20.0 / 255.0)
 
 var lifetime_ticks := 262

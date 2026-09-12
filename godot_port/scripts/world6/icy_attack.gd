@@ -25,6 +25,7 @@ var charging := true
 
 
 func _ready() -> void:
+	add_to_group("enemy_projectile_blockers")
 	super._ready()
 	hit_points = 1
 	contact_damage = 3
@@ -37,7 +38,7 @@ func configure(attack_variant: int, attack_direction: int) -> void:
 	variant = clampi(attack_variant, 0, FRAMES.size() - 1)
 	direction = 0 if attack_direction <= 0 else 1
 	body_size = SIZES[variant]
-	velocity = SPEEDS[variant] * 0.25
+	velocity = SPEEDS[variant] * 0.5
 	if direction == 1:
 		velocity.x *= -1.0
 	sprite.texture = FRAMES[variant]
@@ -76,3 +77,7 @@ func _move_and_hit(amount: Vector2) -> bool:
 			return true
 		position += step
 	return false
+
+
+func blocks_player_projectile(rect: Rect2, weapon_id: int, _water_splash: bool = false) -> bool:
+	return preload("res://scripts/shared/projectile_interception.gd").overlaps(self, rect, body_size, weapon_id)

@@ -60,3 +60,7 @@ func _move_down(amount: float) -> bool:
 		position.y += step
 		remaining -= step
 	return true
+
+
+func take_projectile_hit(_damage: int) -> void:
+	pass

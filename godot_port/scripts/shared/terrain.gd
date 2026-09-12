@@ -4,6 +4,8 @@ extends Node2D
 const TILE_SIZE := 20
 
 var cells: Array = []
+var solid_sprites: Array[Sprite2D] = []
+var one_way_sprites: Array[Sprite2D] = []
 var atlas: Texture2D
 var source_rects: Dictionary = {}
 var non_solid_tokens := PackedStringArray()
@@ -158,6 +160,9 @@ func is_solid_cell(tile_x: int, tile_y: int) -> bool:
 
 
 func is_solid_at(point: Vector2) -> bool:
+	for solid_sprite in solid_sprites:
+		if is_instance_valid(solid_sprite) and solid_sprite.visible and Rect2(solid_sprite.position, solid_sprite.texture.get_size()).has_point(point):
+			return true
 	var tile_x := floori(point.x / TILE_SIZE)
 	var tile_y := floori(point.y / TILE_SIZE)
 	if not is_solid_cell(tile_x, tile_y):
@@ -179,7 +184,25 @@ func is_lethal_at(point: Vector2) -> bool:
 	return lethal_tokens.has(get_cell(tile_x, tile_y))
 
 
+func one_way_landing_y(previous_rect: Rect2, next_rect: Rect2) -> float:
+	var landing_y := INF
+	if next_rect.end.y <= previous_rect.end.y:
+		return landing_y
+	for platform in one_way_sprites:
+		if not is_instance_valid(platform) or not platform.visible:
+			continue
+		var platform_rect := Rect2(platform.position, platform.texture.get_size())
+		if next_rect.end.x <= platform_rect.position.x or next_rect.position.x >= platform_rect.end.x:
+			continue
+		if previous_rect.end.y <= platform_rect.position.y + 0.001 and next_rect.end.y >= platform_rect.position.y:
+			landing_y = minf(landing_y, platform_rect.position.y)
+	return landing_y
+
+
 func rect_hits_solid(rect: Rect2) -> bool:
+	for solid_sprite in solid_sprites:
+		if is_instance_valid(solid_sprite) and solid_sprite.visible and Rect2(solid_sprite.position, solid_sprite.texture.get_size()).intersects(rect):
+			return true
 	var left := floori(rect.position.x / TILE_SIZE)
 	var right := floori((rect.end.x - 0.001) / TILE_SIZE)
 	var top := floori(rect.position.y / TILE_SIZE)
