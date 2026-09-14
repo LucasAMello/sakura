@@ -5,10 +5,12 @@ const PRELUDE_END_TICK := 600
 const PANEL_FADE_TICKS := 255
 const PANEL_FADE_OUT_START := 1400
 const PANEL_DURATION := 1655
+const FINAL_FADE_TICKS := 255
+const OPENING_FADE_TICKS := 255 * 3
 const BACKGROUNDS := [
 	preload("res://assets/world1/background.png"), preload("res://assets/world2/background.png"),
 	preload("res://assets/world3/background.png"), preload("res://assets/world4/background.png"),
-	preload("res://assets/world5/background.png"), preload("res://assets/world6/background.png"),
+	preload("res://assets/world1/background.png"), preload("res://assets/world6/background.png"),
 ]
 const PANELS := [
 	preload("res://assets/ending/ending1.png"), preload("res://assets/ending/ending2.png"),
@@ -28,13 +30,12 @@ const PLAYER_FRAMES := [
 ]
 
 var background_a: Sprite2D
-var background_b: Sprite2D
 var reflection_a: Sprite2D
-var reflection_b: Sprite2D
 var ground_sprites: Array[Sprite2D] = []
 var player_sprite: Sprite2D
 var credit_sprite: Sprite2D
 var fade: ColorRect
+var backdrop: ColorRect
 var final_layer: Control
 var panel_index := 0
 var panel_ticks := 0
@@ -45,6 +46,10 @@ var finished := false
 var credits_started := false
 var panel_hold_ticks := 0
 var final_hold_ticks := 0
+var final_fade_ticks := 0
+var final_started := false
+var cheat_hint_visible := false
+var background_textures: Array[ImageTexture] = []
 
 
 func _ready() -> void:
@@ -67,17 +72,21 @@ func _physics_process(_delta: float) -> void:
 		if final_hold_ticks == 0:
 			_show_final()
 		return
+	if final_started:
+		final_fade_ticks += 1
+		fade.color.a = maxf(0.0, 1.0 - float(final_fade_ticks) / FINAL_FADE_TICKS)
+		if final_fade_ticks >= FINAL_FADE_TICKS:
+			finished = true
+		return
 	if panel_hold_ticks > 0:
 		panel_hold_ticks -= 1
 		return
 	panel_ticks += 1
 	scroll_x += 1.0
 	player_walk_ticks += 1
-	var background_offset := -160.0 + float(panel_ticks * 2) / 20.0
+	var background_offset := -160.0 + floorf(float(panel_ticks * 2) / 20.0)
 	background_a.position.x = background_offset
-	background_b.position.x = background_offset + background_a.texture.get_width()
 	reflection_a.position.x = background_a.position.x
-	reflection_b.position.x = background_b.position.x
 	var tile_width := 120.0 if panel_index == 5 else 160.0
 	var ground_offset := fmod(scroll_x, tile_width) - tile_width
 	for index in range(ground_sprites.size()):
@@ -93,10 +102,12 @@ func _physics_process(_delta: float) -> void:
 			credit_sprite.modulate.a = minf(1.0, credit_sprite.modulate.a + 1.0 / 255.0)
 		else:
 			credit_sprite.modulate.a = maxf(0.0, credit_sprite.modulate.a - 1.0 / 255.0)
-	if panel_ticks < PANEL_FADE_TICKS:
+	if panel_index == 0 and panel_ticks < OPENING_FADE_TICKS:
+		fade.color = Color(1.0, 1.0, 1.0, 1.0 - float(panel_ticks) / OPENING_FADE_TICKS)
+	elif panel_ticks < PANEL_FADE_TICKS:
 		fade.color.a = 1.0 - float(panel_ticks) / PANEL_FADE_TICKS
 	elif panel_ticks >= PANEL_FADE_OUT_START:
-		fade.color.a = float(panel_ticks - PANEL_FADE_OUT_START) / PANEL_FADE_TICKS
+		fade.color = Color(0.0, 0.0, 0.0, float(panel_ticks - PANEL_FADE_OUT_START) / PANEL_FADE_TICKS)
 	else:
 		fade.color.a = 0.0
 	if panel_ticks >= PANEL_DURATION:
@@ -108,32 +119,59 @@ func _physics_process(_delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if not event.pressed or event.echo or not finished:
+	if not event.pressed or event.echo or not final_started:
 		return
 	if event.physical_keycode == KEY_ENTER:
-		get_node("/root/GameFlow").open_title()
+		if not finished:
+			return
+		if not cheat_hint_visible and get_node("/root/SakuraProgress").card_total() == 52:
+			_show_cheat_hint()
+		else:
+			get_node("/root/GameFlow").open_title()
+
+
+func _show_cheat_hint() -> void:
+	cheat_hint_visible = true
+	final_layer.visible = false
+	var hint := Label.new()
+	hint.position = Vector2(60, 90)
+	hint.size = Vector2(520, 300)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 20)
+	hint.text = "ALL 52 CARDS COLLECTED!\n\nType K E R O in Options to enable cheats.\n\nG: God mode    H: Hard mode    N: Normal mode\nL: Full health    V: 9 lives    M: All cards\nK: Lose a life    J: Final boss\n+ / -: Change music    B: Disable cheats\n\nPress Enter to return to the title."
+	hint.z_index = 20
+	add_child(hint)
 
 
 func _build_scene() -> void:
-	var fill := ColorRect.new()
-	fill.size = Vector2(640, 480)
-	fill.color = Color8(15, 0, 0)
-	add_child(fill)
+	backdrop = ColorRect.new()
+	backdrop.size = Vector2(640, 480)
+	backdrop.color = Color8(15, 0, 0)
+	backdrop.z_index = -30
+	add_child(backdrop)
+	for index in range(BACKGROUNDS.size()):
+		var canvas := Image.create(800, 480, false, Image.FORMAT_RGBA8)
+		canvas.fill(Color8(0, 0, 161) if index == 3 else Color8(15, 0, 0))
+		var source: Image = BACKGROUNDS[index].get_image()
+		if source.is_compressed():
+			source.decompress()
+		source.convert(Image.FORMAT_RGBA8)
+		canvas.blend_rect(source, Rect2i(Vector2i.ZERO, source.get_size()), Vector2i.ZERO)
+		if index == 2 or index == 3 or index == 5:
+			canvas.blend_rect(source, Rect2i(Vector2i.ZERO, source.get_size()), Vector2i(source.get_width(), 0))
+		background_textures.append(ImageTexture.create_from_image(canvas))
 	background_a = _make_sprite(Vector2.ZERO, -20)
-	background_b = _make_sprite(Vector2(640, 0), -20)
 	reflection_a = _make_sprite(Vector2(0, 150), -19)
-	reflection_b = _make_sprite(Vector2(640, 150), -19)
 	reflection_a.flip_h = true
-	reflection_b.flip_h = true
 	add_child(background_a)
-	add_child(background_b)
 	add_child(reflection_a)
-	add_child(reflection_b)
 	for index in range(7):
 		var ground := _make_sprite(Vector2(index * 160, 380), 0)
 		add_child(ground)
 		ground_sprites.append(ground)
 	player_sprite = _make_sprite(Vector2(540, 300), 5)
+	player_sprite.texture = PLAYER_FRAMES[0]
 	player_sprite.flip_h = true
 	add_child(player_sprite)
 	credit_sprite = _make_sprite(Vector2.ZERO, 10)
@@ -173,28 +211,24 @@ func _show_panel(index: int, hold_ticks: int = 0) -> void:
 	panel_hold_ticks = hold_ticks
 	scroll_x = 0.0
 	credits_started = false
-	background_a.texture = BACKGROUNDS[index]
-	background_b.texture = BACKGROUNDS[index]
-	reflection_a.texture = BACKGROUNDS[index]
-	reflection_b.texture = BACKGROUNDS[index]
+	background_a.texture = background_textures[index]
+	reflection_a.texture = background_textures[index]
 	reflection_a.visible = index == 3
-	reflection_b.visible = index == 3
+	backdrop.color = Color8(0, 0, 161) if index == 3 else Color8(15, 0, 0)
 	for ground in ground_sprites:
 		ground.texture = PANELS[index]
 		ground.position.y = 360.0 if index == 3 else 380.0
 	credit_sprite.texture = CREDITS[index]
-	credit_sprite.position = Vector2((640.0 - credit_sprite.texture.get_width()) * 0.5, 60)
+	credit_sprite.position = Vector2(floorf((640.0 - credit_sprite.texture.get_width()) * 0.5), 60)
 	credit_sprite.modulate.a = 0.0
-	player_sprite.position = Vector2(540, 300)
+	player_sprite.z_index = -1 if index == 3 else 5
 	player_sprite.visible = true
-	fade.color.a = 1.0
+	fade.color = Color.WHITE if index == 0 else Color.BLACK
 
 
 func _begin_final_hold() -> void:
 	background_a.visible = false
-	background_b.visible = false
 	reflection_a.visible = false
-	reflection_b.visible = false
 	for ground in ground_sprites:
 		ground.visible = false
 	player_sprite.visible = false
@@ -205,14 +239,14 @@ func _begin_final_hold() -> void:
 
 
 func _show_final() -> void:
-	finished = true
+	backdrop.color = Color.BLACK
+	final_started = true
+	final_fade_ticks = 0
 	background_a.visible = false
-	background_b.visible = false
 	reflection_a.visible = false
-	reflection_b.visible = false
 	for ground in ground_sprites:
 		ground.visible = false
 	player_sprite.visible = false
 	credit_sprite.visible = false
 	final_layer.visible = true
-	fade.color.a = 0.0
+	fade.color.a = 1.0

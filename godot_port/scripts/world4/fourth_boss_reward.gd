@@ -46,8 +46,7 @@ func _physics_process(_delta: float) -> void:
 	if state == 1:
 		sprite.texture = FRAMES[int(timer / 8.0) % FRAMES.size()]
 		var target := player.position + Vector2(14, 22)
-		position.x = move_toward(position.x, target.x, 1.25)
-		position.y = move_toward(position.y, target.y, 1.25)
+		position = position.move_toward(target, 1.25)
 		if position.distance_to(target) <= 0.1 and timer % 64 == 0:
 			state = 2
 			timer = 0

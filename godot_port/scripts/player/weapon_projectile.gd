@@ -102,6 +102,8 @@ func setup(map_terrain: SakuraTerrain, owner_player: SakuraPlayer, owner_stage: 
 
 
 func _physics_process(_delta: float) -> void:
+	if _free_outside_map():
+		return
 	if weapon_id == 3 and _shadow_outside_vertical_bounds():
 		_emit_finished()
 		queue_free()
@@ -131,13 +133,21 @@ func _physics_process(_delta: float) -> void:
 					velocity.x *= 2.0
 				velocity.x = clampf(velocity.x, -40.0 * SOURCE_MOTION_SCALE, 40.0 * SOURCE_MOTION_SCALE)
 			_move_and_collide(Vector2(velocity.x, 0.0))
+	if _free_outside_map():
+		return
 	if not ending and (not is_instance_valid(player) or absf(position.x - player.position.x) > MAX_PLAYER_DISTANCE or life_ticks >= 240):
 		_end()
 
 
-func _shadow_outside_vertical_bounds() -> bool:
-	if position.y < 0.0 or position.y >= terrain.world_size.y:
+func _free_outside_map() -> bool:
+	if not Rect2(Vector2.ZERO, terrain.world_size).intersects(Rect2(position, sprite.texture.get_size())):
+		_emit_finished()
+		queue_free()
 		return true
+	return false
+
+
+func _shadow_outside_vertical_bounds() -> bool:
 	if is_instance_valid(player):
 		var vertical_distance := position.y - player.position.y
 		return vertical_distance < -480.0 or vertical_distance > 560.0
@@ -191,7 +201,7 @@ func _move_and_collide(amount: Vector2) -> void:
 	for _index in range(steps):
 		position += step
 		var rect := Rect2(position, body_size)
-		if stage.projectile_hits_solid(rect):
+		if stage.projectile_hits_solid(rect, true):
 			_end(true)
 			return
 		if weapon_id == 2:
@@ -215,12 +225,12 @@ func _move_water_axis(amount: Vector2, impact_kind: int) -> bool:
 		var previous_position := position
 		position += step
 		var rect := Rect2(position, body_size)
-		if stage.projectile_hits_solid(rect):
+		if stage.projectile_hits_solid(rect, true):
 			var clear_fraction := 0.0
 			var blocked_fraction := 1.0
 			for _probe in range(10):
 				var fraction := (clear_fraction + blocked_fraction) * 0.5
-				if stage.projectile_hits_solid(Rect2(previous_position + step * fraction, body_size)):
+				if stage.projectile_hits_solid(Rect2(previous_position + step * fraction, body_size), true):
 					blocked_fraction = fraction
 				else:
 					clear_fraction = fraction
@@ -244,7 +254,7 @@ func _move_water_axis(amount: Vector2, impact_kind: int) -> bool:
 
 
 func _terrain_collision_after(offset: Vector2) -> bool:
-	return stage.projectile_hits_solid(Rect2(position + offset, body_size))
+	return stage.projectile_hits_solid(Rect2(position + offset, body_size), true)
 
 
 func _damage() -> int:

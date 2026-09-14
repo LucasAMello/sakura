@@ -107,13 +107,12 @@ func _ready() -> void:
 	debug_label.add_theme_constant_override("shadow_offset_y", 1)
 	debug_label.visible = false
 	add_child(debug_label)
-	if OS.is_debug_build():
-		god_mode_label = Label.new()
-		god_mode_label.text = "GOD MODE"
-		god_mode_label.position = Vector2(510, 8)
-		god_mode_label.add_theme_color_override("font_color", Color.YELLOW)
-		god_mode_label.visible = false
-		add_child(god_mode_label)
+	god_mode_label = Label.new()
+	god_mode_label.text = "GOD MODE"
+	god_mode_label.position = Vector2(510, 8)
+	god_mode_label.add_theme_color_override("font_color", Color.YELLOW)
+	god_mode_label.visible = false
+	add_child(god_mode_label)
 	ready_image = TextureRect.new()
 	ready_image.texture = preload("res://assets/hud/ready.png")
 	ready_image.position = Vector2(241, 200)
@@ -306,8 +305,15 @@ func _update_pause_cards(progress: Node) -> void:
 
 
 func update_status(player: SakuraPlayer, _stage_state: String, enemy_count: int, map_number: int, world_size: Vector2) -> void:
+	if not is_inside_tree() or not is_instance_valid(player) or not player.is_inside_tree():
+		return
 	if is_instance_valid(god_mode_label):
-		god_mode_label.visible = player.is_god_mode_active()
+		var progress := get_node_or_null("/root/SakuraProgress")
+		var hard_mode: bool = is_instance_valid(progress) and progress.hard_mode
+		var cheats_enabled: bool = is_instance_valid(progress) and progress.cheats_enabled
+		var god_mode := player.is_god_mode_active()
+		god_mode_label.visible = god_mode or hard_mode or cheats_enabled
+		god_mode_label.text = "GOD MODE" if god_mode else ("HARD MODE" if hard_mode else "CHEATS")
 	last_maximum_hp = player.maximum_hp
 	player_meter_extension.visible = player.maximum_hp > 15
 	player_meter_extension.position.y = PLAYER_METER_Y - float(player.maximum_hp - 15) * 5.0

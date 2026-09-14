@@ -1,6 +1,6 @@
 # Sakura — Godot port
 
-This is a preservation-minded Godot 4.7.2 port of Sakura, the 2008 C++/Allegro game. It restores the canonical campaign represented by `old/2 Joguito`: the original menu and stage-selection structure, six elemental worlds, seven weapons, 52 cards, the final-stage rematches, final boss, and ending. Unfinished Sakura 2.0 features such as hard mode are intentionally excluded.
+This is a preservation-minded Godot 4.7.2 port of Sakura, the 2008 C++/Allegro game. It restores the canonical campaign represented by `old/2 Joguito`: the original menu and stage-selection structure, six elemental worlds, seven weapons, 52 cards, the final-stage rematches, final boss, and ending. The original cheat-based hard mode is restored; the later Sakura 2.0 selectable difficulty system remains outside scope.
 
 ## Campaign
 
@@ -24,6 +24,29 @@ All 52 card IDs are represented. Maximum HP is derived from the card count and i
 
 Controls can be remapped from Options. Music and SFX levels apply immediately and are retained separately from campaign progress. The pause menu provides the original weapon grid, lives display, collected-card book, audio and control options, resume, and return to stage select.
 
+## Cheats and normal/hard mode
+
+Type **K E R O** in title-menu Options or paused Options (outside control rebinding). The accept sound confirms activation. Then use these keys during active gameplay:
+
+| Key | Effect |
+| --- | --- |
+| G | God mode: invincibility, with normal movement speed |
+| H | Hard mode: a damaging hit kills Sakura; disables god mode |
+| N | Normal mode: restores ordinary damage and disables god mode |
+| L | Restore full health |
+| K | Lose a life, including while invincible |
+| V | Set lives to nine |
+| M | Collect all 52 cards and unlock their weapons/maximum HP |
+| J | Jump directly to the final boss |
+| + / - | Cycle music (main keyboard or keypad) |
+| B | Disable cheats and restore normal mode |
+
+Cheats and mode selection last for the application session, across deaths, room changes, New Game and Load Game; they are not saved. Changes to collected cards can be saved normally. Normal mode is the startup default. Completing the ending with all 52 cards displays the code and shortcuts after Enter, once the final fade has finished. A second Enter returns to the title. Knowing the code is sufficient to activate cheats before completing the game.
+
+The 2008 release readmes document the shortcuts, including H/N in Portuguese. The later `old/4 Sakura2.0/menu.cpp` and `intro.cpp` preserve KERO and the 52-card ending condition absent from the canonical source snapshot. The hint is recreated as text rather than using the later CHEAT bitmap. Existing debug-only G behavior remains available when cheats are disabled.
+
+Validation (2026-09-13): Godot 4.7.2 editor/parser compile check completed without script errors. No gameplay tests were run under repository instructions. User playtesting remains pending for both Options entry points, the cheat shortcuts, hard-mode damage, and the 51/52-card ending branches.
+
 ## Saves and settings
 
 The final-stage boulder reveal is recorded once its fade finishes and preserved in saves. Older native saves without that flag replay the reveal once when all six bosses are complete.
@@ -46,7 +69,7 @@ World 4 shoreline slope tokens use source-image alpha for pixel-accurate collisi
 
 Maps and behavior come from `old/2 Joguito`. Release menu, ending, credits, World 7 atlases, and final-boss graphics were extracted from its authoritative `files.dat`; loose assets were used only when verified or when the archive did not contain that group. Allegro magenta `(255, 0, 255)` was converted to transparency without resizing.
 
-The 40 canonical sound effects were extracted from `files.dat`. `Title`, `Intro`, `CSelect`, `Tek`, `Wkn`, `Emr`, `Ask`, `Ce`, `Myk`, `Rrk`, `Omoide`, and `Ending` were rendered to OGG with FluidSynth 2.6.0 and MuseScore General. The non-looping intro starts at its original Allegro beat-4 cue. Each looping MIDI has a seeked initial render and a separate fresh-state loop render, reproducing Allegro's note reset at the original loop markers without carrying pre-loop notes across the seam. MuseScore General attribution and license are in `assets/audio/licenses/`; rendered OGG files do not bundle the soundfont.
+The 40 canonical sound effects were extracted from `files.dat`. `Title`, `Intro`, `CSelect`, `Tek`, `Wkn`, `Emr`, `Ask`, `Ce`, `Myk`, `Rrk`, `Omoide`, and `Ending` were rendered to OGG with FluidSynth 2.6.0 and MuseScore General. All ten looping tracks use their unchanged base OGG with native in-file loop offsets, following the user-confirmed seamless CSelect solution. Separate loop and composite OGGs have been removed. Intro and ending remain non-looping, and the intro retains its existing playback cue. See `AUDIO_PARITY.md` for sample offsets and listening-validation status. MuseScore General attribution and license are in `assets/audio/licenses/`; rendered OGG files do not bundle the soundfont.
 
 Asset-group provenance is recorded in the parity documents and the READMEs beside converted asset groups. The original game assets remain subject to their original ownership; redistribution of a packaged build should be authorized by the rights holder.
 

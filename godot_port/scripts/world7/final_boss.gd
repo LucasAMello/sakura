@@ -34,6 +34,7 @@ var attack_kind: Attack = Attack.TARGET
 var last_attack: Attack = Attack.TARGET
 var vulnerable := false
 var hit_this_appearance := false
+var boss_health := 30.0
 
 
 func _ready() -> void:
@@ -84,8 +85,9 @@ func accepts_weapon_hit(weapon_id: int) -> bool:
 func take_weapon_hit(_damage: int, weapon_id: int) -> void:
 	if weapon_id != 1 or not vulnerable or defeated_state or hit_this_appearance:
 		return
-	hit_this_appearance = true
-	hit_points -= 1
+	# hit_this_appearance = true
+	boss_health -= 0.5
+	hit_points = ceil(boss_health)
 	hit_flash_ticks = 16
 	if hit_points <= 0:
 		hit_points = 0

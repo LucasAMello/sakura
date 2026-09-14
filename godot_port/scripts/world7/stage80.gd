@@ -113,7 +113,6 @@ func _on_boss_defeated() -> void:
 
 func _update_victory() -> void:
 	victory_ticks += 1
-	_settle_player_for_victory()
 	if victory_ticks == 20:
 		_spawn_boss_light_flashes(boss.position + Vector2(40, 60), 250)
 		for _burst in range(3):
@@ -128,17 +127,6 @@ func _update_victory() -> void:
 			boss.queue_free()
 	else:
 		get_node("/root/GameFlow").play_ending()
-
-
-func _settle_player_for_victory() -> void:
-	var target_y := 260.0
-	if player.position.x > 1180.0 and player.position.x < 1280.0:
-		target_y = 300.0
-	elif (player.position.x > 1040.0 and player.position.x < 1140.0) or (player.position.x > 1320.0 and player.position.x < 1420.0):
-		target_y = 380.0
-	elif (player.position.x > 1080.0 and player.position.x < 1180.0) or (player.position.x > 1280.0 and player.position.x < 1380.0):
-		target_y = 140.0
-	player.position.y = move_toward(player.position.y, target_y, 5.0)
 
 
 func _build_background() -> void:

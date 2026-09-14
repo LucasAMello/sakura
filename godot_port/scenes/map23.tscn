@@ -1,7 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://c21rkydxlm3hj"]
 
-[ext_resource type="Script" path="res://scripts/world2/stage2.gd" id="1_stage"]
+[ext_resource type="Script" uid="uid://8wvwxnhq5ntq" path="res://scripts/world2/stage2.gd" id="1_stage"]
 
-[node name="Map23" type="Node2D"]
+[node name="Map23" type="Node2D" unique_id=1475106701]
 script = ExtResource("1_stage")
 map_number = 23

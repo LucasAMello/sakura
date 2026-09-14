@@ -17,26 +17,17 @@ const TRACK_NAMES := {
 	"memory": "omoide",
 	"ending": "ending",
 }
-const LOOP_TRACK_NAMES := {
-	"title": "title_loop",
-	"world1": "tek_loop",
-	"world2": "wkn_loop",
-	"world3": "emr_loop",
-	"world4": "ask_loop",
-	"world5": "ce_loop",
-	"world6": "myk_loop",
-	"world7": "rrk_loop",
-	"memory": "omoide_loop",
-}
-const COMPOSITE_LOOP_TRACKS := {
-	"world4": {
-		"file_name": "ask_composite",
-		"loop_offset": 7055993.0 / 44100.0,
-	},
-	"select": {
-		"file_name": "cselect_composite",
-		"loop_offset": 125.038095,
-	},
+const MUSIC_LOOP_OFFSETS := {
+	"title": 1632639.0 / 44100.0,
+	"select": 2928777.0 / 44100.0,
+	"world1": 157970.0 / 44100.0,
+	"world2": 157970.0 / 44100.0,
+	"world3": 1400822.0 / 44100.0,
+	"world4": 3608178.0 / 44100.0,
+	"world5": 789850.0 / 44100.0,
+	"world6": 473910.0 / 44100.0,
+	"world7": 2073357.0 / 44100.0,
+	"memory": 565908.0 / 44100.0,
 }
 
 var music_player: AudioStreamPlayer
@@ -50,7 +41,6 @@ func _ready() -> void:
 	music_player = AudioStreamPlayer.new()
 	music_player.bus = "Music"
 	add_child(music_player)
-	music_player.finished.connect(_on_music_finished)
 	get_node("/root/SakuraProgress").card_collected.connect(_on_card_collected)
 
 
@@ -61,19 +51,20 @@ func play_music(track_id: String, restart: bool = false, start_position: float =
 		stop_music()
 		return
 	var file_name: String = TRACK_NAMES[track_id]
-	var loop := false
-	var loop_offset := 0.0
-	if COMPOSITE_LOOP_TRACKS.has(track_id):
-		var composite: Dictionary = COMPOSITE_LOOP_TRACKS[track_id]
-		file_name = composite["file_name"]
-		loop = true
-		loop_offset = composite["loop_offset"]
+	var loop := MUSIC_LOOP_OFFSETS.has(track_id)
+	var loop_offset: float = MUSIC_LOOP_OFFSETS.get(track_id, 0.0)
 	var loaded := _load_music_stream(file_name, loop, loop_offset)
 	if loaded == null:
 		return
 	music_player.stream = loaded
 	current_track = track_id
 	music_player.play(start_position)
+
+
+func cycle_cheat_music(direction: int) -> void:
+	var tracks := ["world1", "world2", "world3", "world4", "world5", "world6", "world7", "memory", "title", "select", "ending"]
+	var index := tracks.find(current_track)
+	play_music(tracks[wrapi(index + direction, 0, tracks.size())], true)
 
 
 func stop_music() -> void:
@@ -114,16 +105,6 @@ func play_sfx_near_player(effect_id: String, source_position: Vector2, player_po
 	if offset.y <= -SFX_PROXIMITY_HALF_EXTENTS.y or offset.y >= SFX_PROXIMITY_HALF_EXTENTS.y:
 		return
 	play_sfx(effect_id, pitch_scale, volume_scale)
-
-
-func _on_music_finished() -> void:
-	if not LOOP_TRACK_NAMES.has(current_track):
-		return
-	var loaded := _load_music_stream(LOOP_TRACK_NAMES[current_track], true)
-	if loaded == null:
-		return
-	music_player.stream = loaded
-	music_player.play()
 
 
 func _load_music_stream(file_name: String, loop: bool, loop_offset: float = 0.0) -> AudioStream:

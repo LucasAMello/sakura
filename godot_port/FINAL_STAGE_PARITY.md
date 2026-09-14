@@ -41,3 +41,15 @@ The user's request to match original timing supersedes the preserved 30 Hz tunin
 - Maps 74–79 are the six canonical boss arenas at their source dimensions and coordinates, with their existing boss controllers running in transient rematch mode.
 - Final-boss projectile collision and presentation reproduce the source target-ball, lightning-column, orbiting-fire, and six-angle ice families; packaged playtesting should confirm safe gaps and visual layering at release resolution.
 - Ending panel dwell, fades, one-second inter-panel holds, backgrounds, reflection panel, ground widths, credit alpha, and final Enter gate are reconstructed directly from `menu.h`; packaged playtesting should confirm uninterrupted audio/video timing.
+
+## Ending sequence audit (2026-09-13)
+
+Compared `scripts/menu/ending.gd` with canonical `old/2 Joguito/menu.h` (`myend` and `drawend`) and the boss-to-ending white hold in `draw.h`.
+
+- Moved the opaque backdrop behind the scenery; it previously covered both background layers.
+- Rebuilt each background as the original 800x480 composite, including the 608/400/640-pixel repeats, blue water fill, and horizontal reflection of the complete water composite. Panel five uses the first world's background, as the source reloads `bg.bmp`.
+- Kept Sakura's horizontal position and eight-tick walk phase continuous across panels; initialized the first walk texture immediately. The water foreground now draws over her lower body, matching source draw order. Credit centering and background scrolling use source integer coordinates.
+- Preserved the white screen through both five-second prelude holds and restored the first panel's white reveal. Its source fade decreases every third draw; 765 physics ticks uses the existing 60 Hz presentation assumption. Later black fades, panel durations, one-second holds, non-looping ending music, final fade, and final Enter gate retain their current timing/behavior.
+- Preserved pre-existing edits to the ending's final fade, campaign routing, and final boss. No player or combat tuning changed.
+
+Validation: Godot 4.7.2 headless editor/parser load exited 0 with no script/parser errors; sandbox editor-directory, certificate-store, and settings-save errors remained. `git diff --check` passed. No gameplay tests were created or run. Draw-driven fade timing remains a 60 Hz approximation; the original uncapped draw loop and accumulated timer ticks during blocking rests are not reproduced. Full audiovisual playtest acceptance remains pending.

@@ -7,6 +7,8 @@ const INTRO_2 := preload("res://assets/intro/intro2.png")
 const INTRO_3 := preload("res://assets/intro/intro3.png")
 const SAKURA_FALLING := preload("res://assets/intro/intro4.png")
 const ISLAND := preload("res://assets/intro/intro5.png")
+const BOULDER := preload("res://assets/menu/final_stage_boulder.png")
+const BOULDER_ISLAND_POSITION := Vector2(124, 31)
 const START_DELAY_TICKS := 120
 const FADE_PHASE_TICKS := 100
 const FINISH_WAIT_TICKS := 300
@@ -102,6 +104,12 @@ func _build_scene() -> void:
 	intro_3_sprite = _make_sprite(INTRO_3, Vector2(320, 230), 1)
 	island_sprite = _make_sprite(ISLAND, Vector2(20, 150), 1)
 	island_sprite.scale = Vector2(1.5, 1.5)
+	var boulder_sprite := Sprite2D.new()
+	boulder_sprite.centered = false
+	boulder_sprite.texture = BOULDER
+	boulder_sprite.position = BOULDER_ISLAND_POSITION
+	boulder_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	island_sprite.add_child(boulder_sprite)
 	falling_sprite = _make_sprite(SAKURA_FALLING, Vector2(320, 215), 2)
 	falling_sprite.offset = Vector2(20, 20)
 	falling_sprite.visible = false

@@ -197,7 +197,8 @@ func _update_horizontal(direction: int) -> void:
 		return
 	if signf(x_speed) != 0.0 and signf(x_speed) != float(direction):
 		x_speed = 0.0
-	var speed_multiplier := GOD_MODE_SPEED_MULTIPLIER if is_god_mode_active() else 1.0
+	var debug_speed: bool = OS.is_debug_build() and get_node("/root/SakuraProgress").debug_god_mode
+	var speed_multiplier := GOD_MODE_SPEED_MULTIPLIER if debug_speed else 1.0
 	if absf(x_speed) < 1.0:
 		x_speed += 0.2 * direction * speed_multiplier
 	else:
@@ -492,16 +493,16 @@ func _update_immunity() -> void:
 
 
 func is_god_mode_active() -> bool:
-	if not OS.is_debug_build() or not is_inside_tree():
+	if not is_inside_tree():
 		return false
 	var progress := get_node_or_null("/root/SakuraProgress")
-	return is_instance_valid(progress) and progress.debug_god_mode
+	return is_instance_valid(progress) and (progress.cheat_god_mode or (OS.is_debug_build() and progress.debug_god_mode))
 
 
 func take_damage(amount: int) -> void:
-	if dead or is_god_mode_active() or immunity_ticks > 0 or amount <= 0:
+	if not is_inside_tree() or dead or is_god_mode_active() or immunity_ticks > 0 or amount <= 0:
 		return
-	hp -= amount
+	hp = 0 if get_node("/root/SakuraProgress").hard_mode else hp - amount
 	immunity_ticks = 80
 	hp_changed.emit(hp, maximum_hp)
 	if hp <= 0:

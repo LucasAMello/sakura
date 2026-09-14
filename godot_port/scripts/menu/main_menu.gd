@@ -102,6 +102,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 					binding_index = -1
 			_update_options()
 			return
+		get_node("/root/SakuraProgress").enter_cheat_code(event.physical_keycode)
 		if event.physical_keycode == KEY_ESCAPE:
 			_show_menu()
 		elif event.physical_keycode == KEY_UP:
@@ -286,6 +287,7 @@ func _show_menu() -> void:
 
 
 func _show_options() -> void:
+	get_node("/root/SakuraProgress").cheat_code_index = 0
 	screen = Screen.OPTIONS
 	for card in menu_cards:
 		card.visible = false

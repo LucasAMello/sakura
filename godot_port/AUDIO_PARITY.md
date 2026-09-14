@@ -22,13 +22,30 @@
 | World 7 | Rrk | beat 5 | 110–278 |
 | Final boss | Omoide | file start | 37–389 |
 
-`Intro.mid` and `Ending.mid` are non-looping. The intro is rendered in full and playback begins at the source's beat-4 seek point. Every looping MIDI is sliced into an initial seek-to-end file and a loop-start-to-end file before synthesis, matching Allegro's all-notes-off seek behavior. `tools/midi_timing.py` converts beat positions using the MIDI tempo map; `tools/midi_slice.py` creates the state-restored MIDI sections.
+`Intro.mid` and `Ending.mid` remain non-looping. The intro is rendered in full and retains its existing playback cue.
 
-Stage select packages those two independently synthesized sections into `cselect_composite.ogg` and loops at `125.038095` seconds, the exact end of its initial beat-4-to-277 section. This keeps the loop's fresh MIDI state while avoiding an audible process-frame gap from swapping streams after the initial section finishes.
+## In-file music loops (2026-09-14)
 
-World 4 similarly packages the existing `ask.ogg` and `ask_loop.ogg` sections into `ask_composite.ogg`. Its loop offset is exactly 7,055,993 samples at 44,100 Hz (159.999841 seconds), preserving the beat-5 initial seek and beat-185-to-357 repeat without switching streams. The composite is generated with FFmpeg's audio concat filter and Vorbis quality 6.
+The user confirmed that CSelect loops seamlessly when the unchanged initial recording seeks back into itself, and requested the same solution for every looping track. All ten looping tracks now use their existing base OGG with Godot's native `loop` and `loop_offset`; no stream swap or appended loop section is used. The twelve base OGGs are unchanged. Ten separate loop OGGs and two composite OGGs have been removed.
 
-The MIDI files provide explicit tick-zero tempos; these override Standard MIDI's default 120 BPM. World 1's initial/loop renders are `71.641760`/`68.059672` seconds, and World 2's are `77.014892`/`73.432804` seconds. The previous 120 BPM assumption placed both loop ends several musical bars late.
+| Role | File | Loop start sample (44,100 Hz) | Loop start seconds |
+|---|---|---:|---:|
+| Title | `title.ogg` | 1,632,639 | 37.021293 |
+| Stage select | `cselect.ogg` | 2,928,777 | 66.412177 |
+| World 1 | `tek.ogg` | 157,970 | 3.582086 |
+| World 2 | `wkn.ogg` | 157,970 | 3.582086 |
+| World 3 | `emr.ogg` | 1,400,822 | 31.764671 |
+| World 4 | `ask.ogg` | 3,608,178 | 81.818095 |
+| World 5 | `ce.ogg` | 789,850 | 17.910431 |
+| World 6 | `myk.ogg` | 473,910 | 10.746259 |
+| World 7 | `rrk.ogg` | 2,073,357 | 47.014898 |
+| Final boss | `omoide.ogg` | 565,908 | 12.832381 |
+
+Offsets follow the approved CSelect method: use `tools/midi_timing.py` to subtract the existing render's initial seek time from its source loop-start time, then round to the nearest 44,100 Hz sample. The existing files end at their rendered loop-end markers, so Godot repeats from EOF to the listed offset. Each file's duration was checked against its MIDI tempo map; rounding differs by less than one sample. Explicit tick-zero tempos override the Standard MIDI default of 120 BPM.
+
+This preserves sustained notes and reverb already present at the destination in the continuous recording. It supersedes the earlier requirement for fresh-state loop renders, which dropped note starts preceding their slice boundary. Exact Allegro beat-number conversion is a separate historical question; these offsets intentionally preserve the existing recordings and the user-approved CSelect approach rather than rerendering or shifting their initial cues.
+
+CSelect's 125.038095-to-66.412177-second transition is user-validated. The other nine transitions use the same method and still need user listening confirmation. No gameplay tests were run.
 
 ## Canonical SFX event mapping
 

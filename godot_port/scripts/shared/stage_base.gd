@@ -68,8 +68,9 @@ var pause_row := 0
 var pause_page := 0
 var pause_option_selection := 0
 var pause_binding_index := -1
-var victory_target := Vector2.ZERO
-var victory_target_set := false
+var boss_landing_pending := false
+var boss_landing_y := 0.0
+var boss_landing_speed := 0.0
 
 const PAUSE_BINDING_ACTIONS := [
 	"move_up", "move_down", "move_right", "move_left", "jump",
@@ -135,7 +136,7 @@ func _handle_global_input() -> bool:
 		else:
 			get_node("/root/GameFlow").complete_elemental_stage(_world_number())
 		return true
-	if Input.is_action_just_pressed("pause") and stage_state != StageState.DYING and not get_tree().paused:
+	if Input.is_action_just_pressed("pause") and player.gameplay_active and not player.dead and not get_tree().paused:
 		pause_column = 0
 		pause_row = 0
 		pause_page = 0
@@ -151,7 +152,7 @@ func _handle_global_input() -> bool:
 		return true
 	if Input.is_action_just_pressed("toggle_debug"):
 		hud.toggle_debug()
-	if OS.is_debug_build() and Input.is_action_just_pressed("toggle_god_mode") and is_instance_valid(progress) and is_instance_valid(player) and not player.dead:
+	if OS.is_debug_build() and not progress.cheats_enabled and Input.is_action_just_pressed("toggle_god_mode") and is_instance_valid(progress) and is_instance_valid(player) and not player.dead:
 		progress.debug_god_mode = not progress.debug_god_mode
 	return false
 
@@ -225,6 +226,7 @@ func _activate_pause_cell() -> void:
 				get_node("/root/GameFlow").complete_elemental_stage(_world_number())
 	elif pause_row == 4:
 		pause_page = 2
+		progress.cheat_code_index = 0
 		pause_option_selection = 0
 	elif pause_column == 0:
 		_set_paused(false)
@@ -259,6 +261,13 @@ func _adjust_pause_option(direction: int) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
+	if event.pressed and not event.echo:
+		if get_tree().paused and pause_page == 2 and pause_binding_index < 0:
+			progress.enter_cheat_code(event.physical_keycode)
+		elif not get_tree().paused and progress.cheats_enabled and player.gameplay_active and not player.dead:
+			if _handle_cheat_key(event.physical_keycode):
+				get_viewport().set_input_as_handled()
+				return
 	if not get_tree().paused or pause_binding_index < 0 or not event.pressed or event.echo:
 		return
 	get_node("/root/SakuraSettings").set_key(PAUSE_BINDING_ACTIONS[pause_binding_index], event.physical_keycode)
@@ -269,7 +278,53 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
+func _handle_cheat_key(keycode: int) -> bool:
+	match keycode:
+		KEY_G:
+			progress.cheat_god_mode = true
+			progress.debug_god_mode = false
+			progress.hard_mode = false
+		KEY_H:
+			progress.cheat_god_mode = false
+			progress.debug_god_mode = false
+			progress.hard_mode = true
+		KEY_N, KEY_B:
+			progress.cheat_god_mode = false
+			progress.debug_god_mode = false
+			progress.hard_mode = false
+			if keycode == KEY_B:
+				progress.cheats_enabled = false
+		KEY_L:
+			player.add_health(player.maximum_hp)
+		KEY_K:
+			var previous_cheat_god: bool = progress.cheat_god_mode
+			var previous_debug_god: bool = progress.debug_god_mode
+			progress.cheat_god_mode = false
+			progress.debug_god_mode = false
+			player.immunity_ticks = 0
+			player.take_damage(player.hp)
+			progress.cheat_god_mode = previous_cheat_god
+			progress.debug_god_mode = previous_debug_god
+		KEY_V:
+			progress.lives = 9
+			player.lives = 9
+		KEY_M:
+			for card_id in range(progress.CARD_COUNT):
+				progress.collect_card(card_id)
+		KEY_J:
+			get_node("/root/GameFlow").cheat_open_final_boss()
+		KEY_KP_ADD, KEY_PLUS, KEY_EQUAL:
+			get_node("/root/AudioManager").cycle_cheat_music(1)
+		KEY_KP_SUBTRACT, KEY_MINUS:
+			get_node("/root/AudioManager").cycle_cheat_music(-1)
+		_:
+			return false
+	return true
+
+
 func _finish_physics_tick() -> void:
+	if not is_inside_tree():
+		return
 	_prune_enemies()
 	_update_camera()
 	_update_hud()
@@ -353,47 +408,51 @@ func _start_departure(direction: int = 0) -> void:
 	add_child(departure_front)
 
 
-func _move_player_to_boss_departure(world_number: int) -> void:
-	if departure_ticks > 0:
+func _begin_boss_landing() -> void:
+	player.x_speed = 0.0
+	player.y_speed = 0.0
+	boss_landing_speed = 0.0
+	boss_landing_y = _boss_ground_below()
+	if is_inf(boss_landing_y):
+		_start_departure()
 		return
-	if not victory_target_set:
-		victory_target_set = true
-		match world_number:
-			1:
-				if player.position.x >= 3120.0 and player.position.x < 3280.0:
-					victory_target = Vector2(3200, 180)
-				elif player.position.x >= 3440.0 and player.position.x < 3600.0:
-					victory_target = Vector2(3520, 180)
-				else:
-					victory_target = Vector2(3360, 300)
-			2:
-				victory_target = Vector2(5480, 460)
-			3:
-				victory_target = Vector2(5460, 400)
-			4:
-				victory_target = Vector2(9580, 560)
-			5:
-				victory_target = Vector2(5420, 2220)
-			6:
-				if player.position.x >= 3400.0 and player.position.x < 3500.0:
-					victory_target = Vector2(3450, 990)
-				elif player.position.x >= 3720.0 and player.position.x < 3820.0:
-					victory_target = Vector2(3770, 990)
-				else:
-					victory_target = Vector2(3600, 1020)
-	player.position.y = move_toward(player.position.y, victory_target.y, 5.0)
-	var distance := victory_target.x - player.position.x
-	if absf(distance) >= 4.0:
-		player.set_scripted_animation_active(true)
-		player.scripted_step(1 if distance > 0.0 else -1, 4.0)
-	else:
-		player.position.x = victory_target.x
-		player.x_speed = 0.0
-	if player.position == victory_target:
-		player.y_speed = 0.0
+	if boss_landing_y <= player.position.y:
 		player.grounded = true
-		player.walk_tick = 0
-		player.set_scripted_animation_active(false)
+		player.set_scripted_frame(0)
+		_start_departure()
+		return
+	boss_landing_pending = true
+	player.grounded = false
+	player.set_scripted_frame(2)
+
+
+func _boss_ground_below() -> float:
+	var body := player.get_hit_rect()
+	var left := maxf(0.0, body.position.x)
+	var width := minf(terrain.world_size.x, body.end.x) - left
+	if width <= 0.0:
+		return INF
+	var floor_y := INF
+	for y in range(maxi(0, floori(body.end.y)), ceili(terrain.world_size.y)):
+		if terrain.rect_hits_solid(Rect2(left, y, width, 1.0)):
+			floor_y = float(y)
+			break
+	var bottom_body := Rect2(Vector2(body.position.x, terrain.world_size.y), body.size)
+	floor_y = minf(floor_y, terrain.one_way_landing_y(body, bottom_body))
+	return maxf(player.position.y, floor_y - body.size.y)
+
+
+func _update_boss_landing() -> void:
+	boss_landing_speed = minf(10.0, boss_landing_speed + 0.5)
+	player.position.y = move_toward(player.position.y, boss_landing_y, boss_landing_speed)
+	if player.position.y < boss_landing_y:
+		return
+	boss_landing_pending = false
+	player.grounded = true
+	player.y_speed = 0.0
+	player.walk_tick = 0
+	player.set_scripted_frame(0)
+	_start_departure()
 
 
 func _update_departure() -> void:
@@ -565,7 +624,11 @@ func _on_maximum_hp_changed(value: int) -> void:
 	get_node("/root/AudioManager").play_sfx("sparkle")
 
 
-func projectile_hits_solid(rect: Rect2) -> bool:
+func projectile_hits_solid(rect: Rect2, ignore_map_boundary: bool = false) -> bool:
+	if ignore_map_boundary:
+		rect = rect.intersection(Rect2(Vector2.ZERO, terrain.world_size))
+		if not rect.has_area():
+			return false
 	if terrain.rect_hits_solid(rect):
 		return true
 	for door in boss_doors:
@@ -636,10 +699,12 @@ func _spawn_boss_light_flashes(effect_position: Vector2, lifetime_ticks: int = 2
 
 func _spawn_boss_explosion(effect_position: Vector2) -> void:
 	get_node("/root/AudioManager").play_sfx("anim13")
-	var effect: TurretShotExplosion = BossExplosionScript.new()
-	effect.position = effect_position - Vector2(TurretShotExplosion.FRAMES[0].get_size()) * 0.5
-	effect.z_index = 30
-	add_child(effect)
+	var half_size := Vector2(TurretShotExplosion.FRAMES[0].get_size()) * 0.5
+	for offset in [Vector2.ZERO, Vector2(half_size.x, -half_size.y)]:
+		var effect: TurretShotExplosion = BossExplosionScript.new()
+		effect.position = effect_position + offset - half_size
+		effect.z_index = 30
+		add_child(effect)
 
 
 func _prune_enemies() -> void:

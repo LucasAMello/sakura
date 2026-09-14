@@ -373,7 +373,9 @@ func _on_boss_defeated() -> void:
 
 
 func _update_victory() -> void:
-	_move_player_to_boss_departure(4)
+	if boss_landing_pending:
+		_update_boss_landing()
+		return
 	if departure_ticks > 0:
 		_update_departure()
 	state_ticks += 1
@@ -402,7 +404,7 @@ func _update_victory() -> void:
 			if is_instance_valid(boss_reward):
 				boss_reward.begin_homing()
 			else:
-				_start_departure()
+				_begin_boss_landing()
 
 
 func _spawn_boss_reward() -> void:
@@ -420,7 +422,7 @@ func _spawn_boss_reward() -> void:
 func _on_boss_reward_collected() -> void:
 	progress.collect_card(3)
 	progress.unlock_fourth_boss_reward()
-	_start_departure()
+	_begin_boss_landing()
 
 
 func _complete_departure() -> void:

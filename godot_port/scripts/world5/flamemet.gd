@@ -43,7 +43,7 @@ func take_water_splash_hit() -> void:
 
 func _update_enemy() -> void:
 	sprite.texture = FRAMES[int(timer / 8.0) % FRAMES.size()]
-	if ceiling and timer % 280 == 279:
+	if ceiling and timer % 140 == 0:
 		falling_fire_requested.emit(position + Vector2(9, -2))
 	timer += 1
 	var movement := 1.0 if direction == 1 else -1.0

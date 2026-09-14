@@ -12,6 +12,10 @@ const BOSS_CARD_COUNT := 6
 
 var carried_hp := -1
 var debug_god_mode := false
+var cheats_enabled := false
+var cheat_god_mode := false
+var hard_mode := false
+var cheat_code_index := 0
 var selected_weapon := 1
 var lives := 5
 var cards: Dictionary = {}
@@ -41,6 +45,18 @@ var fifth_boss_reward: bool:
 var sixth_boss_reward: bool:
 	get:
 		return has_card(5)
+
+
+func enter_cheat_code(keycode: int) -> void:
+	var code := [KEY_K, KEY_E, KEY_R, KEY_O]
+	if keycode == code[cheat_code_index]:
+		cheat_code_index += 1
+	else:
+		cheat_code_index = 1 if keycode == KEY_K else 0
+	if cheat_code_index == code.size():
+		cheat_code_index = 0
+		cheats_enabled = true
+		get_node("/root/AudioManager").play_sfx("accept")
 
 
 func reset_new_game() -> void:

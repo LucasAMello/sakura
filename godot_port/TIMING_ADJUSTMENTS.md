@@ -605,3 +605,11 @@ User playtest pending: maps 60–62, Ice Met ledges/death needles, both icicle s
 - Automatic replacement of old 30 Hz documentation throughout the repository. Reconcile those statements when timing work is undertaken; preserve non-timing guidance.
 
 The highest-confidence broad suspect is unchanged source script values running at interval two. The strongest counterexamples to a blanket change are Stage 1 turret firing, the thunder boss's fourfold conversion, the turtle boss's interval four, and orange's extra attack gate. Stage 7 red-ball animation and turret firing are already slower cases. Review the actual execution path before changing any of them.
+
+## Boss victory order update (2026-09-14)
+
+The user's requested victory behavior supersedes the original relocation targets and previous departure tuning. All six elemental bosses now leave Sakura at her defeat-time position through explosions, white fade, and card collection. Reward cards move along the direct vector to Sakura at 1.25 pixels per 60 Hz tick (75 px/s), rather than moving each axis by 1.25 independently. Existing animation, collection-fade, explosion, and portal timings remain intact.
+
+After collection (or the equivalent no-card phase during rematches/replays), Sakura falls vertically to the nearest terrain or one-way platform beneath her, then enters the existing portal spawned in front of her. Landing starts from rest, accelerates by 0.5 px/tick to 10 px/tick, and stops exactly at the surface. No horizontal relocation or post-victory lethal-floor damage is applied. The terrain scan uses her full collision width and the map's actual solid/alpha-collision geometry. With no terrain below, including the first boss's bottomless pits and its rematch, the portal sequence begins immediately in mid-air; the same guard avoids an endless fall in any arena lacking support. Already-grounded Sakura starts the portal without a falling frame.
+
+The final boss also no longer repositions Sakura; its existing white fade and ending transition remain, with no reward card or departure portal added. User playtesting is pending for airborne/grounded kills, platform edges, first-boss pits, water layering, all reward trajectories, and rematches. Validation is limited to the permitted Godot editor/parser compile check; no gameplay tests were created or run.

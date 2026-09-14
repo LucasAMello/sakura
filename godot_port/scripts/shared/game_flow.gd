@@ -15,7 +15,7 @@ const STAGE_STARTS := {
 	4: "res://scenes/map40.tscn",
 	5: "res://scenes/map50.tscn",
 	6: "res://scenes/map60.tscn",
-	7: "res://scenes/map80.tscn",
+	7: "res://scenes/map70.tscn",
 }
 
 var transitioning := false
@@ -159,3 +159,11 @@ func game_over() -> void:
 func play_ending() -> void:
 	get_tree().paused = false
 	get_tree().change_scene_to_file(ENDING_SCENE)
+
+
+func cheat_open_final_boss() -> void:
+	if transitioning:
+		return
+	get_node("/root/SakuraProgress").begin_stage(7)
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/map80.tscn")
