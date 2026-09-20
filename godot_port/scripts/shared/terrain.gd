@@ -161,7 +161,7 @@ func is_solid_cell(tile_x: int, tile_y: int) -> bool:
 
 func is_solid_at(point: Vector2) -> bool:
 	for solid_sprite in solid_sprites:
-		if is_instance_valid(solid_sprite) and solid_sprite.visible and Rect2(solid_sprite.position, solid_sprite.texture.get_size()).has_point(point):
+		if is_instance_valid(solid_sprite) and solid_sprite.visible and Rect2(solid_sprite.position, solid_sprite.get_rect().size).has_point(point):
 			return true
 	var tile_x := floori(point.x / TILE_SIZE)
 	var tile_y := floori(point.y / TILE_SIZE)
@@ -201,7 +201,7 @@ func one_way_landing_y(previous_rect: Rect2, next_rect: Rect2) -> float:
 
 func rect_hits_solid(rect: Rect2) -> bool:
 	for solid_sprite in solid_sprites:
-		if is_instance_valid(solid_sprite) and solid_sprite.visible and Rect2(solid_sprite.position, solid_sprite.texture.get_size()).intersects(rect):
+		if is_instance_valid(solid_sprite) and solid_sprite.visible and Rect2(solid_sprite.position, solid_sprite.get_rect().size).intersects(rect):
 			return true
 	var left := floori(rect.position.x / TILE_SIZE)
 	var right := floori((rect.end.x - 0.001) / TILE_SIZE)

@@ -30,7 +30,7 @@ func setup(map_terrain: SakuraTerrain, target_player: SakuraPlayer, direction: i
 	player = target_player
 	move_direction = 1 if direction == 1 else -1
 	sprite.flip_h = move_direction > 0
-	get_node("/root/AudioManager").play_sfx_near_player("turret", position, target_player.position, 1.0, 100.0 / 255.0)
+	get_node("/root/AudioManager").play_sfx_near_player("turret", position, target_player.position)
 
 
 func _physics_process(_delta: float) -> void:

@@ -141,9 +141,27 @@ func finish_active_rematch() -> void:
 	var progress := get_node("/root/SakuraProgress")
 	progress.finish_rematch()
 	if progress.all_rematches_complete():
-		get_tree().change_scene_to_file("res://scenes/map80.tscn")
+		open_final_boss()
 	else:
 		get_tree().change_scene_to_file("res://scenes/map73.tscn")
+
+
+func open_final_boss() -> void:
+	if transitioning:
+		return
+	transitioning = true
+	transition_overlay.modulate.a = 1.0
+	transition_overlay.show()
+	get_tree().paused = true
+	var error := get_tree().change_scene_to_file("res://scenes/map80.tscn")
+	if error != OK:
+		await _fail_stage_transition()
+		return
+	await get_tree().scene_changed
+	await RenderingServer.frame_post_draw
+	transition_overlay.hide()
+	transitioning = false
+	get_tree().paused = false
 
 
 func leave_final_stage() -> void:
@@ -165,5 +183,4 @@ func cheat_open_final_boss() -> void:
 	if transitioning:
 		return
 	get_node("/root/SakuraProgress").begin_stage(7)
-	get_tree().paused = false
-	get_tree().change_scene_to_file("res://scenes/map80.tscn")
+	open_final_boss()

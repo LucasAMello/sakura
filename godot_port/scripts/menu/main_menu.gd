@@ -306,7 +306,7 @@ func _adjust_option(direction: int) -> void:
 	if option_selection == 0:
 		settings.set_music_volume(clampf(settings.music_volume + direction, 0.0, 1.0))
 	elif option_selection == 1:
-		settings.set_sfx_volume(settings.sfx_volume + direction / 255.0)
+		settings.set_sfx_volume(settings.sfx_volume + direction * settings.SFX_VOLUME_STEP)
 	_update_options()
 
 

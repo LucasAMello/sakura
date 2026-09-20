@@ -68,6 +68,8 @@ func take_weapon_hit(_damage: int, weapon_id: int) -> void:
 
 
 func _take_boss_damage(damage: float) -> void:
+	if not is_instance_valid(player) or player.dead:
+		return
 	if defeated_state or not _can_receive_damage():
 		return
 	boss_health -= damage
@@ -125,7 +127,7 @@ func _update_crouch() -> void:
 func _update_dash() -> void:
 	sprite.flip_h = dash_direction > 0
 	if timer == 0 && dash_direction < 0:
-		get_node("/root/AudioManager").play_sfx("roar2", 1.0, 155.0 / 255.0)
+		get_node("/root/AudioManager").play_sfx("roar2")
 	var x_speeds := [35.0, 55.0, 55.0, 55.0, 55.0, 42.0, 26.0, 15.0]
 	var y_speeds := [-2.0, -2.0, -1.0, -1.0, 1.0, 1.0, 2.0, 2.0]
 	if timer == 0:

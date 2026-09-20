@@ -310,10 +310,9 @@ func update_status(player: SakuraPlayer, _stage_state: String, enemy_count: int,
 	if is_instance_valid(god_mode_label):
 		var progress := get_node_or_null("/root/SakuraProgress")
 		var hard_mode: bool = is_instance_valid(progress) and progress.hard_mode
-		var cheats_enabled: bool = is_instance_valid(progress) and progress.cheats_enabled
 		var god_mode := player.is_god_mode_active()
-		god_mode_label.visible = god_mode or hard_mode or cheats_enabled
-		god_mode_label.text = "GOD MODE" if god_mode else ("HARD MODE" if hard_mode else "CHEATS")
+		god_mode_label.visible = god_mode or hard_mode
+		god_mode_label.text = "GOD MODE" if god_mode else "HARD MODE"
 	last_maximum_hp = player.maximum_hp
 	player_meter_extension.visible = player.maximum_hp > 15
 	player_meter_extension.position.y = PLAYER_METER_Y - float(player.maximum_hp - 15) * 5.0

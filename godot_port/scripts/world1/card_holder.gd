@@ -54,7 +54,7 @@ func take_projectile_hit(_damage: int) -> void:
 		return
 	opened_state = true
 	timer = 0
-	get_node("/root/AudioManager").play_sfx("glass", 1.0, 125.0 / 255.0)
+	get_node("/root/AudioManager").play_sfx("glass")
 	sprite.texture = OPEN_TEXTURE
 	card_sprite.visible = false
 	opened.emit(position + Vector2(9, 12), card_id)

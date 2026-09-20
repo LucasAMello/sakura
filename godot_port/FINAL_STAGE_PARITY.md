@@ -53,3 +53,9 @@ Compared `scripts/menu/ending.gd` with canonical `old/2 Joguito/menu.h` (`myend`
 - Preserved pre-existing edits to the ending's final fade, campaign routing, and final boss. No player or combat tuning changed.
 
 Validation: Godot 4.7.2 headless editor/parser load exited 0 with no script/parser errors; sandbox editor-directory, certificate-store, and settings-save errors remained. `git diff --check` passed. No gameplay tests were created or run. Draw-driven fade timing remains a 60 Hz approximation; the original uncapped draw loop and accumulated timer ticks during blocking rests are not reproduced. Full audiovisual playtest acceptance remains pending.
+
+## Final-boss arrival update
+
+The final-rematch, completed-hub, and cheat entry paths now share a persistent GameFlow black overlay across the scene change. It remains opaque until the new scene has rendered, then hands off to map80's existing black intro fade. The previous paths replaced the HUD and its scene-owned fade together; the life bar itself has no blink logic. This addresses a possible transition flash, but the reported flicker has not been visually reproduced.
+
+Map80 initializes carried HP to the current maximum before constructing the player and HUD, so arrival is fully healed without displaying the previous health first. Existing intro timing is retained. Godot parser/editor validation and diff checks are used; gameplay and fade appearance await user playtesting.

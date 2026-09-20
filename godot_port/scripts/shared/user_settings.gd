@@ -2,6 +2,8 @@ extends Node
 
 const SETTINGS_PATH := "user://sakura_settings.json"
 
+const SFX_VOLUME_STEP := 0.2
+
 const DEFAULT_KEYS := {
 	"move_up": KEY_UP,
 	"move_down": KEY_DOWN,
@@ -48,7 +50,7 @@ func load_settings() -> void:
 		return
 	var data: Dictionary = parsed
 	music_volume = clampf(float(data.get("music_volume", 1.0)), 0.0, 1.0)
-	sfx_volume = clampf(float(data.get("sfx_volume", 1.0)), 0.0, 1.0)
+	sfx_volume = snappedf(clampf(float(data.get("sfx_volume", 1.0)), 0.0, 1.0), SFX_VOLUME_STEP)
 	var stored_keys: Variant = data.get("keys", {})
 	if stored_keys is Dictionary:
 		for action in DEFAULT_KEYS:
@@ -92,7 +94,7 @@ func set_music_volume(value: float) -> void:
 
 
 func set_sfx_volume(value: float) -> void:
-	sfx_volume = clampf(value, 0.0, 1.0)
+	sfx_volume = snappedf(clampf(value, 0.0, 1.0), SFX_VOLUME_STEP)
 	apply_audio_levels()
 	save_settings()
 

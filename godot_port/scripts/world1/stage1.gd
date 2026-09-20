@@ -254,12 +254,14 @@ func _update_intermission_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		_set_boss_door_opening(0, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 120:
 		_set_boss_door_opening(0, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(2440, 320), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_boss_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_boss_door_opening(0, 0.0)
 		camera_lock_position = Vector2(2440, 320)
@@ -301,6 +303,7 @@ func _update_boss_intro() -> void:
 			get_node("/root/AudioManager").play_sfx("recuperator")
 	if state_ticks <= 40:
 		_set_boss_door_opening(1, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 		return
 	if state_ticks <= 80:
 		_set_boss_door_opening(1, 1.0)
@@ -309,6 +312,7 @@ func _update_boss_intro() -> void:
 		return
 	if state_ticks <= 120:
 		_set_boss_door_opening(1, 1.0 - float(state_ticks - 80) / 40.0)
+		player.set_scripted_frame(0)
 		return
 	_set_boss_door_opening(1, 0.0)
 	camera_lock_position = FIRST_BOSS_CAMERA_POSITION
@@ -351,7 +355,7 @@ func _update_boss_intro() -> void:
 func _set_boss_door_opening(index: int, amount: float) -> void:
 	if index < 0 or index >= boss_doors.size():
 		return
-	boss_doors[index].position.y = 280.0 - clampf(amount, 0.0, 1.0) * 100.0
+	_set_retracting_door_opening(index, amount)
 
 
 func _update_boss_intro_camera() -> void:
@@ -393,7 +397,7 @@ func _update_victory() -> void:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 24 and is_instance_valid(boss):
 				_spawn_boss_light_flashes(boss.position + boss.body_size * 0.5)
-			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
+			for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, state_ticks) if is_instance_valid(boss) else 0):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, int(boss.body_size.x)), randi_range(0, int(boss.body_size.y))))
 			return
 		if state_ticks <= 285:

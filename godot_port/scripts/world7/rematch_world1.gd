@@ -4,7 +4,7 @@ const REMATCH_CONFIGS := {
 	75: {
 		"width": 200,
 		"height": 28,
-		"start": Vector2(3380, 300),
+		"start": Vector2(3280, 300),
 		"exit": Rect2(),
 		"next": 0,
 		"red_balls": [],

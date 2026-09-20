@@ -17,7 +17,7 @@ var timer := 0
 
 func configure() -> void:
 	set_update_interval(1)
-	get_node("/root/AudioManager").play_sfx_near_player("fireyflame", position, player.position, 1.0, 128.0 / 255.0)
+	get_node("/root/AudioManager").play_sfx_near_player("fireyflame", position, player.position)
 	body_size = Vector2(20, 39)
 	hit_points = 1
 	contact_damage = 2

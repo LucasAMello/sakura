@@ -50,8 +50,7 @@ func _physics_process(_delta: float) -> void:
 		return
 	if Rect2(position, BODY_SIZE).intersects(player.get_hit_rect()):
 		player.take_damage(2)
-		queue_free()
-	elif position.x < -40.0 or position.x > terrain.world_size.x + 40.0 or position.y > terrain.world_size.y + 40.0:
+	if position.x < -40.0 or position.x > terrain.world_size.x + 40.0 or position.y > terrain.world_size.y + 40.0:
 		queue_free()
 
 

@@ -220,12 +220,14 @@ func _update_checkpoint_entry() -> void:
 			player.y_speed = 0.0
 			player.grounded = true
 		_set_door_opening(0, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(5020, 380), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_door_opening(0, 0.0)
 		camera_lock_position = Vector2(5020, 380)
@@ -246,12 +248,14 @@ func _update_boss_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		_set_door_opening(1, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 120:
 		_set_door_opening(1, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(5640, 380), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(1, 1.0 - float(state_ticks - 120) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_door_opening(1, 0.0)
 		camera_lock_position = Vector2(5640, 380)
@@ -282,6 +286,7 @@ func _on_boss_ready() -> void:
 
 
 func _on_boss_control_lock_requested(value: bool) -> void:
+	player.scripted_invulnerable = value and boss.state == SecondStageBoss.BossState.SPLITTING
 	player.set_gameplay_active(not value)
 
 
@@ -320,15 +325,11 @@ func _update_victory() -> void:
 				_spawn_boss_light_flashes(boss.position + Vector2(25, 25))
 				for clone_position in defeated_clone_positions:
 					_spawn_boss_light_flashes(clone_position + Vector2(25, 25))
-				for burst in range(3):
-					_spawn_boss_explosion(boss.position + Vector2(25, 25))
-					for clone_position in defeated_clone_positions:
-						_spawn_boss_explosion(clone_position + Vector2(25, 25))
-			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
+			for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, state_ticks) if is_instance_valid(boss) else 0):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
-			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks, "clones", 28):
-				for clone_position in defeated_clone_positions:
-					_spawn_boss_explosion(clone_position + Vector2(randi_range(0, 46), randi_range(0, 46)))
+			for clone_index in range(defeated_clone_positions.size()):
+				for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, state_ticks, "clone_" + str(clone_index), 28)):
+					_spawn_boss_explosion(defeated_clone_positions[clone_index] + Vector2(randi_range(0, 46), randi_range(0, 46)), false)
 			return
 		if state_ticks <= 285:
 			hud.set_boss_flash(1.0)
@@ -498,7 +499,7 @@ func _build_boss_area() -> void:
 func _set_door_opening(index: int, amount: float) -> void:
 	if index < 0 or index >= boss_doors.size():
 		return
-	boss_doors[index].position.y = 440.0 - clampf(amount, 0.0, 1.0) * 100.0
+	_set_retracting_door_opening(index, amount)
 
 
 func _update_camera() -> void:

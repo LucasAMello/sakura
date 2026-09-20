@@ -1,7 +1,8 @@
 extends Node2D
 
 const FINAL_STAGE_BOULDER_POSITION := Vector2(244, 211)
-const FINAL_STAGE_REVEAL_TICKS := 20
+const FINAL_STAGE_REVEAL_TICKS := 60
+const FINAL_STAGE_REVEAL_HOLD_SECONDS := 0.5
 const MAP_MARKER_FRAMES := [
 	preload("res://assets/menu/pisk.png"),
 	preload("res://assets/menu/pisk2.png"),
@@ -39,7 +40,7 @@ var message_window: Control
 var message_label: Label
 var message_ticks := 0
 var final_stage_boulder: Sprite2D
-var final_stage_reveal_ticks := -1
+var final_stage_revealing := false
 
 
 func _ready() -> void:
@@ -65,7 +66,7 @@ func _ready() -> void:
 			final_stage_boulder = sprite
 			sprite.visible = not progress.is_final_stage_unlocked() or reveal_final_stage
 			if reveal_final_stage:
-				final_stage_reveal_ticks = 0
+				final_stage_revealing = true
 		add_child(sprite)
 	map_marker = Sprite2D.new()
 	map_marker.centered = false
@@ -86,10 +87,11 @@ func _ready() -> void:
 	_build_message_window()
 	get_node("/root/GameFlow").stage_start_failed.connect(_show_message.bind(true))
 	_update_selection()
+	if final_stage_revealing:
+		_reveal_final_stage()
 
 
 func _physics_process(_delta: float) -> void:
-	_update_final_stage_reveal()
 	map_marker_ticks = (map_marker_ticks + 1) % (MAP_MARKER_FRAME_TICKS * MAP_MARKER_FRAMES.size())
 	map_marker.texture = MAP_MARKER_FRAMES[int(map_marker_ticks / float(MAP_MARKER_FRAME_TICKS))]
 	if message_ticks <= 0:
@@ -99,18 +101,18 @@ func _physics_process(_delta: float) -> void:
 		message_window.visible = false
 
 
-func _update_final_stage_reveal() -> void:
-	if final_stage_reveal_ticks < 0 or not is_instance_valid(final_stage_boulder):
-		return
-	final_stage_reveal_ticks += 1
-	final_stage_boulder.modulate.a = maxf(
-		0.0,
-		float(FINAL_STAGE_REVEAL_TICKS - final_stage_reveal_ticks) / float(FINAL_STAGE_REVEAL_TICKS)
-	)
-	if final_stage_reveal_ticks >= FINAL_STAGE_REVEAL_TICKS:
-		final_stage_boulder.visible = false
-		get_node("/root/SakuraProgress").finish_final_stage_reveal()
-		final_stage_reveal_ticks = -1
+func _reveal_final_stage() -> void:
+	await RenderingServer.frame_post_draw
+	while get_node("/root/GameFlow").transitioning:
+		await get_tree().process_frame
+	var tween := create_tween()
+	tween.tween_interval(FINAL_STAGE_REVEAL_HOLD_SECONDS)
+	tween.tween_callback(get_node("/root/AudioManager").play_sfx.bind("lasts"))
+	tween.tween_property(final_stage_boulder, "modulate:a", 0.0, FINAL_STAGE_REVEAL_TICKS / 60.0)
+	await tween.finished
+	final_stage_boulder.visible = false
+	get_node("/root/SakuraProgress").finish_final_stage_reveal()
+	final_stage_revealing = false
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -118,7 +120,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if not event.pressed or event.echo:
 		return
-	if final_stage_reveal_ticks >= 0:
+	if final_stage_revealing:
 		return
 	if message_ticks > 0:
 		return

@@ -171,6 +171,8 @@ func take_weapon_hit(_damage: int, weapon_id: int) -> void:
 
 
 func _take_boss_damage(damage: float) -> void:
+	if not is_instance_valid(player) or player.dead:
+		return
 	if defeated_state or not vulnerable:
 		return
 	boss_health -= damage

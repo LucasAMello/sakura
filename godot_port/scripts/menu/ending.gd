@@ -139,7 +139,7 @@ func _show_cheat_hint() -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 20)
-	hint.text = "ALL 52 CARDS COLLECTED!\n\nType K E R O in Options to enable cheats.\n\nG: God mode    H: Hard mode    N: Normal mode\nL: Full health    V: 9 lives    M: All cards\nK: Lose a life    J: Final boss\n+ / -: Change music    B: Disable cheats\n\nPress Enter to return to the title."
+	hint.text = "ALL 52 CARDS COLLECTED!\n\nType K E R O in Options to enable cheats.\n\nG: God Mode Toggle    B: Battle the Last Boss\nC: Collect All Cards    T: Turn Cheats Off\n\nPress Enter to return to the title."
 	hint.z_index = 20
 	add_child(hint)
 

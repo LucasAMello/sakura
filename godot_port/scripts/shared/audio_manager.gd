@@ -2,6 +2,48 @@ extends Node
 
 const MUSIC_PATH := "res://assets/audio/music/%s.ogg"
 const SFX_PATH := "res://assets/audio/sfx/%s.wav"
+const SFX_GAIN_DB := {
+	"accept": -14.136109,
+	"anim13": -14.540853,
+	"anim40": -15.952475,
+	"anim60": -9.931875,
+	"bigthunder": -8.666055,
+	"cardget": -9.931875,
+	"deny": -18.924358,
+	"die": -11.938200,
+	"ewulmissile": -3.703634,
+	"fireslash": -14.937969,
+	"fireyflame": -16.020600,
+	"flamethrower": -22.041200,
+	"glass": -22.041200,
+	"haduex": -16.020600,
+	"iceanim": -10.822358,
+	"icefall": -15.952475,
+	"lasts": -16.020600,
+	"penasound": -9.999470,
+	"quicar": -9.735446,
+	"recuperator": -9.931875,
+	"recuperators": -9.824078,
+	"roar": -10.000000,
+	"roar2": -22.041200,
+	"sands": -9.999735,
+	"sparkle": -10.000000,
+	"splaash": -18.066701,
+	"splash": -16.020600,
+	"thundersound": -22.041200,
+	"tiro1": -15.986604,
+	"tiro2": -11.606215,
+	"tiro3": -9.999470,
+	"tiro4": -16.020600,
+	"tiro5": -14.048404,
+	"tiro6": -9.931875,
+	"tiro7": -15.766970,
+	"turret": -14.624931,
+	"turtledash": -11.606215,
+	"turtlejato": -18.066701,
+	"windydash": -11.606215,
+	"wts": -14.048404,
+}
 const SFX_PROXIMITY_HALF_EXTENTS := Vector2(520.0, 380.0)
 const TRACK_NAMES := {
 	"title": "title",
@@ -74,7 +116,8 @@ func stop_music() -> void:
 
 
 func play_sfx(effect_id: String, pitch_scale: float = 1.0, volume_scale: float = 1.0) -> void:
-	var path := SFX_PATH % effect_id.to_lower()
+	var normalized_id := effect_id.to_lower()
+	var path := SFX_PATH % normalized_id
 	if not ResourceLoader.exists(path):
 		return
 	var tick := Engine.get_physics_frames()
@@ -82,7 +125,8 @@ func play_sfx(effect_id: String, pitch_scale: float = 1.0, volume_scale: float =
 		sfx_tick = tick
 		sfx_started_this_tick.clear()
 	var key := "%s:%s" % [path, pitch_scale]
-	var volume := clampf(volume_scale, 0.0, 1.0)
+	var gain_db: float = SFX_GAIN_DB.get(normalized_id, 0.0)
+	var volume := clampf(volume_scale, 0.0, 1.0) * db_to_linear(gain_db)
 	var existing: AudioStreamPlayer = sfx_started_this_tick.get(key)
 	if is_instance_valid(existing):
 		existing.volume_linear = maxf(existing.volume_linear, volume)

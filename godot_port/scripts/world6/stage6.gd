@@ -217,12 +217,14 @@ func _update_checkpoint_entry() -> void:
 		player.grounded = true
 	if state_ticks <= 40:
 		_set_door_opening(0, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(3060, 960), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_door_opening(0, 0.0)
 		camera_lock_position = Vector2(3060, 960)
@@ -243,12 +245,14 @@ func _update_boss_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		_set_door_opening(1, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 108:
 		_set_door_opening(1, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(3630, 960), float(state_ticks - 40) / 68.0)
 	elif state_ticks <= 148:
 		_set_door_opening(1, 1.0 - float(state_ticks - 108) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_door_opening(1, 0.0)
 		camera_lock_position = Vector2(3630, 960)
@@ -327,9 +331,7 @@ func _update_victory() -> void:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 24:
 				_spawn_boss_light_flashes(boss.position + Vector2(60, 70))
-				for _burst in range(3):
-					_spawn_boss_explosion(boss.position + Vector2(60, 70))
-			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
+			for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, state_ticks) if is_instance_valid(boss) else 0):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 120), randi_range(0, 140)))
 			return
 		if state_ticks <= 285:
@@ -489,7 +491,7 @@ func _build_boss_area() -> void:
 func _set_door_opening(index: int, amount: float) -> void:
 	if index < 0 or index >= boss_doors.size():
 		return
-	boss_doors[index].position.y = 960.0 - clampf(amount, 0.0, 1.0) * 140.0
+	_set_retracting_door_opening(index, amount)
 
 
 func _build_background() -> void:

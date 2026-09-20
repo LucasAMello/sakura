@@ -65,7 +65,7 @@ func setup(projectile_kind: Kind, map_terrain: SakuraTerrain, target_player: Sak
 	direction = projectile_direction
 	match kind:
 		Kind.WALL_SHOT, Kind.MACHINE_SHOT, Kind.ORANGE_SHOT:
-			get_node("/root/AudioManager").play_sfx_near_player("wts", position, player.position, 1.0, 100.0 / 255.0)
+			get_node("/root/AudioManager").play_sfx_near_player("wts", position, player.position)
 			sprite.texture = WALL_TEXTURES[0]
 			velocity = _wall_velocity(direction, kind)
 			damage = 2
@@ -147,9 +147,11 @@ func _update_missile() -> void:
 
 func _end_missile() -> void:
 	var explosion := TurretShotExplosion.new()
-	explosion.position = position + Vector2(10, -7)
+	var travel_direction := -1 if velocity.x < 0.0 else 1
+	var impact_center := position + body_size * 0.5 + Vector2(travel_direction * (body_size.x * 0.5 + 8.0), 0.0)
+	explosion.position = impact_center - Vector2(TurretShotExplosion.FRAMES[0].get_size()) * 0.5
 	explosion.z_index = z_index
-	explosion.setup(player, -1)
+	explosion.setup(player, travel_direction)
 	get_parent().add_child(explosion)
 	queue_free()
 

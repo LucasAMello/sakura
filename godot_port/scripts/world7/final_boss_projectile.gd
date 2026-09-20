@@ -1,6 +1,8 @@
 class_name FinalBossProjectile
 extends Node2D
 
+signal fire_orbit_finished
+
 const BALL_FRAMES := [
 	preload("res://assets/world7/last_ball_1.png"), preload("res://assets/world7/last_ball_2.png"),
 	preload("res://assets/world7/last_ball_3.png"), preload("res://assets/world7/last_ball_4.png"),
@@ -96,14 +98,15 @@ func _physics_process(_delta: float) -> void:
 	if kind in [77, 78]:
 		_update_fire()
 		return
+	if kind == 79:
+		_update_ice()
+		return
 	physics_phase = (physics_phase + 1) % 4
 	if physics_phase != 0:
 		return
 	match kind:
 		75:
 			_update_target_ball()
-		79:
-			_update_ice()
 
 
 func _update_animation() -> void:
@@ -183,6 +186,7 @@ func _update_fire_orbit() -> void:
 	if rotation_count == 2 and fire_orbit_index == checkpoint_indices[variant - 1]:
 		action_state = 10 + variant
 		timer = 0
+		fire_orbit_finished.emit()
 		return
 	fire_orbit_index += 1
 	if fire_orbit_index >= FIRE_DELTAS.size():
@@ -208,14 +212,14 @@ func _update_fire_settle() -> void:
 func _update_ice() -> void:
 	timer += 1
 	if action_state == 0:
-		sprite.modulate.a = minf(1.0, float(timer) * 60.0 / 255.0)
+		sprite.modulate.a = minf(1.0, float(timer) * 15.0 / 255.0)
 		_damage_player_if_touching()
-		if timer >= 5:
+		if timer >= 20:
 			action_state = 1
 			timer = 0
 			sprite.modulate.a = 1.0
 		return
-	var velocity: Vector2 = ICE_SPEEDS[variant]
+	var velocity: Vector2 = ICE_SPEEDS[variant] / 4.0
 	if direction == 1:
 		velocity.x *= -1.0
 	for _step_index in range(2):

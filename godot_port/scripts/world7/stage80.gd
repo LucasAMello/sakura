@@ -30,6 +30,8 @@ func _entry_complete_state() -> int:
 
 
 func _ready() -> void:
+	var campaign := get_node("/root/SakuraProgress")
+	campaign.carried_hp = campaign.maximum_hp()
 	super._ready()
 	hud.set_completion_fade(1.0)
 
@@ -94,6 +96,8 @@ func _on_boss_attack_requested(kind: int, origin: Vector2, direction: int, varia
 	projectile.z_index = 14
 	add_child(projectile)
 	projectile.configure(player, terrain, kind, direction, variant)
+	if kind in [77, 78]:
+		projectile.fire_orbit_finished.connect(boss.on_fire_orbit_finished)
 
 
 func _on_boss_flash_requested(alpha: float) -> void:
@@ -115,9 +119,7 @@ func _update_victory() -> void:
 	victory_ticks += 1
 	if victory_ticks == 20:
 		_spawn_boss_light_flashes(boss.position + Vector2(40, 60), 250)
-		for _burst in range(3):
-			_spawn_boss_explosion(boss.position + Vector2(40, 60))
-	if victory_ticks < 255 and preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, victory_ticks, "boss", 12):
+	for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, victory_ticks, "boss", 12) if victory_ticks < 255 else 0):
 		_spawn_boss_explosion(boss.position + Vector2(randi_range(-20, 90), randi_range(-10, 120)))
 	if victory_ticks < 255:
 		hud.set_boss_flash(float(victory_ticks) / 255.0)

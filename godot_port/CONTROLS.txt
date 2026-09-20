@@ -6,7 +6,7 @@ D             Fire
 A / S         Previous / next unlocked weapon
 1–7           Select weapon directly
 Enter         Confirm / pause
-Escape        Back / open or close pause
+Escape        Back in menus (exit stages through the pause menu)
 F3            Compatibility information
 
 Controls can be changed from Options. Music and sound levels can be changed from Options or the pause menu.

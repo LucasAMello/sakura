@@ -130,12 +130,6 @@ func _ready() -> void:
 func _handle_global_input() -> bool:
 	if get_node("/root/GameFlow").transitioning:
 		return true
-	if Input.is_action_just_pressed("quit") and stage_state != StageState.DYING and not get_tree().paused:
-		if _world_number() == 7:
-			get_node("/root/GameFlow").leave_final_stage()
-		else:
-			get_node("/root/GameFlow").complete_elemental_stage(_world_number())
-		return true
 	if Input.is_action_just_pressed("pause") and player.gameplay_active and not player.dead and not get_tree().paused:
 		pause_column = 0
 		pause_row = 0
@@ -257,7 +251,7 @@ func _adjust_pause_option(direction: int) -> void:
 	if pause_option_selection == 0:
 		settings.set_music_volume(clampf(settings.music_volume + direction, 0.0, 1.0))
 	elif pause_option_selection == 1:
-		settings.set_sfx_volume(settings.sfx_volume + direction / 255.0)
+		settings.set_sfx_volume(settings.sfx_volume + direction * settings.SFX_VOLUME_STEP)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -281,42 +275,19 @@ func _unhandled_key_input(event: InputEvent) -> void:
 func _handle_cheat_key(keycode: int) -> bool:
 	match keycode:
 		KEY_G:
-			progress.cheat_god_mode = true
+			progress.cheat_god_mode = not progress.cheat_god_mode
 			progress.debug_god_mode = false
 			progress.hard_mode = false
-		KEY_H:
-			progress.cheat_god_mode = false
-			progress.debug_god_mode = false
-			progress.hard_mode = true
-		KEY_N, KEY_B:
+		KEY_T:
 			progress.cheat_god_mode = false
 			progress.debug_god_mode = false
 			progress.hard_mode = false
-			if keycode == KEY_B:
-				progress.cheats_enabled = false
-		KEY_L:
-			player.add_health(player.maximum_hp)
-		KEY_K:
-			var previous_cheat_god: bool = progress.cheat_god_mode
-			var previous_debug_god: bool = progress.debug_god_mode
-			progress.cheat_god_mode = false
-			progress.debug_god_mode = false
-			player.immunity_ticks = 0
-			player.take_damage(player.hp)
-			progress.cheat_god_mode = previous_cheat_god
-			progress.debug_god_mode = previous_debug_god
-		KEY_V:
-			progress.lives = 9
-			player.lives = 9
-		KEY_M:
+			progress.cheats_enabled = false
+		KEY_C:
 			for card_id in range(progress.CARD_COUNT):
 				progress.collect_card(card_id)
-		KEY_J:
-			get_node("/root/GameFlow").cheat_open_final_boss()
-		KEY_KP_ADD, KEY_PLUS, KEY_EQUAL:
-			get_node("/root/AudioManager").cycle_cheat_music(1)
-		KEY_KP_SUBTRACT, KEY_MINUS:
-			get_node("/root/AudioManager").cycle_cheat_music(-1)
+		KEY_B:
+			get_node("/root/GameFlow").call_deferred("cheat_open_final_boss")
 		_:
 			return false
 	return true
@@ -599,8 +570,7 @@ func _recovery_fall_speed() -> float:
 
 
 func _on_shot_requested(origin: Vector2, direction: int, weapon_id: int) -> void:
-	var shot_volume := 205.0 / 255.0 if weapon_id == 1 else 1.0
-	get_node("/root/AudioManager").play_sfx("tiro%d" % weapon_id, 1.0, shot_volume)
+	get_node("/root/AudioManager").play_sfx("tiro%d" % weapon_id)
 	if (weapon_id == 1):
 		var projectile: ProjectileScript = ProjectileScript.new()
 		projectile.position = origin
@@ -624,6 +594,16 @@ func _on_maximum_hp_changed(value: int) -> void:
 	get_node("/root/AudioManager").play_sfx("sparkle")
 
 
+func _set_retracting_door_opening(index: int, amount: float) -> void:
+	if index < 0 or index >= boss_doors.size():
+		return
+	var door := boss_doors[index]
+	var size := door.texture.get_size()
+	var retracted := roundf(clampf(amount, 0.0, 1.0) * maxf(0.0, size.y - 20.0))
+	door.region_enabled = true
+	door.region_rect = Rect2(0.0, retracted, size.x, size.y - retracted)
+
+
 func projectile_hits_solid(rect: Rect2, ignore_map_boundary: bool = false) -> bool:
 	if ignore_map_boundary:
 		rect = rect.intersection(Rect2(Vector2.ZERO, terrain.world_size))
@@ -633,7 +613,7 @@ func projectile_hits_solid(rect: Rect2, ignore_map_boundary: bool = false) -> bo
 		return true
 	for door in boss_doors:
 		if is_instance_valid(door) and door.visible and door.texture != null:
-			if Rect2(door.position, door.texture.get_size()).intersects(rect):
+			if Rect2(door.position, door.get_rect().size).intersects(rect):
 				return true
 	return false
 
@@ -697,14 +677,14 @@ func _spawn_boss_light_flashes(effect_position: Vector2, lifetime_ticks: int = 2
 	add_child(effect)
 
 
-func _spawn_boss_explosion(effect_position: Vector2) -> void:
-	get_node("/root/AudioManager").play_sfx("anim13")
+func _spawn_boss_explosion(effect_position: Vector2, play_sound: bool = true) -> void:
+	if play_sound:
+		get_node("/root/AudioManager").play_sfx("anim13")
 	var half_size := Vector2(TurretShotExplosion.FRAMES[0].get_size()) * 0.5
-	for offset in [Vector2.ZERO, Vector2(half_size.x, -half_size.y)]:
-		var effect: TurretShotExplosion = BossExplosionScript.new()
-		effect.position = effect_position + offset - half_size
-		effect.z_index = 30
-		add_child(effect)
+	var effect: TurretShotExplosion = BossExplosionScript.new()
+	effect.position = effect_position - half_size
+	effect.z_index = 30
+	add_child(effect)
 
 
 func _prune_enemies() -> void:
@@ -715,6 +695,8 @@ func _prune_enemies() -> void:
 
 func _set_gameplay_active(value: bool) -> void:
 	player.set_gameplay_active(value)
+	if not value and stage_state == StageState.VICTORY and not player.dead:
+		player.set_scripted_frame(0 if player.grounded else 2)
 	for enemy in enemies:
 		if is_instance_valid(enemy):
 			enemy.set_gameplay_active(value)
@@ -797,6 +779,8 @@ func _entry_player_frame() -> int:
 
 
 func _entry_should_show_ready() -> bool:
+	if map_number >= 74 and map_number <= 79:
+		return false
 	return _entry_has_portal()
 
 

@@ -50,7 +50,7 @@ func _update_enemy() -> void:
 		return
 	var source_tick := int(timer / 4.0)
 	if timer < 108 and timer % 28 == 4:
-		get_node("/root/AudioManager").play_sfx_near_player("flamethrower", position, player.position, 1.0, 100.0 / 255.0)
+		get_node("/root/AudioManager").play_sfx_near_player("flamethrower", position, player.position)
 	if timer >= 108 and timer < 112:
 		sprite.texture = frames[7]
 	elif timer >= 112:

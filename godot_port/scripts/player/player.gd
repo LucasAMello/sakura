@@ -61,6 +61,7 @@ var jump_latched := false
 var jump_blocked_until_release := false
 var walk_tick := 0
 var firing_ticks := 0
+var firing_animation_active := false
 var fire_cycle_ticks := 0
 var active_shots := 0
 var current_weapon := 1
@@ -70,6 +71,7 @@ var hp := MAX_HP
 var maximum_hp := MAX_HP
 var lives := 5
 var immunity_ticks := 0
+var scripted_invulnerable := false
 var dead := false
 var water_surface_y := -1.0
 var in_water := false
@@ -130,6 +132,8 @@ func set_water_surface(surface_y: float, starts_in_water: bool = false) -> void:
 
 func set_gameplay_active(value: bool) -> void:
 	gameplay_active = value
+	if not value:
+		firing_animation_active = false
 
 
 func block_jump_until_release() -> void:
@@ -463,6 +467,10 @@ func _update_animation(direction: int) -> void:
 func _update_sprite(frame_index: int) -> void:
 	if sprite == null:
 		return
+	if gameplay_active and Input.is_action_pressed("fire"):
+		firing_animation_active = true
+	elif not gameplay_active or frame_index in [0, 1, 2]:
+		firing_animation_active = false
 	if dead or presentation_hidden:
 		sprite.visible = false
 		attack_overlay.visible = false
@@ -472,7 +480,7 @@ func _update_sprite(frame_index: int) -> void:
 		attack_overlay.visible = false
 		return
 	sprite.visible = true
-	var firing := gameplay_active and Input.is_action_pressed("fire")
+	var firing := firing_animation_active
 	var texture_sets: Dictionary = firing_textures_by_weapon if firing else normal_textures_by_weapon
 	var textures: Array = texture_sets.get(current_weapon, NORMAL_TEXTURES)
 	sprite.texture = textures[frame_index]
@@ -500,7 +508,7 @@ func is_god_mode_active() -> bool:
 
 
 func take_damage(amount: int) -> void:
-	if not is_inside_tree() or dead or is_god_mode_active() or immunity_ticks > 0 or amount <= 0:
+	if not is_inside_tree() or dead or scripted_invulnerable or is_god_mode_active() or immunity_ticks > 0 or amount <= 0:
 		return
 	hp = 0 if get_node("/root/SakuraProgress").hard_mode else hp - amount
 	immunity_ticks = 80

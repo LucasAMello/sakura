@@ -69,13 +69,13 @@ The event assignments below were checked against every `play_sample(...)` call i
 | Falling icicle and sixth-boss ice attack | `icefall`; `tiro7` |
 | Final-boss small shot, thunder shot, and fire shot | `lasts`; `thundersound`; `fireyflame` |
 
-Archive gain differences are preserved for `tiro1` (205/255), `turret`, `wts`, and `flamethrower` (100/255), `glass` and `sands` (125/255), falling `fireyflame` (128/255), `roar2` (155/255), and turret-shot `anim13` (150/255). All other listed events use full source gain. Menu and pause navigation are intentionally silent in the canonical source; `sands` is not a navigation sound.
+Current playback uses one tuned gain per sound file. Former event multipliers are folded into `SFX_GAIN_DB`, choosing the quieter level for shared effects and identical WAV copies. This supersedes the archive relative mix and earlier contextual volume differences. See `SFX_LEVELS.md` for current gains and listening adjustments. Menu and pause navigation remain silent; `sands` is not a navigation sound.
 
 The original `inpl()` gate is also preserved for turret shots and impacts, World 3 wall shots/missiles/shock balls, falling fire, flamethrowers, and Ice-shot impacts. These sounds play only while their source is strictly within `520` horizontal and `380` vertical pixels of the player; the cutoff is binary, with no attenuation or panning.
 
 ## Overlapping sound levels
 
-As a playtest-driven mix adjustment, identical effects at the same pitch within one physics tick share one playback at the loudest requested gain. Effects triggered on later ticks still overlap, preserving the timing of boss explosions and health-meter filling. The SFX bus limits peaks to -6 dB, and the Master bus limits the combined music/effects output to -1 dB, both without added pre-gain. These are port mix settings rather than archive values; individual sound gains, proximity gates, and gameplay timing remain unchanged.
+As a playtest-driven mix adjustment, identical effects at the same pitch within one physics tick share one playback at the loudest requested gain. Effects triggered on later ticks still overlap, preserving the timing of boss explosions and health-meter filling. The SFX bus limits peaks to -6 dB, and the Master bus limits the combined music/effects output to -1 dB, both without added pre-gain. These are port mix settings rather than archive values; proximity gates and gameplay timing remain unchanged; individual gains now follow the -10 dBFS tuning recorded in `SFX_LEVELS.md`.
 
 ## Manual validation required
 

@@ -200,12 +200,14 @@ func _update_checkpoint_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		_set_door_opening(0, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 120:
 		_set_door_opening(0, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(5040, 400), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(0, 1.0 - float(state_ticks - 120) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_door_opening(0, 0.0)
 		camera_lock_position = Vector2(5040, 400)
@@ -228,12 +230,14 @@ func _update_boss_entry() -> void:
 	state_ticks += 1
 	if state_ticks <= 40:
 		_set_door_opening(1, float(state_ticks) / 40.0)
+		player.set_scripted_frame(0)
 	elif state_ticks <= 120:
 		_set_door_opening(1, 1.0)
 		player.scripted_step_right(2.0)
 		camera_lock_position = transition_camera_start.lerp(Vector2(5600, 400), float(state_ticks - 40) / 80.0)
 	elif state_ticks <= 160:
 		_set_door_opening(1, 1.0 - float(state_ticks - 120) / 40.0)
+		player.set_scripted_frame(0)
 	else:
 		_set_door_opening(1, 0.0)
 		camera_lock_position = Vector2(5600, 400)
@@ -248,11 +252,8 @@ func _update_boss_entry() -> void:
 
 func _update_boss_intro() -> void:
 	state_ticks += 1
-	if state_ticks <= 160:
-		player.scripted_step_right(1.25)
-	elif state_ticks == 161:
-		player.set_scripted_animation_active(false)
-	elif state_ticks == 228:
+	player.set_scripted_frame(0)
+	if state_ticks == 228:
 		_spawn_boss_projectile(World3Projectile.Kind.BOSS_LIGHTNING, Vector2(5750, 160))
 	elif state_ticks == 240:
 		hud.set_boss_flash(0.5)
@@ -304,9 +305,7 @@ func _update_victory() -> void:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 24:
 				_spawn_boss_light_flashes(boss.position + Vector2(48, 30))
-				for burst in range(3):
-					_spawn_boss_explosion(boss.position + Vector2(25, 25))
-			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
+			for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, state_ticks) if is_instance_valid(boss) else 0):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 50), randi_range(0, 50)))
 			return
 		if state_ticks <= 285:
@@ -502,7 +501,7 @@ func _spawn_boss_projectile(kind: int, spawn_position: Vector2, direction: int =
 func _set_door_opening(index: int, amount: float) -> void:
 	if index < 0 or index >= boss_doors.size():
 		return
-	boss_doors[index].position.y = 380.0 - clampf(amount, 0.0, 1.0) * 100.0
+	_set_retracting_door_opening(index, amount)
 
 
 func _update_camera() -> void:

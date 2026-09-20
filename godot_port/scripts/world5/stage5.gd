@@ -252,7 +252,11 @@ func _begin_world5_checkpoint() -> void:
 
 
 func _update_checkpoint() -> void:
-	if player.get_hit_rect().intersects(Rect2(5420, 1460, 360, 40)):
+	if player.position.x >= 5460.0 or player.get_hit_rect().intersects(Rect2(5420, 1460, 360, 40)):
+		player.position.x = minf(player.position.x, 5460.0)
+		player.x_speed = 0.0
+		player.y_speed = 0.0
+		player.facing = 1
 		_begin_boss_entry()
 		boss_fall_speed = 0.0
 		player.grounded = false
@@ -264,12 +268,8 @@ func _update_boss_entry() -> void:
 	_update_scripted_boss_fall()
 	camera_lock_position.y = clampf(player.get_center().y, VIEWPORT_HALF_SIZE.y, 2160.0)
 	if state_ticks <= 128:
-		var distance := 5460.0 - player.position.x
-		if absf(distance) > 0.0:
-			if not player.grounded:
-				player.position.x = move_toward(player.position.x, 5460.0, 1.0)
-		else:
-			player.facing = 1
+		if player.position.x < 5460.0 and not player.grounded:
+			player.position.x = move_toward(player.position.x, 5460.0, 1.0)
 	elif state_ticks <= 132:
 		player.facing = 1
 	elif state_ticks <= 212:
@@ -336,9 +336,7 @@ func _update_victory() -> void:
 			hud.set_boss_flash(float(state_ticks) / 255.0)
 			if state_ticks == 24:
 				_spawn_boss_light_flashes(boss.position + Vector2(64, 53))
-				for burst in range(3):
-					_spawn_boss_explosion(boss.position + Vector2(64, 53))
-			if preload("res://scripts/shared/boss_explosion_timing.gd").is_due(self, state_ticks) and is_instance_valid(boss):
+			for _explosion in range(preload("res://scripts/shared/boss_explosion_timing.gd").due_count(self, state_ticks) if is_instance_valid(boss) else 0):
 				_spawn_boss_explosion(boss.position + Vector2(randi_range(0, 128), randi_range(0, 60)))
 			return
 		if state_ticks <= 285:

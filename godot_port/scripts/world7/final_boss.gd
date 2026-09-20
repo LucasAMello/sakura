@@ -18,6 +18,7 @@ const ATTACK_POSITIONS := {
 	Attack.ICE_RIGHT: Vector2(915, 236),
 }
 const ICE_TIMES := [60, 70, 80, 86, 96, 106, 120, 130, 140, 150, 160, 165, 180, 190]
+const FIRE_SPAWN_TIMES := [25, 29, 33, 39, 45, 51]
 const LIGHTNING_LANES := {
 	Attack.TARGET: Vector2(1218, 30),
 	Attack.LIGHTNING_LEFT: Vector2(1078, 10),
@@ -35,6 +36,7 @@ var last_attack: Attack = Attack.TARGET
 var vulnerable := false
 var hit_this_appearance := false
 var boss_health := 30.0
+var finished_fire_orbits := 0
 
 
 func _ready() -> void:
@@ -83,6 +85,8 @@ func accepts_weapon_hit(weapon_id: int) -> bool:
 
 
 func take_weapon_hit(_damage: int, weapon_id: int) -> void:
+	if not is_instance_valid(player) or player.dead:
+		return
 	if weapon_id != 1 or not vulnerable or defeated_state or hit_this_appearance:
 		return
 	# hit_this_appearance = true
@@ -166,12 +170,19 @@ func _update_lightning_attack() -> void:
 
 
 func _update_fire_attack() -> void:
-	var spawn_times := [25, 29, 33, 39, 45, 51]
-	var spawn_index := spawn_times.find(timer)
+	if timer == FIRE_SPAWN_TIMES[0]:
+		finished_fire_orbits = 0
+	var spawn_index := FIRE_SPAWN_TIMES.find(timer)
 	if spawn_index >= 0:
 		var projectile_type := 77 if attack_kind == Attack.FIRE_LEFT else 78
 		attack_requested.emit(projectile_type, position + Vector2(30, 80), 0, spawn_index + 1)
-	elif timer >= 200:
+
+
+func on_fire_orbit_finished() -> void:
+	if state != BossState.ATTACK or attack_kind not in [Attack.FIRE_LEFT, Attack.FIRE_RIGHT]:
+		return
+	finished_fire_orbits += 1
+	if finished_fire_orbits == FIRE_SPAWN_TIMES.size():
 		_finish_attack()
 
 
@@ -219,13 +230,15 @@ func _update_fade_out() -> void:
 		sprite.modulate.a = maxf(0.0, sprite.modulate.a - 32.0 / 255.0)
 	elif timer == 11:
 		position = Vector2(10, 10)
-	elif timer >= 50:
-		var next_attack: Attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT) as Attack
-		while next_attack == last_attack:
-			next_attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT) as Attack
-		attack_kind = next_attack
-		position = ATTACK_POSITIONS[attack_kind]
-		state = BossState.FADE_IN
-		timer = 0
-		hit_this_appearance = false
-		sprite.modulate.a = 0.0
+	else:
+		var target = 90 if last_attack == Attack.FIRE_LEFT or last_attack == Attack.FIRE_RIGHT else 50
+		if timer >= target:
+			var next_attack: Attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT) as Attack
+			while next_attack == last_attack:
+				next_attack = randi_range(Attack.TARGET, Attack.ICE_RIGHT) as Attack
+			attack_kind = next_attack
+			position = ATTACK_POSITIONS[attack_kind]
+			state = BossState.FADE_IN
+			timer = 0
+			hit_this_appearance = false
+			sprite.modulate.a = 0.0

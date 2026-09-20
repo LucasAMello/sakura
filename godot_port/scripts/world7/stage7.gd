@@ -267,8 +267,7 @@ func _update_playing() -> void:
 	_update_ghost_mask_spawners()
 	if map_number == 73:
 		if progress.all_rematches_complete():
-			progress.carried_hp = player.hp
-			get_tree().change_scene_to_file("res://scenes/map80.tscn")
+			get_node("/root/GameFlow").open_final_boss()
 			return
 		for portal in portal_sprites:
 			if is_instance_valid(portal) and Rect2(portal.position, Vector2(70, 100)).intersects(player.get_hit_rect()):
@@ -445,6 +444,10 @@ func _update_camera() -> void:
 
 func _entry_has_portal() -> bool:
 	return returning_from_rematch or super._entry_has_portal()
+
+
+func _entry_should_show_ready() -> bool:
+	return not returning_from_rematch and super._entry_should_show_ready()
 
 
 func _update_entry_visual() -> void:
