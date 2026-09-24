@@ -333,6 +333,7 @@ func _move_vertical(amount: float) -> void:
 				fall_ticks = 0
 				landed_this_tick = true
 			else:
+				position.y = floorf(candidate.position.y) + 1.0
 				grounded = false
 				fall_ticks = 0
 			if direction > 0.0:

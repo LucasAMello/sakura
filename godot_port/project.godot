@@ -10,8 +10,10 @@ config_version=5
 
 [application]
 
-config/name="Sakura — Godot Port"
+config/name="The Adventure of Sakura"
 run/main_scene="res://scenes/main.tscn"
+config/use_custom_user_dir=true
+config/custom_user_dir_name="Sakura"
 config/features=PackedStringArray("4.7")
 config/icon="res://assets/sakura_icon.png"
 

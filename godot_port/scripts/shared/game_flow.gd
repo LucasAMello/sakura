@@ -11,7 +11,7 @@ const ENDING_SCENE := "res://scenes/ending.tscn"
 const STAGE_STARTS := {
 	1: "res://scenes/map10.tscn",
 	2: "res://scenes/map20.tscn",
-	3: "res://scenes/map30.tscn",
+	3: "res://scenes/map31.tscn",
 	4: "res://scenes/map40.tscn",
 	5: "res://scenes/map50.tscn",
 	6: "res://scenes/map60.tscn",
