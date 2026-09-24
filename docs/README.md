@@ -14,4 +14,4 @@ python docs/build_reference.py
 
 `build_reference.py` combines curated descriptions with current source constants, map configurations, card names, coordinates and embedded GDScript. `reference.css` and `reference.js` own presentation and browser interactions. Curated behavior descriptions and boss damage tables need a source review when gameplay changes; regeneration alone does not audit their meaning.
 
-Snapshot: 2026-09-21. No game code or assets were changed. No automated tests, manual tests, browser tests or gameplay sessions were run, in accordance with AGENTS.md.
+Snapshot: 2026-09-24. No game code or assets were changed. No automated tests, manual tests, browser tests or gameplay sessions were run, in accordance with AGENTS.md.
